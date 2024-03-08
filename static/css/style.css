@@ -1,0 +1,111 @@
+/* styles.css */
+
+/***** student_form.html *****/
+.form-body{
+    padding: 10px;
+}
+.form-body p{
+    margin-bottom:30px;
+}
+input[type="submit"] .btn.btn-primary {
+    margin-right: 100px;
+}
+@media (min-width: 450px) {
+    .form-body p label {
+        width: 40% !important;
+    }
+    .form-body p input[type="label"],
+    .form-body p input[type="text"], .form-body p input[type="date"], .form-body p select {
+        width: 50% !important;
+    }
+    div.form-body p select {
+        width: 50% !important;
+    }
+    input[type="submit"].btn.btn-primary {
+        margin-right: 100px;
+    }
+    
+    .form-body{
+        padding: 30px;
+    }
+}
+
+/******certificate_display.html******/
+.bg-img {
+    background-image: url('../images/16763422_tp204-certificate.png');
+    height: 100%;
+    background-size: contain;
+    background-repeat: no-repeat;
+    max-width: 100%;
+}
+
+
+.certificate-id {
+    text-align: right;
+}
+.certi-body{
+    padding: 50px;
+}
+
+.certi-text {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 3px;
+}
+
+.certificate-title h1 {
+    margin-bottom: 0rem;
+    letter-spacing: 5px;
+    font-weight: 500;
+    font-family: 'Times New Roman', Times, serif;
+}
+
+.certificate-title span {
+    font-weight: 600;
+    letter-spacing: 4px;
+}
+
+.certi-name {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 2.5rem;
+    color: rgb(255, 166, 0);
+    font-style: italic;
+
+}
+
+.certi-content {
+    font-style: italic;
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.certi-content span {
+    font-weight: 500;
+}
+
+.bottom-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.divider {
+    border-top: 1px solid #ccc;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+.signature {
+    font-style: italic;
+}
+.download {
+    text-align: center;
+}
+/******certificate-verification.html ******/
+.verify-main{
+    padding: 50px;
+}
+.verify-student-details{
+    background-color: beige;
+    padding: 50px;
+}

@@ -1,0 +1,64 @@
+
+{% extends 'base.html' %}
+{% block body %}
+<div class="container verify-main">
+    <div class="row">
+        <div class="verify-head">
+            <h1>{{student_instance.course |upper}}</h1>
+        </div>
+        <div class="col-md-6 verify-student-details mt-5 p-5">
+            <i class="fa-regular fa-circle-check"></i>
+            <h1>{{student_instance.name}}</h1>
+            <p>{{student_instance.end_date}}</p> 
+           
+        </div>
+
+
+        <div class="col-md-6 verified-certificate mt-5 ">
+            <div class="card">
+                <div class="card-body certi-body p-5">
+                    <div class="certificate-id">
+                        <p>SRC/2022/{{ student_instance.id }}</p>
+                    </div>
+                    <div class="logo text-center mb-3">
+                        <img src="" alt="logo">
+                    </div>
+                    <div class="certificate-title text-center mb-4">
+                        <h1>CERTIFICATE</h1>
+                        <span>OF PARTICIPATION</span>
+                    </div>
+                    <div class="certi-text text-center">
+                        <p>PROUDLY PRESENTED TO</p>
+                    </div>
+                    <div class="certi-name text-center">
+                        <p>{{student_instance.name}}</p>
+                    </div>
+                    <div class="certi-content">
+                        <p>8th semester B. Tech Naval Architecture and Ship Building Engineering student of
+                            <span>{{student_instance.college_name}}</span> workshop conducted by <span>Sinro Robotics PVT. LTD.</span>
+                            under the guidance of <span>{{student_instance.mentor_name}}</span> (Dept lead) <span>On {{student_instance.end_date}}</span>
+                        </p>
+                    </div>
+                    <div class="bottom-section">
+                        <div class="date-sec">
+                            <span class="date">{{student_instance.end_date}}</span>
+                            <div class="divider"></div>
+                            <p>DATE</p>
+                        </div>
+            
+                        <img src="your-logo.png" alt="Logo" class="logo">
+                        <div class="signature-sec">
+                            <div class="divider"></div>
+                            <span class="signature">Signature</span>
+                        </div>
+            
+                    </div>
+                    <div class="verification-link text-center mt-3">
+                        <a href="">https://sinrobotics//{{ student_instance.id }}</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
