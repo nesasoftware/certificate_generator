@@ -87,15 +87,27 @@ def render_pdf_view( c, student_id):
         # Calculate the width of the name in points
         name_width = c.stringWidth(name, 'Helvetica', 12)
         
-        center_align_x = (desired_width - name_width) / 2
-        center_align_y = 2.20 * inch
+        if len(name) < 10:  # Adjust the threshold as needed
+            # Left-aligned text
+            left_align_x = 2.6 * inch  # Adjust as needed
+            left_align_y = 2.20 * inch  # Adjust as needed
+            c.drawString(left_align_x, left_align_y, name)
+            
+        else:
+            center_align_x = (desired_width - name_width) / 2
+            center_align_y = 2.20 * inch
+
+            # Center-aligned text
+            c.drawCentredString(center_align_x, center_align_y, name)
+        # center_align_x = (desired_width - name_width) / 2
+        # center_align_y = 2.20 * inch
          
         # Center-aligned text
-        c.drawCentredString(center_align_x, center_align_y, name)
+            c.drawCentredString(center_align_x, center_align_y, name)
 
 
         text_object = c.beginText(0.2 * inch, 5.8 * inch)
-        text_object.setFont("Helvetica", 12)
+        text_object.setFont("Helvetica", 10)
         line1 = text_object.textLine(f"Student of {mymodel.college_name}, has successfully completed the academic internship")
         line2 = text_object.textLine(f"program at SinroRobotics Pvt Ltd in {mymodel.course} under the guidance of {mymodel.mentor_name}.")
         line3 = text_object.textLine(f"The internship spanned from {mymodel.start_date} to {mymodel.end_date}.")
