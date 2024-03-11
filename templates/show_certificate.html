@@ -24,12 +24,10 @@
             background-size: 100% auto;
             overflow: hidden;
             background-image: url("{% static 'images/Graduation_Certificate(3).png' %}");
-            height: 100vh;
+            height: 950px;
             background-size: contain;
             background-repeat: no-repeat;
-            width: 80%;
-            padding: 0px;
-            margin: 30px 100px;
+            width: 1980px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -38,7 +36,7 @@
         .std_id p {
             font-family: Arial, Helvetica, sans-serif, Times, serif;
             text-align: right;
-            margin: 10px 0;
+            margin: 60px 0px 0px 700px;
         }
 
         .std_name h1 {
@@ -47,9 +45,10 @@
             font-style: normal;
             font-size: 4.5rem;
             color: #3c3a3f;
-            margin-top: 20px;
-            margin-bottom: 20px;
+            margin-top: 308px;
+            margin-bottom: 40px;
             text-align: center;
+            margin-right: 30px;
         }
 
         .certi_details {
@@ -58,8 +57,12 @@
             font-style: normal;
             color: #4e4d50;
             text-align: justify;
-            line-height: 1.5rem;
-            margin: 10px 50px;
+            line-height: 2rem;
+            margin: 0px 10px;
+            padding: 0px 150px 0px 150px;
+
+
+
         }
 
         .certi_details span {
@@ -80,15 +83,29 @@
             font-weight: 600;
             color: #232324;
             font-size: 1rem;
-            margin: 0;
+            margin-top: 113px;
+            margin-left: 670px;
         }
 
         .download {
             text-align: center;
-            margin-top: 20px;
+            margin-bottom: 10px;
         }
 
-       
+        .verification_link {
+            margin-top: 90px;
+        }
+
+        .verification_link a {
+            margin-top: 90px;
+            color: rgb(2, 18, 80);
+        }
+
+        .verification_link a:hover {
+            cursor: pointer;
+            color: rgb(4, 38, 175);
+
+        }
     </style>
 </head>
 
@@ -113,19 +130,30 @@
                 <p class="date">{{student_instance.end_date}}</p>
             </div>
         </div>
+        <div class="verification_link">
+            <a href="{% url 'certificate_verify' student_instance.id %}">https://sinrobotics/{{student_instance.id}}</a>
+        </div>
+
     </div>
 
-    <div class="download mt-3">
+    <div class="download">
         <button class="btn btn-primary" id="downloadBtn">Download PDF</button>
     </div>
-
+    <!-- 
     <script>
         document.getElementById('downloadBtn').addEventListener('click', function () {
             // Redirect to the PDF rendering view
             window.location.href = '{% url "render_pdf" student_instance.id %}';
         });
 
+    </script> -->
+    <script>
+        document.getElementById('downloadBtn').addEventListener('click', function () {
+            // Replace the hardcoded URL with the actual URL from your Django context
+            window.location.href = '{% url "render_pdf" student_instance.id %}';
+        });
     </script>
+
 </body>
 
 </html>

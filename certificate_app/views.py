@@ -1,15 +1,23 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 from .models import Student
 from .forms import MyForm
-from django.shortcuts import render, get_object_or_404
-from django.template.loader import get_template, render_to_string
-from xhtml2pdf import pisa
-from django.conf import settings
+from django.shortcuts import render
+from django.template.loader import get_template
 from django.urls import reverse
-from django.templatetags.static import static, StaticNode
+from .process import html_to_pdf 
+from .models import Student
+from django.template import loader
+from reportlab.pdfgen import canvas
+from reportlab.lib.units import inch
+from reportlab.lib.pagesizes import letter,A4
+from django.conf import settings
+import os
+from reportlab.pdfbase.ttfonts import TTFont
 
-# student form page submitting details
+
+
+# student form page for submitting details
 def my_view(request):
     form = MyForm()
 
@@ -37,48 +45,81 @@ def certificate_show(request, student_id):
     return render(request, 'show_certificate.html', context)
 
 
+# display verification page
+def certificate_verification(request, student_id):
+    student_instance = Student.objects.get(id=student_id)
+    context = {'student_instance': student_instance}
+    return render(request, 'certificate_verification.html', context)
 
-def link_callback(uri, rel):
-    # Convert HTML URIs to absolute system paths so xhtml2pdf can access those resources
-    # Use Django's static() function to get the absolute URL
-    s_url = StaticNode.handle_simple("static", f"'{uri}'")
-    return s_url
 
-#display the pdf page
-def render_pdf_view(request, student_id):  
-    latest_student = Student.objects.latest('id')
+#pdf generation 
+def render_pdf_view( c, student_id):
     
-    template_path = 'ex.html'
-    template = get_template(template_path)
-    context = {'student_instance': latest_student}
-
-    # Build the full URL for the background image
-    image_url = request.build_absolute_uri(static('images/Graduation_Certificate(3).png'))
-    context['background_image_url'] = image_url
-
-    html = template.render(context)
+    # response = HttpResponse(content_type='application/pdf')
+    # response['Content-Disposition'] = 'attachment; filename="generate.pdf"'
     response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = 'inline; filename="downloaded_pdf.pdf"'
+    response['Content-Disposition'] = 'inline; filename="generate.pdf"'
 
-    pdf_options = {
-        'page-size': 'Landscape',
-        'margin-top': '20mm',
-        'margin-right': '20mm',
-        'margin-bottom': '20mm',
-        'margin-left': '20mm',
-        'encoding': 'utf-8',  
-    }
+    custom_page_size = (620, 440)
+    # Create the PDF object, using the response object as its "file."
+    c = canvas.Canvas(response, bottomup=1,pagesize=custom_page_size)
+    c.translate(inch,inch) #starting point of coordinates
 
-    pisa_status = pisa.CreatePDF(
-        html, dest=response, encoding='utf-8', link_callback=link_callback
-    )
- 
+    desired_width = 580
+    desired_height = 400
+
+    # Get all objects from the MyModel model
+    mymodels = Student.objects.all()
+
+    # Get the specific Student object based on student_id
+    student_instance = get_object_or_404(Student, id=student_id)
 
 
-    if pisa_status.err:
-        return HttpResponse('Error during PDF generation.', content_type='text/plain')
+    for mymodel in mymodels:
+        c.drawImage('pictures\Graduation_Certificate.jpg', -0.7*inch, -0.69*inch, width=desired_width, height=desired_height,mask=None)
+        c.drawString(4.7*inch, 9.1*inch, f"SRC/2024/{student_instance.id}")
+
+        c.setFont('Helvetica', 32)
+
+        # Example name
+        name = mymodel.name
+
+        # Calculate the width of the name in points
+        name_width = c.stringWidth(name, 'Helvetica', 12)
+        
+        center_align_x = (desired_width - name_width) / 2
+        center_align_y = 2.20 * inch
+         
+        # Center-aligned text
+        c.drawCentredString(center_align_x, center_align_y, name)
+
+
+        text_object = c.beginText(0.2 * inch, 5.8 * inch)
+        text_object.setFont("Helvetica", 12)
+        line1 = text_object.textLine(f"Student of {mymodel.college_name}, has successfully completed the academic internship")
+        line2 = text_object.textLine(f"program at SinroRobotics Pvt Ltd in {mymodel.course} under the guidance of {mymodel.mentor_name}.")
+        line3 = text_object.textLine(f"The internship spanned from {mymodel.start_date} to {mymodel.end_date}.")
+
+        
+        c.drawText(text_object)
+            
+        c.drawString(4.9*inch, 4.0*inch, str(mymodel.end_date))
+       
+        c.drawString(2.5*inch, 1.0*inch, "verification link")
+
+    # Close the canvas object    
+    c.showPage()
+    c.save()
 
     return response
 
-def certificate_verification(request,std_id):
-    return render(request,'certificate_verification.html')
+
+def pdf_view(request, student_id):
+    # Render the template with the PDF content
+    template = get_template('generate.html')
+    context = {'pdf_content': render_pdf_view(request, canvas.Canvas( bottomup=1, pagesize=letter), student_id).content}
+    rendered_template = template.render(context)
+
+    # Return the rendered template
+    return HttpResponse(rendered_template) 
+

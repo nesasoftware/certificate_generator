@@ -21,9 +21,7 @@
         .bg-img {
             background-size: 100% auto;
             overflow: hidden;
-            
-            background-image: url('{% static "images/Graduation_Certificate(3).png" %}');
-        height: 100vh;
+            height: 100vh;
             background-size: contain;
             background-repeat: no-repeat;
             width: 80%;
@@ -86,13 +84,11 @@
             text-align: center;
             margin-top: 20px;
         }
-
-       
     </style>
 </head>
 
 <body>
-    <div class="bg-img" >
+    <div class="bg-img" style="background-image: url("{% static 'images/Graduation_Certificate(3).png' %}")>
         <div class="std_id">
             <p>SRC/2024/{{ student_instance.id }}</p>
         </div>

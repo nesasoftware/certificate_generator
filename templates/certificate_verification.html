@@ -1,6 +1,4 @@
 
-{% extends 'base.html' %}
-{% block body %}
 <div class="container verify-main">
     <div class="row">
         <div class="verify-head">
@@ -9,12 +7,40 @@
         <div class="col-md-6 verify-student-details mt-5 p-5">
             <i class="fa-regular fa-circle-check"></i>
             <h1>{{student_instance.name}}</h1>
-            <p>{{student_instance.end_date}}</p> 
-           
+            <p>{{student_instance.end_date}}</p>
+
         </div>
 
-
         <div class="col-md-6 verified-certificate mt-5 ">
+                    <div class="bg-img">
+                        <div class="std_id">
+                            <p>SRC/2024/{{ student_instance.id }}</p>
+                        </div>
+                        <div class="std_name">
+                            <h1>{{student_instance.name|capfirst}}</h1>
+                        </div>
+                        <div class="certi_details">
+                            <p>Student of <span>{{student_instance.college_name}}</span>, has successfully
+                                completed the academic internship program at SinroRobotics Pvt
+                                Ltd in <span>{{student_instance.course}}</span> under the guidance
+                                of {{student_instance.mentor_name}}. The internship spanned from <span>
+                                    {{student_instance.start_date}}</span>
+                                to <span> {{student_instance.end_date}}</span>.</p>
+                        </div>
+                        <div class="footer-sec">
+                            <div class="date-sec">
+                                <p class="date">{{student_instance.end_date}}</p>
+                            </div>
+                        </div>
+                        <div class="verification_link">
+                            <a href="{% url 'certificate_verify' student_instance.id %}">https://sinrobotics/{{ student_instance.id }}</a>
+                        </div>
+                        
+                    </div>
+                
+               
+        </div>
+        <!-- <div class="col-md-6 verified-certificate mt-5 ">
             <div class="card">
                 <div class="card-body certi-body p-5">
                     <div class="certificate-id">
@@ -58,7 +84,6 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </div> -->
     </div>
 </div>
-{% endblock %}

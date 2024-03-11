@@ -109,3 +109,73 @@ input[type="submit"] .btn.btn-primary {
     background-color: beige;
     padding: 50px;
 }
+body {
+    background-color: #e7e5e5;
+    margin: 0;
+}
+
+.bg-img {
+    background-size: 100% auto;
+    overflow: hidden;
+    background-image: url("{% static 'images/Graduation_Certificate(3).png' %}");
+    height: 100vh;
+    background-size: contain;
+    background-repeat: no-repeat;
+    width: 80%;
+    padding: 0px;
+    margin: 30px 100px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.std_id p {
+    font-family: Arial, Helvetica, sans-serif, Times, serif;
+    text-align: right;
+    margin: 40px 0px 0px 150px;
+}
+
+.std_name h1 {
+    font-family: "MonteCarlo", cursive;
+    font-weight: 400;
+    font-style: normal;
+    font-size: 4.5rem;
+    color: #3c3a3f;
+    margin-top: 160px;
+    margin-bottom: 20px;
+    text-align: center;
+    margin-right: 220px;
+}
+
+.certi_details {
+    font-family: "Libre Baskerville", serif;
+    font-weight: 500;
+    font-style: normal;
+    color: #4e4d50;
+    text-align: justify;
+    line-height: 1.5rem;
+    margin: 0px 10px;
+    padding: 0px 300px 0px 50px;
+}
+
+.certi_details span {
+    font-weight: 900;
+    color: #232324;
+}
+
+.footer-sec {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 20px 0 0;
+    width: 100%;
+}
+
+.date-sec p {
+    font-family: "Libre Baskerville", serif;
+    font-weight: 600;
+    color: #232324;
+    font-size: 1rem;
+    margin-top: 20px;
+    margin-left: 190px;
+}
