@@ -7,32 +7,35 @@
 .form-body p{
     margin-bottom:30px;
 }
-input[type="submit"] .btn.btn-primary {
-    margin-right: 100px;
-}
-@media (min-width: 450px) {
-    .form-body p label {
-        width: 40% !important;
-    }
-    .form-body p input[type="label"],
-    .form-body p input[type="text"], .form-body p input[type="date"], .form-body p select {
-        width: 50% !important;
-    }
-    div.form-body p select {
-        width: 50% !important;
-    }
-    input[type="submit"].btn.btn-primary {
-        margin-right: 100px;
-    }
-    
-    .form-body{
-        padding: 30px;
-    }
+
+.frm label {
+    width: 100%;
+    display: inline-block;
+    text-align: left;
+    padding-right: 10px; /* Optional: Adjust spacing between label and input */
+    padding-bottom: 20px;
 }
 
-/******certificate_display.html******/
+.frm input[type="text"],
+.frm input[type="date"],
+.frm select {
+    width: 100%;
+    padding: 5px;
+    box-sizing: border-box;
+}
+
+/* Optional: Adjust styling for the submit button */
+.frm input[type="submit"] {
+    width: 100%; /* Adjust as needed */
+   
+    padding: 10px 0px;
+}
+
+
+
+/******show_certificate.html******/
 .bg-img {
-    background-image: url('../images/16763422_tp204-certificate.png');
+    background-image: url('../images/GraduationCertificate.jpg');
     height: 100%;
     background-size: contain;
     background-repeat: no-repeat;
@@ -102,28 +105,13 @@ input[type="submit"] .btn.btn-primary {
     text-align: center;
 }
 /******certificate-verification.html ******/
-.verify-main{
-    padding: 50px;
-}
-.verify-student-details{
-    background-color: beige;
-    padding: 50px;
-}
-body {
-    background-color: #e7e5e5;
-    margin: 0;
-}
-
-.bg-img {
-    background-size: 100% auto;
+.certifi-bg-img {
     overflow: hidden;
-    background-image: url("{% static 'images/Graduation_Certificate(3).png' %}");
-    height: 100vh;
+    background-image: url("{% static 'images/Graduation_CertificateQ.jpg' %}");
+    height: 950px;
     background-size: contain;
     background-repeat: no-repeat;
-    width: 80%;
-    padding: 0px;
-    margin: 30px 100px;
+    width: 1980px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -132,7 +120,7 @@ body {
 .std_id p {
     font-family: Arial, Helvetica, sans-serif, Times, serif;
     text-align: right;
-    margin: 40px 0px 0px 150px;
+    margin: 60px 0px 0px 700px;
 }
 
 .std_name h1 {
@@ -141,10 +129,10 @@ body {
     font-style: normal;
     font-size: 4.5rem;
     color: #3c3a3f;
-    margin-top: 160px;
-    margin-bottom: 20px;
+    margin-top: 308px;
+    margin-bottom: 40px;
     text-align: center;
-    margin-right: 220px;
+    margin-right: 30px;
 }
 
 .certi_details {
@@ -152,10 +140,11 @@ body {
     font-weight: 500;
     font-style: normal;
     color: #4e4d50;
-    text-align: justify;
-    line-height: 1.5rem;
+    text-align: center;
+    line-height: 2rem;
     margin: 0px 10px;
-    padding: 0px 300px 0px 50px;
+    padding: 0px 180px 0px 150px;
+
 }
 
 .certi_details span {
@@ -173,9 +162,101 @@ body {
 
 .date-sec p {
     font-family: "Libre Baskerville", serif;
-    font-weight: 600;
+    font-weight: 400;
     color: #232324;
     font-size: 1rem;
-    margin-top: 20px;
-    margin-left: 190px;
+    margin-top: 113px;
+    margin-left: 670px;
 }
+
+.download {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.verification_link {
+    margin-top: 90px;
+}
+
+.verification_link a {
+    margin-top: 90px;
+    color: rgb(2, 18, 80);
+}
+
+.verification_link a:hover {
+    cursor: pointer;
+    color: rgb(4, 38, 175);
+
+}
+
+.verify-main{
+    border:0.2px solid #ccc;
+    margin: 20px auto;
+}
+.verify-head{
+    margin: 10px 30px;
+    color: #414142;
+    
+    
+}
+
+.std_details{
+    /* background-color: #ccc; */
+    margin: 0px;
+    padding: 30px 30px;
+}
+
+.std_details .sub-head{
+    margin-left: 20px;
+    color: #959595;
+}
+.std_details h5{
+    margin-top: 10px;
+    margin-left: 30px;
+    color: #6e6a6a;
+}
+.std_certificate{
+    margin: 0px 0px 0px 0px;
+}
+.certi-img{
+    /* box-shadow: #ccc; */
+    margin-top: 100px;
+    background-image: url('../images/GraduationCertificate.jpg');
+    width: 532px;
+    height: 376px;
+    background-repeat: no-repeat;
+    background-size: contain;
+}
+.sub-head{
+    font-size: 1rem;
+    color:#414142;
+}
+.certi_verify_id p{
+    text-align: right;
+    margin-right: 100px;
+    font-size: 0.7rem;
+    margin-top:30px;
+}
+.certi_verify_name{
+    font-family: "MonteCarlo", cursive;
+    text-align: center; 
+    margin-top: 120px;  
+}
+.certi_verify_details p{
+    text-align: center;
+    font-size: 0.6rem;
+    padding: 5px 50px;
+}
+.certi_verify_date{
+    text-align: right;
+    margin-right: 103px;
+    margin-top: 35px;
+    font-size: 0.7rem;
+}
+/* *****Registration.html****** */
+.register{
+    padding: 10px;
+}
+
+
+/* registration end */

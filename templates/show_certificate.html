@@ -23,7 +23,7 @@
         .bg-img {
             background-size: 100% auto;
             overflow: hidden;
-            background-image: url("{% static 'images/Graduation_Certificate(3).png' %}");
+            background-image: url("{% static 'images/Graduation_CertificateQ.jpg' %}");
             height: 950px;
             background-size: contain;
             background-repeat: no-repeat;
@@ -56,12 +56,10 @@
             font-weight: 500;
             font-style: normal;
             color: #4e4d50;
-            text-align: justify;
+            text-align: center;
             line-height: 2rem;
             margin: 0px 10px;
-            padding: 0px 150px 0px 150px;
-
-
+            padding: 0px 180px 0px 150px;
 
         }
 
@@ -80,7 +78,7 @@
 
         .date-sec p {
             font-family: "Libre Baskerville", serif;
-            font-weight: 600;
+            font-weight: 400;
             color: #232324;
             font-size: 1rem;
             margin-top: 113px;
@@ -121,7 +119,7 @@
             <p>Student of <span>{{student_instance.college_name}}</span>, has successfully
                 completed the academic internship program at SinroRobotics Pvt
                 Ltd in <span>{{student_instance.course}}</span> under the guidance
-                of {{student_instance.mentor_name}}. The internship spanned from <span>
+                of <span>{{student_instance.mentor_name}}</span>. The internship spanned from <span>
                     {{student_instance.start_date}}</span>
                 to <span> {{student_instance.end_date}}</span>.</p>
         </div>
@@ -131,7 +129,10 @@
             </div>
         </div>
         <div class="verification_link">
-            <a href="{% url 'certificate_verify' student_instance.id %}">https://sinrobotics/{{student_instance.id}}</a>
+            <img src="{{ qr_code_path }}" alt="QR Code" width="100" height="100">
+
+            <!-- <a href="{% url 'certificate_verify' student_instance.id %}">http://ceritificate/verify/SRC/2024/{{student_instance.id}}</a>
+         -->
         </div>
 
     </div>
@@ -139,14 +140,8 @@
     <div class="download">
         <button class="btn btn-primary" id="downloadBtn">Download PDF</button>
     </div>
-    <!-- 
-    <script>
-        document.getElementById('downloadBtn').addEventListener('click', function () {
-            // Redirect to the PDF rendering view
-            window.location.href = '{% url "render_pdf" student_instance.id %}';
-        });
-
-    </script> -->
+    
+    
     <script>
         document.getElementById('downloadBtn').addEventListener('click', function () {
             // Replace the hardcoded URL with the actual URL from your Django context

@@ -1,17 +1,75 @@
+{% extends 'base.html' %}
+{% block body %}
 
-<div class="container verify-main">
+<div class="container verify-main ">
     <div class="row">
-        <div class="verify-head">
-            <h1>{{student_instance.course |upper}}</h1>
+
+        <div class="col-md-6 col-lg-6 text-left p-2">
+            <div class="verify-head">
+                <h2>Verified Certificate</h2>
+            </div>
+            <div class="std_details">
+                <div class="mb-5">
+                    <p class="sub-head mb-1 p-0">This certificate was issued for: </p>
+                    <h5>{{student_instance.name|capfirst}}</h5>
+                </div>
+                <div class="mb-5">
+                    <p class="sub-head mb-1 p-0">Certification: </p>
+                    <h5>{{student_instance.course|capfirst}}</h5>
+                </div>
+                <div class="mb-5">
+                    <p class="sub-head mb-1 p-0">Issue date: </p>
+                    <h5>{{student_instance.end_date|capfirst}}</h5>
+                </div>
+                <div class="mb-5">
+                    <p class="sub-head mb-1 p-0">Certificate Id: </p>
+                    <h5>{{student_instance.id}}</h5>
+                </div>
+
+            </div>
+
         </div>
-        <div class="col-md-6 verify-student-details mt-5 p-5">
+        <div class="col-md-6 col-lg-6 text-center p-2">
+            <div class="std_certificate">
+                <div class="certi-img">
+                    <div class="certi_verify_id">
+                        <p>SRC/2024/{{ student_instance.id }}</p>
+                    </div>
+                    <div class="certi_verify_name">
+                        <h1>{{student_instance.name|capfirst}}</h1>
+                    </div>
+                    <div class="certi_verify_details">
+                        <p>Student of <b>{{student_instance.college_name}}</b>, has successfully
+                            completed the academic internship program at SinroRobotics Pvt
+                            Ltd in <b>{{student_instance.course}}</b> under the guidance
+                            of {{student_instance.mentor_name}}. The internship spanned from <b>
+                                {{student_instance.start_date}}</b>
+                            to <b> {{student_instance.end_date}}</b>.</p>
+                    </div>
+    
+                    <div class="certi_verify_date">
+                        <p class="date">{{student_instance.end_date}}</p>
+                    </div>
+            
+                    <div class="certi_verify_qrcode">
+                        <img src="{{ qr_code_path }}" alt="QR Code">
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+<!-- <div class="col-md-6 col-lg-6 mt-5 p-5">
             <i class="fa-regular fa-circle-check"></i>
             <h1>{{student_instance.name}}</h1>
             <p>{{student_instance.end_date}}</p>
 
         </div>
 
-        <div class="col-md-6 verified-certificate mt-5 ">
+        <div class="col-md-6 col-lg-6 mt-5 ">
                     <div class="bg-img">
                         <div class="std_id">
                             <p>SRC/2024/{{ student_instance.id }}</p>
@@ -39,8 +97,8 @@
                     </div>
                 
                
-        </div>
-        <!-- <div class="col-md-6 verified-certificate mt-5 ">
+        </div> -->
+<!-- <div class="col-md-6 verified-certificate mt-5 ">
             <div class="card">
                 <div class="card-body certi-body p-5">
                     <div class="certificate-id">
@@ -85,5 +143,3 @@
                 </div>
             </div>
         </div> -->
-    </div>
-</div>

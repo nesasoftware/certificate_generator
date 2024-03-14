@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block body %}
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-6 mx-auto">
+      <div class="card text-justify mt-5">
+        <div class="card-body form-body p-5">
+          <h5 class="card-title text-center">Registration Form</h5>
+          <p class="card-text">
+          <form method="post" action="" >
+            {% csrf_token %}
+            <div class="register">
+              <label for="name">Full Name</label>
+              <input type="text" name="name">
+            </div>
+
+            <div class="register">
+              <label for="user_name">User Name</label>
+              <input type="text" name="user_name" required>
+            </div>
+
+            <div class="register">
+              <label for="email_id">Email</label>
+              <input type="email" name="user_name" required>
+            </div>
+
+            <div class="register">
+              <label for="password">Password</label>
+              <input type="password" name="password" required>
+
+            </div>
+
+            <input class="btn btn-primary" type="submit" value="submit">
+          </form>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
