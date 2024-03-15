@@ -1,24 +1,37 @@
-
+<!-- student_form.html -->
 {% extends 'base.html' %}
 {% load static %}
 {% block body %}
-    <div class="container">
-        <div class="row">
-          <div class="col-md-6 mx-auto">
-            <div class="card text-justify mt-5">
-              <div class="card-body form-body p-5">
-                <h5 class="card-title text-center">Student Data Form</h5>
-                <p class="card-text">
-                    <form method="post" action="" class="frm">
-                        {% csrf_token %}
-                        {{ form.as_p }}
-                        <input class="btn btn-primary" type="submit" value="submit">       
-                    </form>
-                </p>
-              </div>
-            </div>
-          </div>
+<div class="container">
+  <div class="row">
+    <div class="col-md-6 mx-auto">
+      <div>
+        <a href="{% url 'logout' %}">Logout</a>
+      </div>
+      <div class="card text-justify mt-5">
+        <div class="card-body form-body p-5">
+          <h5 class="card-title text-center">Student Data Form</h5>
+          <p class="card-text">
+            <form method="post" action="" class="frm">
+              {% csrf_token %}
+              {{ form.as_p }}
+              <input class="btn btn-primary" type="submit" name="submit_form" value="submit">
+            </form>
+  
+            <p class="text-center p-3">----Or---</p>
+  
+            <h3>Upload CSV File</h3>
+            <form method="post" enctype="multipart/form-data">
+              {% csrf_token %}
+              {{ upload_form.as_p }}
+              <input class="btn btn-primary" type="submit" name="upload_csv" value="Upload">
+            </form>
+          </p>
         </div>
       </div>
-      
+
+    </div>
+  </div>
+</div>
+
 {% endblock %}

@@ -26,9 +26,9 @@
 
 /* Optional: Adjust styling for the submit button */
 .frm input[type="submit"] {
-    width: 100%; /* Adjust as needed */
-   
+    width: 100%; /* Adjust as needed */  
     padding: 10px 0px;
+    margin-bottom: 50px 
 }
 
 
@@ -260,3 +260,9 @@
 
 
 /* registration end */
+
+/**** display_students.html****/
+table, th, td {
+    border: 1px solid #232324;
+    margin:10px;
+  }

@@ -1,0 +1,38 @@
+<!-- display_students.html -->
+
+{% extends 'base.html' %}
+{% block body %}
+<a href="{% url 'download_students_csv' %}">Download All Students CSV</a>
+
+<table border="1">
+    <thead>
+        <tr>
+            <th>Select</th>
+            <th>Name</th>
+            <th>College Name</th>
+            <th>Course</th>
+            <th>Start Date</th>
+            <th>End Date</th>
+            <th>Mentor Name</th>
+            <th>Generate Certificate</th>
+            
+        </tr>
+    </thead>
+    <tbody>
+        {% for student in students %}
+        <tr>
+            <td><input type="checkbox" name="selected_students" value="{{ student.id }}"></td>
+            <td>{{ student.name }}</td>
+            <td>{{ student.college_name }}</td>
+            <td>{{ student.course }}</td>
+            <td>{{ student.start_date }}</td>
+            <td>{{ student.end_date }}</td>
+            <td>{{ student.mentor_name }}</td>
+            <td><a href="{% url 'render_pdf' student.id %}">Generate Certificate</a></td>
+            
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

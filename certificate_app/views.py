@@ -1,11 +1,12 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 from certificate_app.models import Student
-from .forms import MyForm
+from .forms import MyForm, UploadFileForm
 from django.shortcuts import render
 from django.template.loader import get_template
 from django.urls import reverse
 from django.conf import settings
+import csv
 import os
 from django.contrib.auth.models import User
 from .models import Student
@@ -25,36 +26,67 @@ import io
 import png 
 from pyqrcode import QRCode
 import textwrap
-#from .pdf_generator import generate_pdf
+from django.contrib.auth.decorators import login_required
+from datetime import datetime
+import zipfile
+from io import BytesIO
+
 
 
 
 # student form page for submitting details
+@login_required(login_url='login/')
 def my_view(request):
     form = MyForm()
+    upload_form = UploadFileForm()
 
     if request.method == 'POST':
-        form = MyForm(request.POST)
-        if form.is_valid():
-            student_instance = form.save(commit=False)  # Save the form data but don't commit to the database yet
-            name = form.cleaned_data['name']
-            course = form.cleaned_data['course']
-            end_date = form.cleaned_data['end_date']
-            student_instance.name = name
-            student_instance.course = course
-            student_instance.end_date = end_date
-            student_instance.save()  # Now, save the modified instance
-            
-            return redirect('certificate_show', student_id=student_instance.id)  # Redirect to the certificate page
+        if 'submit_form' in request.POST:
+            form = MyForm(request.POST)
+            if form.is_valid():
+                form.save()
+                return redirect('upload_success')  # Redirect to the upload success URL
+        elif 'upload_csv' in request.POST:
+            upload_form = UploadFileForm(request.POST, request.FILES)
+            if upload_form.is_valid():
+                csv_file = request.FILES['csv_file']
+                decoded_file = csv_file.read().decode('utf-8').splitlines()
+                reader = csv.DictReader(decoded_file)
+                for row in reader:
+                    # Parse and format dates
+                    start_date = datetime.strptime(row['start_date'], '%d-%m-%Y').strftime('%Y-%m-%d')
+                    end_date = datetime.strptime(row['end_date'], '%d-%m-%Y').strftime('%Y-%m-%d')
 
-    return render(request, 'student_form.html', {'form': form})
+                    Student.objects.create(
+                        name=row.get('name', ''),
+                        college_name=row.get('college_name', ''),
+                        course=row.get('course', ''),
+                        start_date=start_date,
+                        end_date=end_date,
+                        mentor_name=row.get('mentor_name', '')
+                    )
+                return redirect('upload_success')  # Redirect to the upload success URL
+
+    return render(request, 'student_form.html', {'form': form, 'upload_form': upload_form})
+
+def upload_success(request):
+    return render(request, 'upload_success.html')
+
+
+# display all students
+def display_students(request):
+    students = Student.objects.all()
+    return render(request, 'display_students.html', {'students': students})
 
 
 # show the certificate
+@login_required(login_url='login/')
 def certificate_show(request, student_id):
     student_instance = Student.objects.get(id=student_id)
-    context = {'student_instance': student_instance}
+    qr_code_path = f"qr_code_{student_instance.id}.png"
+    context = {'student_instance': student_instance, 'qr_code_path': qr_code_path}
     return render(request, 'show_certificate.html', context)
+
 
 
 # display verification page
@@ -64,6 +96,7 @@ def certificate_verification(request, student_id):
     return render(request, 'certificate_verification.html', context)
 
 
+@login_required(login_url='login/')
 def render_pdf_view(request, student_id):
     # Get the specific Student object based on student_id
     student_instance = get_object_or_404(Student, id=student_id)
@@ -159,6 +192,7 @@ def render_pdf_view(request, student_id):
     # Save the QR code as a file on the server
     qr_filename = f"qr_code_{student_instance.id}.png"
     qr_path = os.path.join(settings.MEDIA_ROOT, qr_filename)
+    print("QR Code Path:", qr_path)
     qr.png(qr_path, scale=6)
 
     # Pass the URL or path of the QR code image to the context
@@ -171,8 +205,6 @@ def render_pdf_view(request, student_id):
     # Draw the QR code image on the PDF
     qr_image = ImageReader(qr_buffer)
     c.drawImage(qr_image, x, y, width, height)
-
-    
 
     
     c.showPage()
@@ -191,7 +223,42 @@ def render_pdf_view(request, student_id):
     return response
 
 
+@login_required(login_url='login/')
+def download_students_csv(request):
+    # Retrieve all student data
+    students = Student.objects.all()
 
+    # Create a BytesIO buffer to store the zip file
+    zip_buffer = io.BytesIO()
+
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED, False) as zip_file:
+        for student in students:
+        # Create a CSV file for each student
+            csv_buffer = io.BytesIO()
+            csv_writer = csv.writer(csv_buffer)
+            csv_writer.writerow([b'Name', b'College Name', b'Course', b'Start Date', b'End Date', b'Mentor Name'])  # Ensure bytes-like objects
+            csv_writer.writerow([
+                student.name.encode('utf-8'),            # Encode strings as bytes
+                student.college_name.encode('utf-8'),
+                student.course.encode('utf-8'),
+                student.start_date.strftime('%Y-%m-%d').encode('utf-8'),  # Format date as string and encode as bytes
+                student.end_date.strftime('%Y-%m-%d').encode('utf-8'),    # Format date as string and encode as bytes
+                student.mentor_name.encode('utf-8')                        # Encode string as bytes
+        ])
+        # Create a filename with student ID (adjust as needed)
+            filename = f"student_{student.id}.csv"
+
+            # Write the CSV data to the ZipFile
+            zip_file.writestr(filename, csv_buffer.getvalue())
+
+    # Set the content type and response headers
+    response = HttpResponse(zip_buffer.getvalue(), content_type='application/zip')
+    response['Content-Disposition'] = 'attachment; filename=students.zip'
+
+    return response
+
+
+@login_required(login_url='login/')
 def pdf_view(request, student_id):
     # Get the student_instance based on student_id
     student_instance = get_object_or_404(Student, id=student_id)
@@ -209,8 +276,4 @@ def pdf_view(request, student_id):
     # Return the rendered template
     return HttpResponse(rendered_template)
 
-
-def registration(request):
-
-    return render(request,'registration.html')
 
