@@ -2,7 +2,7 @@ from django.db import models
 from django.utils import timezone
 
 class Student(models.Model): 
-    name = models.CharField(max_length=255,blank=True, default='')
+    name = models.CharField(max_length=255, blank=True, default='')
     college_name = models.CharField(max_length=255, blank=True, default='')
     
     COURSE_CHOICES = [  

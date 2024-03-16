@@ -6,7 +6,7 @@ from .  import views
 urlpatterns = [
     
     path('data-submission/', views.my_view, name='student_form'),
-    path('upload-success/', views.upload_success, name='upload_success'),
+    # path('upload-success/', views.upload_success, name='upload_success'),
     path('display-student/', views.display_students, name='display_students'),
     path('download-students-csv/', views.download_students_csv, name='download_students_csv'),
     path('certificate_show/<int:student_id>/', views.certificate_show, name='certificate_show'),

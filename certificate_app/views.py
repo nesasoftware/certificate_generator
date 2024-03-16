@@ -65,15 +65,16 @@ def my_view(request):
                         end_date=end_date,
                         mentor_name=row.get('mentor_name', '')
                     )
-                return redirect('upload_success')  # Redirect to the upload success URL
+                return redirect('display_students')  # Redirect to the upload success URL
 
     return render(request, 'student_form.html', {'form': form, 'upload_form': upload_form})
 
-def upload_success(request):
-    return render(request, 'upload_success.html')
+# def upload_success(request):
+#     return render(request, 'upload_success.html')
 
 
 # display all students
+@login_required(login_url='login/')
 def display_students(request):
     students = Student.objects.all()
     return render(request, 'display_students.html', {'students': students})
