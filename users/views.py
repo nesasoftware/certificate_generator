@@ -2,22 +2,28 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate,login,logout
 from .forms import UserRegistrationForm, LoginForm
-
+from django.contrib.auth.forms import UserCreationForm
 
 
 # Create your views here.
 def registration(request):
-    if request.method=='POST':
-        if request.method == 'POST':
-            form = UserRegistrationForm(request.POST)
+    if request.method == 'POST':
+        form = UserRegistrationForm(request.POST)
         if form.is_valid():
             form.save()
             return redirect('login')
     else:
         form = UserRegistrationForm()
-        return redirect('login')
 
-    return render(request,'users_temp/registration.html')
+    return render(request, 'users_temp/registration.html', {'form': form})
+
+
+
+class CustomUserCreationForm(UserCreationForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['username'].help_text = "Your username must be unique and can contain up to 150 characters. Only letters, digits, and @/./+/-/_ characters are allowed."
+
 
 
 

@@ -45,7 +45,7 @@ def my_view(request):
             form = MyForm(request.POST)
             if form.is_valid():
                 form.save()
-                return redirect('upload_success')  # Redirect to the upload success URL
+                return redirect('display_students')  # Redirect to the upload success URL
         elif 'upload_csv' in request.POST:
             upload_form = UploadFileForm(request.POST, request.FILES)
             if upload_form.is_valid():
@@ -138,15 +138,15 @@ def render_pdf_view(request, student_id):
     name_width = c.stringWidth(name)
 
     
+    # center_align_x = (desired_width - name_width) / 2
+    # center_align_y = 2.20 * inch
+    # c.drawCentredString(center_align_x, center_align_y, name)
 
-    if len(name) < 12:
+    if len(name) <  13:
         left_align_x = 2.4 * inch
         left_align_y = 2.20 * inch
         c.drawString(left_align_x, left_align_y, name)
-    elif len(name)<22:
-        left_align_x = 1.7 * inch
-        left_align_y = 2.20 * inch
-        c.drawString(left_align_x, left_align_y, name)
+    
     else:
         center_align_x = (desired_width - name_width) / 2
         center_align_y = 2.20 * inch
@@ -234,29 +234,35 @@ def download_students_csv(request):
 
     with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED, False) as zip_file:
         for student in students:
-        # Create a CSV file for each student
-            csv_buffer = io.BytesIO()
+            # Create a CSV file for each student
+            csv_buffer = io.StringIO()  # Use StringIO for text data
+
             csv_writer = csv.writer(csv_buffer)
-            csv_writer.writerow([b'Name', b'College Name', b'Course', b'Start Date', b'End Date', b'Mentor Name'])  # Ensure bytes-like objects
+            # Write the header row
+            csv_writer.writerow(['Name', 'College Name', 'Course', 'Start Date', 'End Date', 'Mentor Name'])
+
+            # Write the student data
             csv_writer.writerow([
-                student.name.encode('utf-8'),            # Encode strings as bytes
-                student.college_name.encode('utf-8'),
-                student.course.encode('utf-8'),
-                student.start_date.strftime('%Y-%m-%d').encode('utf-8'),  # Format date as string and encode as bytes
-                student.end_date.strftime('%Y-%m-%d').encode('utf-8'),    # Format date as string and encode as bytes
-                student.mentor_name.encode('utf-8')                        # Encode string as bytes
-        ])
-        # Create a filename with student ID (adjust as needed)
+                student.name,              # Convert to string
+                student.college_name,
+                student.course,
+                student.start_date.strftime('%Y-%m-%d'),  # Format date as string
+                student.end_date.strftime('%Y-%m-%d'),
+                student.mentor_name
+            ])
+
+            # Create a filename with student ID (adjust as needed)
             filename = f"student_{student.id}.csv"
 
             # Write the CSV data to the ZipFile
-            zip_file.writestr(filename, csv_buffer.getvalue())
+            zip_file.writestr(filename, csv_buffer.getvalue().encode('utf-8'))  # Encode as bytes
 
     # Set the content type and response headers
     response = HttpResponse(zip_buffer.getvalue(), content_type='application/zip')
     response['Content-Disposition'] = 'attachment; filename=students.zip'
 
     return response
+
 
 
 @login_required(login_url='login/')
