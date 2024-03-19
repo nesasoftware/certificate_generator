@@ -20,7 +20,7 @@
   
             <p class="text-center p-3">----Or---</p>
   
-            <h3>Upload CSV File</h3>
+            <h3 class="mb-4">Upload CSV File</h3>
             <form method="post" enctype="multipart/form-data">
               {% csrf_token %}
               {{ upload_form.as_p }}

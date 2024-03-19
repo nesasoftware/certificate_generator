@@ -6,13 +6,13 @@
         <div class="col-md-6 mx-auto">
 
             <div class="card text-justify mt-5">
-                <div class="card-body form-body p-5">
+                <div class="card-body form-body p-5 mx-auto">
                     <h5 class="card-title text-center">Login Form</h5>
-                    <p class="card-text">
+                    <p class="card-text ">
                     <form method="post" action="">
                         {% csrf_token %}
                         {{ form.as_p }}
-                        <input class="btn btn-primary" type="submit" value="submit">
+                        <input class="btn btn-primary mb-3" type="submit" value="submit">
                     </form>
                     <p>Don't have an account? <a href="{% url 'register' %}">Register here</a>.</p>
                     </p>

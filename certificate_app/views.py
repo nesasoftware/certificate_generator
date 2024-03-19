@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from certificate_app.models import Student
 from .forms import MyForm, UploadFileForm
 from django.shortcuts import render
@@ -8,6 +8,9 @@ from django.urls import reverse
 from django.conf import settings
 import csv
 import os
+import tempfile
+from django.http import FileResponse
+from django.utils.text import slugify
 from django.contrib.auth.models import User
 from .models import Student
 from django.template import loader
@@ -15,7 +18,7 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.units import inch
 from reportlab.lib.pagesizes import letter,A4
 from reportlab.lib.styles import ParagraphStyle
-from reportlab.platypus import Paragraph
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib.styles import getSampleStyleSheet
@@ -30,7 +33,8 @@ from django.contrib.auth.decorators import login_required
 from datetime import datetime
 import zipfile
 from io import BytesIO
-
+from django.core.files.temp import NamedTemporaryFile
+from reportlab.lib import colors
 
 
 
@@ -97,18 +101,28 @@ def certificate_verification(request, student_id):
     return render(request, 'certificate_verification.html', context)
 
 
+
 @login_required(login_url='login/')
 def render_pdf_view(request, student_id):
+
     # Get the specific Student object based on student_id
     student_instance = get_object_or_404(Student, id=student_id)
 
     # Create a BytesIO buffer to store the PDF content
     buffer = io.BytesIO()
 
-    # Create the response object
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = 'inline; filename="generate.pdf"'
+    file_name=f"{student_instance.id}_{slugify(student_instance.name)}_certificate"
 
+    # # Create the response object and it shows pdf page in other tab without downloading
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="{file_name}.pdf"'
+
+    # Create the response object and it directly download pdf page 
+    # response = HttpResponse(content_type='application/pdf')
+    # response['Content-Disposition'] = f'attachment; filename="{file_name}.pdf"'
+
+
+    #pdf page format
     custom_page_size = (600, 440)
     c = canvas.Canvas(buffer, bottomup=1, pagesize=custom_page_size)
     c.translate(inch, inch)
@@ -142,16 +156,18 @@ def render_pdf_view(request, student_id):
     # center_align_y = 2.20 * inch
     # c.drawCentredString(center_align_x, center_align_y, name)
 
-    if len(name) <  13:
-        left_align_x = 2.4 * inch
-        left_align_y = 2.20 * inch
-        c.drawString(left_align_x, left_align_y, name)
-    
-    else:
-        center_align_x = (desired_width - name_width) / 2
-        center_align_y = 2.20 * inch
-        c.drawCentredString(center_align_x, center_align_y, name)
+    # Calculate the center coordinates of the canvas
+    center_x = desired_width / 2
 
+    # Calculate the starting x-coordinate to center the text
+    if len(name) < 10:
+        start_x = 2.9 * inch
+    else:
+        # For longer names, we'll need to adjust the starting x-coordinate to ensure proper center alignment
+        start_x = center_x - (name_width / 2)
+        
+    align_y = 2.20 * inch    
+    c.drawCentredString(start_x, align_y, name)
     font_path = 'static/fonts/Quattrocento-Regular.ttf'
     pdfmetrics.registerFont(TTFont('Quattrocento', font_path))
     my_Style = ParagraphStyle(
@@ -179,7 +195,9 @@ def render_pdf_view(request, student_id):
 
     c.setFont('Quattrocento', 12)
     c.setFillColorRGB(0,0,0)
-    c.drawString(4.7*inch, 0.4*inch, str(student_instance.end_date))
+    # c.drawString(4.7*inch, 0.4*inch, str(student_instance.end_date))
+    c.drawString(4.7*inch, 0.4*inch, str(datetime.now().strftime("%Y-%m-%d")))
+
 
     # Generate QR code
     base_url = request.build_absolute_uri('/')
@@ -215,7 +233,11 @@ def render_pdf_view(request, student_id):
     buffer.seek(0)
 
     # Write the buffer content to the response
-    response.write(buffer.read())
+    # response.write(buffer.read())
+    
+
+    # Write the buffer content to the response
+    response.write(buffer.getvalue())
 
     # Close the buffers
     buffer.close()
@@ -225,62 +247,57 @@ def render_pdf_view(request, student_id):
 
 
 @login_required(login_url='login/')
-def download_students_csv(request):
-    # Retrieve all student data
-    students = Student.objects.all()
+def pdf_view(request, student_id):
+    # Generate PDF content for the specific student
+    pdf_content = render_pdf_view(request, student_id).content
 
-    # Create a BytesIO buffer to store the zip file
-    zip_buffer = io.BytesIO()
+    # Pass the PDF content to the template context
+    context = {'pdf_content': pdf_content}
 
-    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED, False) as zip_file:
-        for student in students:
-            # Create a CSV file for each student
-            csv_buffer = io.StringIO()  # Use StringIO for text data
+    # Render the template containing the PDF content
+    rendered_template = get_template('generate.html').render(context)
 
-            csv_writer = csv.writer(csv_buffer)
-            # Write the header row
-            csv_writer.writerow(['Name', 'College Name', 'Course', 'Start Date', 'End Date', 'Mentor Name'])
-
-            # Write the student data
-            csv_writer.writerow([
-                student.name,              # Convert to string
-                student.college_name,
-                student.course,
-                student.start_date.strftime('%Y-%m-%d'),  # Format date as string
-                student.end_date.strftime('%Y-%m-%d'),
-                student.mentor_name
-            ])
-
-            # Create a filename with student ID (adjust as needed)
-            filename = f"student_{student.id}.csv"
-
-            # Write the CSV data to the ZipFile
-            zip_file.writestr(filename, csv_buffer.getvalue().encode('utf-8'))  # Encode as bytes
-
-    # Set the content type and response headers
-    response = HttpResponse(zip_buffer.getvalue(), content_type='application/zip')
-    response['Content-Disposition'] = 'attachment; filename=students.zip'
-
-    return response
+    # Return the rendered template as an HttpResponse
+    return HttpResponse(rendered_template)
 
 
 
 @login_required(login_url='login/')
-def pdf_view(request, student_id):
-    # Get the student_instance based on student_id
-    student_instance = get_object_or_404(Student, id=student_id)
+def download_selected_certificates(request):
+    if request.method == 'POST':
+        selected_student_ids = request.POST.getlist('selected_students')
 
-    # # Generate QR code data
-    # qr_data = f"student_id={student_instance.id}"
+        # Create a BytesIO buffer to store the ZIP file content
+        zip_buffer = BytesIO()
 
-    # Render the template with the PDF content
-    template = get_template('generate.html')
-    
-    # Pass both request and qr_data when calling render_pdf_view
-    context = {'pdf_content': render_pdf_view(request, student_instance).content}
-    rendered_template = template.render(context)
+        # Create a ZIP file to store the certificates
+        with zipfile.ZipFile(zip_buffer, 'a', zipfile.ZIP_DEFLATED) as zip_file:
+            for student_id in selected_student_ids:
+                # Generate PDF certificate for each selected student
+                pdf_content = render_pdf_view(request, student_id).content
 
-    # Return the rendered template
-    return HttpResponse(rendered_template)
+                # Retrieve the student object based on the student_id
+                student_instance = get_object_or_404(Student, id=student_id)
+                student_name = student_instance.name
+
+                # Generate PDF certificate for the selected student
+                pdf_content = render_pdf_view(request, student_id).content
+                file_name = f"{student_id}_{student_name.replace(' ', '_')}_certificate.pdf"
+
+                # file_name = f"{student_id}_certificate.pdf"
+
+                # Add the PDF content to the ZIP file
+                zip_file.writestr(file_name, pdf_content)
+
+        # Rewind the buffer to the beginning
+        zip_buffer.seek(0)
+
+        # Create a response to serve the ZIP file
+        response = HttpResponse(zip_buffer, content_type='application/zip')
+        response['Content-Disposition'] = 'attachment; filename="certificates.zip"'
+        return response
+
+    else:
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
 
 

@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+
 {% block body %}
 
 <div class="container">
@@ -8,7 +9,7 @@
         <div class="card-body form-body p-5">
           <h5 class="card-title text-center">Registration Form</h5>
           <p class="card-text">
-          <form method="post" action="" >
+          <form method="post" action="" class="register-form">
             {% csrf_token %}
              {{ form.as_p }}
             <input class="btn btn-primary users-submit" type="submit" value="submit">

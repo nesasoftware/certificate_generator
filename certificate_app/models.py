@@ -18,4 +18,4 @@ class Student(models.Model):
     end_date = models.DateField(default=timezone.now)
     mentor_name = models.CharField(max_length=255, blank=True, default='')
 
-    
+ 

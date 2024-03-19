@@ -2,11 +2,15 @@
 
 {% extends 'base.html' %}
 {% block body %}
-<a href="{% url 'download_students_csv' %}">Download All Students CSV</a>
 
-<table border="1">
-    <thead>
-        <tr>
+<h2 class="dis-head text-center">All Student Data</h2>
+<form action="{% url 'download_selected_certificates' %}" method="post" class="m-3">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-secondary m-2">Download Selected Certificates</button>
+
+<table border="1" class="std-dis-table p-2 text-center">
+    <thead class="p-2">
+        <tr class="table-head-row" >
             <th>Select</th>
             <th>Name</th>
             <th>College Name</th>
@@ -14,25 +18,25 @@
             <th>Start Date</th>
             <th>End Date</th>
             <th>Mentor Name</th>
-            <th>Generate Certificate</th>
+            <th>Download Certificate</th>
             
         </tr>
     </thead>
     <tbody>
         {% for student in students %}
-        <tr>
-            <td><input type="checkbox" name="selected_students" value="{{ student.id }}"></td>
+        <tr class="table-body-row">
+            <td><input type="checkbox" name="selected_students" value="{{ student.id }}" class="m-2"></td>
             <td>{{ student.name }}</td>
             <td>{{ student.college_name }}</td>
             <td>{{ student.course }}</td>
             <td>{{ student.start_date }}</td>
             <td>{{ student.end_date }}</td>
             <td>{{ student.mentor_name }}</td>
-            <td><a href="{% url 'render_pdf' student.id %}">Generate Certificate</a></td>
+            <td><a href="{% url 'render_pdf' student.id %}" class="btn btn-secondary m-2">Download</a></td>
             
         </tr>
         {% endfor %}
     </tbody>
 </table>
-
+</form>
 {% endblock %}

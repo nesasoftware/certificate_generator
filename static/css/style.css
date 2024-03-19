@@ -271,6 +271,46 @@ table, th, td {
   /* .signup_link{
     margin-top:30px;
   } */
-  .users-submit{
+.users-submit{
     margin-bottom: 20px;
   }
+.helptext {
+    display: none;
+}
+
+.register-form label{
+    width: 40%;
+}
+.errorlist{
+    list-style: none;
+    text-align: center;
+}
+.dis-head {
+    color: #060652;
+    padding: 30px;
+    
+}
+table{
+    width: 100%;
+}
+thead{
+    background-color: #060652;
+    color: white;
+}
+.table-head-row{
+    border: 1px solid #2828d1;
+    padding: 10px;
+}
+th{
+    padding: 20px;
+}
+tbody{
+    background-color: #ffffff;
+    text-align: center;
+}
+.table-body-row{
+    border: 1px solid #b7b7f3;padding: 10px;
+}
+.std-dis-table{
+    padding: 10px;
+}
