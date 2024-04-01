@@ -3,7 +3,8 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate,login,logout
 from .forms import UserRegistrationForm, LoginForm
 from django.contrib.auth.forms import UserCreationForm
-
+from django.urls import reverse
+from django.http import HttpResponseRedirect
 
 # Create your views here.
 def registration(request):
@@ -36,8 +37,8 @@ def login_user(request):
             user = authenticate(request, username=username, password=password)
             if user is not None:
                 login(request, user)
-                # Redirect to a success page or home page
-                return redirect('student_form')
+                
+                return redirect('index')
             else:
                 # Authentication failed, return an error message
                 error_message = "Invalid username or password"

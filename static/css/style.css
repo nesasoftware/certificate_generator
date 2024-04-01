@@ -13,7 +13,7 @@
     display: inline-block;
     text-align: left;
     padding-right: 10px; /* Optional: Adjust spacing between label and input */
-    padding-bottom: 20px;
+    /* padding-bottom: 20px; */
 }
 
 .frm input[type="text"],
@@ -22,6 +22,11 @@
     width: 100%;
     padding: 5px;
     box-sizing: border-box;
+    margin-bottom: 30px;
+
+}
+input, textarea {
+    border: 1px solid black !important;
 }
 
 /* Optional: Adjust styling for the submit button */
@@ -31,7 +36,14 @@
     margin-bottom: 50px 
 }
 
-
+.authority-checkbox {
+    display: inline-block; /* Display the checkboxes inline */
+    margin-right: 10px; /* Add some space between checkboxes */
+  }
+.courses{
+    display: none;
+    margin-top: 20px;
+}
 
 /******show_certificate.html******/
 .bg-img {
@@ -313,4 +325,52 @@ tbody{
 }
 .std-dis-table{
     padding: 10px;
+}
+.generate-btn{
+ color:white;
+}
+.csv_upload_form input{
+    width:250px;
+}
+.nav_item a:active{
+    color:#007bff;
+}
+/******** home.html *********/
+.body-wrapper{
+    background-color: #b7b7f3;
+}
+/******* courses.html ******/
+.course-box{
+    padding: 0px 0px 0px 0px;
+}
+.dashboard-btn{
+    color: white !important;
+}
+.internship_link:hover{
+ cursor: pointer;
+}
+@media (min-width: 992px) and (max-width: 1519px) {
+    .overview-item {
+        padding-top: 50px !important;
+        padding-bottom: 50px !important;
+    }
+}
+/***** table.html *****/
+
+.table-responsive{
+    height: 400px;
+    overflow-y: visible;
+}
+/********Search_results.html  *******/
+.search-results{
+    margin: 50px auto 0px;
+}
+.search-results ul{
+    list-style: none;
+}
+.result-details li{
+    line-height: 2rem;
+}
+li{
+    list-style: none;
 }

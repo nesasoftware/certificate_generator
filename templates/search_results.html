@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block body %}
+    <h1>Search Results</h1>
+
+    <div class="search-results mt-5">
+        {% if students %}
+            <ul class="p-3">
+                {% for student in students %}
+                    <li>
+                        <div class="card p-4">
+                            <ul class="result-details">
+                                <li>Name : {{ student.name }}</li>
+                                <li>ID : SRC/2024/{{student.id}}</li>
+                                <li>College Name: {{ student.college_name }}</li>
+                                <li>Course Name: {{ student.course }}</li>
+                                <li>Mentor Name: {{ student.mentor_name }}</li>
+                                <li>Start Date: {{ student.start_date }}</li>
+                                <li>End Date: {{ student.end_date }}</li>
+                                <li>Issued Date: {{ student.issued_date }}</li>
+                            </ul>
+                            <div class="search-download pl-3 mt-3">
+                                <a href="{% url 'render_pdf' student.id %}" class="btn btn-secondary">Download</a>
+                            </div>
+                            
+                        </div>
+                        
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <div>No results found</div>
+        {% endif %}
+    </div>
+{% endblock %}
