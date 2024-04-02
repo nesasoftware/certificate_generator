@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, JsonResponse
-from certificate_app.models import Student, CertificateTypes, Authority
+from certificate_app.models import Student, CertificateTypes, Authority, StudentRelatedAuthority
 from django.contrib.auth.models import User
 from django.db.models import Q, Prefetch
 from .forms import MyForm, UploadFileForm
@@ -69,7 +69,7 @@ def my_view(request):
                 certificate_type_id=certificate_type_id
             )
             # Add selected authorities to the student
-            student.authorities.add(*authority_ids) 
+            # StudentRelatedAuthority.authority.create(*authority_ids) 
 
             return redirect('display_students')  # Redirect to the display students page
 
@@ -93,7 +93,7 @@ def my_view(request):
                             mentor_name=row.get('mentor_name', ''),
                             issued_date=timezone.now().date(),
                             certificate_type_id=row.get('certificate_type_id', ''),
-                            authority_id=authority_id
+                            # authority_id=authority_id
                         )
 
                 return redirect('display_students')
@@ -142,9 +142,6 @@ def render_pdf_view(request, student_id):
 
     # Get the specific Student object based on student_id
     student_instance = get_object_or_404(Student, id=student_id)
-
-    # Get the certificate type associated with the student
-    # certificate_type = student_instance.certificate_type
 
     # Get the certificate type associated with the student
     certificate_type_id = student_instance.certificate_type_id
@@ -210,8 +207,7 @@ def render_pdf_view(request, student_id):
     align_y = 1.9 * inch    
     c.drawCentredString(start_x, align_y, name)
     
-    
-    
+
     # my_Style = ParagraphStyle(
     #     'My Para style',
     #     fontName='Minion Pro',
@@ -236,43 +232,58 @@ def render_pdf_view(request, student_id):
     p1 = Paragraph(f'''<i>Student of <b>{student_instance.college_name}</b>, has successfully completed the academic internship
         program at <b>SinroRobotics Pvt Ltd</b> on <b>{courses}</b> from <b>{student_instance.start_date}</b> to <b>{student_instance.end_date}</b>.</i>''', my_Style)
     
-    # Apply bold style to specific parts of the text
-    # p1.strikeThrough = 1
-
     width = 940
     height = 500
     p1.wrapOn(c, 450, 50)
     p1.drawOn(c, width-930, height-405)
 
     # c.drawImage('pictures\paragraph-end-line.png', 2.45*inch, 0.7*inch, width=100, height=50,mask=None)
+    
 
-    # Get the authorities related to the certificate type (prefetch to avoid extra queries)
-    authorities = certificate_type.authorities.all().prefetch_related(
-        Prefetch('students', queryset=Student.objects.filter(id=student_instance.id))
-    )
- 
 
     # Assume you have the student_instance available
-    student_instance = Student.objects.get(id=student_id)
-    print(student_instance)
+    student_authority_instance = Student.objects.get(id=student_id)
+    print("id:",student_authority_instance)
 
-    # Retrieve the certificate type associated with the student
-    certificate_type = student_instance.certificate_type
-    print(certificate_type)
+    # Step 1: Get the StudentRelatedAuthority object for the student
+    student_related_authority = StudentRelatedAuthority.objects.filter(std_id=student_id)
+    print("studentid:",student_related_authority)
 
-    # Retrieve the authorities related to the certificate type
-    authorities = certificate_type.authorities.all()
-    print(authorities)
-
-    # Decide how you want to select the authority and retrieve its signature image URL
-    # For example, you can choose the first authority
-    if authorities.exists():
-        first_authority = authorities.first()
-        signature_image_url = str(first_authority.signature)  # Assuming signature field contains the URL directly
-        
-        print(signature_image_url)
-        c.drawImage('media/'+signature_image_url , 4.4*inch, 0.1*inch, width=100, height=50,mask=None)
+    if student_related_authority:
+    # Step 2: Access the associated Authority object
+        authority = student_related_authority.authority
+        print("authorityid",authority)
     
+    # Step 3: Retrieve the signature from the Authority object
+        signature = authority.signature
+        print("path:",signature)
+    
+    # Now, you have the signature of the authority for the given student
+    # You can use 'signature' variable as needed
+    else:
+    # Handle the case where no StudentRelatedAuthority exists for the given student
+        print("No associated authority found for the student.")
+
+
+    #Retrieve the certificate type associated with the student
+    # certificate_type = student_instance.certificate_type
+    # print(certificate_type)
+
+    # Retrieve the authorities related to that certificate type
+    # authorities = certificate_type.authorities.all()
+
+    # print(authorities)
+
+    #Decide how you want to select the authority and retrieve its signature image URL
+    #Check if the authority with the specified ID exists
+    # if authorities.exists():
+    #     related_authority = authorities.first()# Assuming you want to select the authority based on its ID
+    #     print(related_authority)
+    #     if related_authority:
+    #         signature_image_url = str(related_authority.signature)
+    #         print(signature_image_url)
+    #         c.drawImage('media/' + signature_image_url, 4.4 * inch, 0.1 * inch, width=100, height=50, mask=None)
+
 
     
     #c.drawImage('pictures/Nebu-John-SIgn.png',4.4*inch, 0.1*inch, width=100, height=50,mask=None)

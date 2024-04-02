@@ -20,16 +20,14 @@ class Course(models.Model):
         return self.course_name
 
 
-
 class CertificateTypes(models.Model):
     certificate_type = models.CharField(max_length=100)
     courses = models.ManyToManyField(Course, related_name='certificate_types')
-    authorities = models.ManyToManyField(Authority, related_name='certificate_types')
+    
 
     def __str__(self):
         return self.certificate_type
     
-
 
 class Student(models.Model): 
     name = models.CharField(max_length=255, blank=True, default='')
@@ -39,8 +37,14 @@ class Student(models.Model):
     mentor_name = models.CharField(max_length=255, blank=True, default='')
     issued_date = models.DateField(default=timezone.now)
     certificate_type = models.ForeignKey(CertificateTypes, on_delete=models.CASCADE, related_name='students', default=None)
-    authorities = models.ManyToManyField(Authority, related_name='students') 
+    #authorities = models.ManyToManyField(Authority, related_name='students') 
+
+
+class StudentRelatedAuthority(models.Model):
+    std = models.ForeignKey(Student, on_delete=models.CASCADE)
+    authority = models.ForeignKey(Authority, on_delete=models.CASCADE)
     
+
     def save(self, *args, **kwargs):
         # Set issued_date to the current date if it's not already set
         if not self.issued_date:
@@ -61,15 +65,5 @@ class Student(models.Model):
     # course = models.CharField(max_length=100, choices=COURSE_CHOICES, blank=True, default='')
     # student_id = models.CharField(max_length=50, unique=True, editable=False)
 
-    # def save(self, *args, **kwargs):
-    #     # Generate the student ID in the format SRC/year/id
-    #     current_year = timezone.now().strftime("%Y")
-    #     last_student = Student.objects.last()
-    #     if last_student:
-    #         last_id = int(last_student.student_id.split('/')[-1]) + 1
-    #     else:
-    #         last_id = 1
-    #     self.student_id = f'SRC/{current_year}/{last_id:04d}'
-    #     super().save(*args, **kwargs)
 
 
