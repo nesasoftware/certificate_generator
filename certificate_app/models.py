@@ -3,6 +3,7 @@ from django.utils import timezone
 
 
 class Authority(models.Model):
+    authority_id = models.CharField(max_length=3,null=True)
     organization = models.CharField(max_length=255, null=True)
     name = models.CharField(max_length=255, null=True)
     designation = models.CharField(max_length=255)
@@ -10,7 +11,8 @@ class Authority(models.Model):
     
     def __str__(self):
         return self.name
-    
+
+
 
 
 class Course(models.Model):
@@ -20,11 +22,11 @@ class Course(models.Model):
         return self.course_name
 
 
+
 class CertificateTypes(models.Model):
     certificate_type = models.CharField(max_length=100)
-    courses = models.ManyToManyField(Course, related_name='certificate_types')
+    courses = models.ManyToManyField(Course, related_name='certificate_types', null=True)
     
-
     def __str__(self):
         return self.certificate_type
     
@@ -39,12 +41,6 @@ class Student(models.Model):
     certificate_type = models.ForeignKey(CertificateTypes, on_delete=models.CASCADE, related_name='students', default=None)
     #authorities = models.ManyToManyField(Authority, related_name='students') 
 
-
-class StudentRelatedAuthority(models.Model):
-    std = models.ForeignKey(Student, on_delete=models.CASCADE)
-    authority = models.ForeignKey(Authority, on_delete=models.CASCADE)
-    
-
     def save(self, *args, **kwargs):
         # Set issued_date to the current date if it's not already set
         if not self.issued_date:
@@ -53,6 +49,22 @@ class StudentRelatedAuthority(models.Model):
 
     def __str__(self):
         return self.name
+    
+
+class StudentRelatedAuthority(models.Model):
+    std = models.ForeignKey(Student, on_delete=models.CASCADE)
+    authority = models.ForeignKey(Authority, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.std
+    
+# class StudentRelatedCourse(models.Model):
+#     std = models.ForeignKey(Student, on_delete=models.CASCADE)
+#     course = models.ForeignKey(Course, on_delete=models.CASCADE)
+
+#     def __str__(self):
+#         return self.std
+   
 
     # COURSE_CHOICES = [  
     #     ('embedded system', 'Embedded System'),

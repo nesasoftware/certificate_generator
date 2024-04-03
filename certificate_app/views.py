@@ -1,8 +1,9 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, JsonResponse
-from certificate_app.models import Student, CertificateTypes, Authority, StudentRelatedAuthority
+from certificate_app.models import Student, CertificateTypes,Course, Authority, StudentRelatedAuthority
 from django.contrib.auth.models import User
 from django.db.models import Q, Prefetch
+from django.db import IntegrityError
 from .forms import MyForm, UploadFileForm
 from django.shortcuts import render
 from django.template.loader import get_template
@@ -58,6 +59,14 @@ def my_view(request):
             issued_date = timezone.now().date()
             certificate_type_id = request.POST.get('certificate_type')
             authority_ids = request.POST.getlist('authority')
+            course_name = request.POST.get('course_name')
+
+            # Fetch the CertificateTypes instance based on the provided certificate_type_id
+            certificate_type = CertificateTypes.objects.get(id=certificate_type_id)
+            
+            # Fetch or create the Course instance based on the provided course_name
+            course = Course.objects.get_or_create(course_name=course_name)
+            
 
             student = Student.objects.create(
                 name=name,
@@ -69,9 +78,15 @@ def my_view(request):
                 certificate_type_id=certificate_type_id
             )
             # Add selected authorities to the student
-            # StudentRelatedAuthority.authority.create(*authority_ids) 
+            for authority_id in authority_ids:
+                authority = Authority.objects.get(id=authority_id)
+                StudentRelatedAuthority.objects.create(std=student, authority=authority)
+
+            # Assign the course to the student through the CertificateTypes instance
+            course.certificate_types.add(certificate_type)
 
             return redirect('display_students')  # Redirect to the display students page
+        
 
         elif 'upload_csv' in request.POST:
             upload_form = UploadFileForm(request.POST, request.FILES)
@@ -83,25 +98,53 @@ def my_view(request):
                     start_date = timezone.datetime.strptime(row['start_date'], '%d-%m-%Y').strftime('%Y-%m-%d')
                     end_date = timezone.datetime.strptime(row['end_date'], '%d-%m-%Y').strftime('%Y-%m-%d')
                     authorities = row.get('authority', '').split(',')
+                    course_name = row.get('course')
 
-                    for authority_id in authorities:
-                        Student.objects.create(
-                            name=row.get('name', ''),
-                            college_name=row.get('college_name', ''),
-                            start_date=start_date,
-                            end_date=end_date,
-                            mentor_name=row.get('mentor_name', ''),
-                            issued_date=timezone.now().date(),
-                            certificate_type_id=row.get('certificate_type_id', ''),
-                            # authority_id=authority_id
-                        )
+                    if course_name:
+                        try:
+                            # Fetch or create Course object based on the course_name
+                            course, created = Course.objects.get_or_create(course_name=course_name)
+
+                            for authority_id in authorities:
+                                authority = Authority.objects.get(id=authority_id)  # Get Authority instance based on ID
+
+                                # Create Student instance for the current row
+                                student = Student.objects.create(
+                                    name=row.get('name', ''),
+                                    college_name=row.get('college_name', ''),
+                                    start_date=start_date,
+                                    end_date=end_date,
+                                    mentor_name=row.get('mentor_name', ''),
+                                    issued_date=timezone.now().date(),
+                                    certificate_type_id=row.get('certificate_type_id', ''),
+                                )
+
+                                # Create StudentRelatedAuthority instance linking student with authority
+                                StudentRelatedAuthority.objects.create(std=student, authority=authority)
+
+                                # Assign the course to the student
+                                student.course = course
+                                student.save()
+
+                            # Print a message indicating successful processing
+                            print("CSV file processed successfully")
+
+                        except IntegrityError as e:
+                            print(f"IntegrityError occurred: {e}")
+                    else:
+                        print("Course name is empty, skipping row")
 
                 return redirect('display_students')
-     
+            else:
+                # Print form errors if any
+                print("Form errors:", upload_form.errors)
+        else:
+            # Print if 'upload_csv' is not in request.POST
+            print("Upload CSV not found in request")
 
     return render(request, 'student_form.html', {'certificate_types': certificate_types, 'authorities': authorities, 'upload_form': upload_form})
 
-
+    
 def get_courses(request):
     certificate_type_id = request.GET.get('certificate_type_id')
     certificate_type = CertificateTypes.objects.get(id=certificate_type_id)
@@ -110,13 +153,12 @@ def get_courses(request):
     return render(request,'student_form.html',{'courses': courses})
 
 
-
+    
 # display all students
 @login_required(login_url='login')
 def display_students(request):
     students = Student.objects.all()
     return render(request, 'table.html', {'students': students})
-    # return render(request, 'display_students.html', {'students': students})
 
 
 # show the certificate
@@ -178,7 +220,7 @@ def render_pdf_view(request, student_id):
     pdfmetrics.registerFont(TTFont('Cascadia', font_path))
     c.setFont('Cascadia', 12)  
     current_year = datetime.now().strftime("%Y")
-    c.drawString(5.3* inch, 4.75 * inch, f"SRC/{current_year}/{student_instance.id}")
+    c.drawString(5.1* inch, 4.75 * inch, f"SRC/{current_year}/{student_instance.id}")
     
     # Register Dancing Script font
     font_path = 'static/fonts/MTCORSVA.TTF'
@@ -200,6 +242,9 @@ def render_pdf_view(request, student_id):
     # Calculate the starting x-coordinate to center the text
     if len(name) < 10:
         start_x = 3.2 * inch
+
+    elif len(name)<20:
+        start_x =3 * inch
     else:
         # For longer names, we'll need to adjust the starting x-coordinate to ensure proper center alignment
         start_x = center_x - (name_width / 2)
@@ -237,62 +282,30 @@ def render_pdf_view(request, student_id):
     p1.wrapOn(c, 450, 50)
     p1.drawOn(c, width-930, height-405)
 
-    # c.drawImage('pictures\paragraph-end-line.png', 2.45*inch, 0.7*inch, width=100, height=50,mask=None)
-    
+    # Get the StudentRelatedAuthority instance for the given student_id
+    student_related_authority = get_object_or_404(StudentRelatedAuthority, std_id=student_id)
 
+    # Accessing the related Student ID
+    student_id = student_related_authority.std.id
+    print("Related Student ID:", student_id)
 
-    # Assume you have the student_instance available
-    student_authority_instance = Student.objects.get(id=student_id)
-    print("id:",student_authority_instance)
+    # Accessing the related Authority instance
+    authority = student_related_authority.authority
 
-    # Step 1: Get the StudentRelatedAuthority object for the student
-    student_related_authority = StudentRelatedAuthority.objects.filter(std_id=student_id)
-    print("studentid:",student_related_authority)
+    if authority:
+        # Accessing the signature attribute of the related Authority instance
+        signature_image_url = str(authority.signature)
+        print("Signature Image URL:", signature_image_url)
 
-    if student_related_authority:
-    # Step 2: Access the associated Authority object
-        authority = student_related_authority.authority
-        print("authorityid",authority)
-    
-    # Step 3: Retrieve the signature from the Authority object
-        signature = authority.signature
-        print("path:",signature)
-    
-    # Now, you have the signature of the authority for the given student
-    # You can use 'signature' variable as needed
-    else:
-    # Handle the case where no StudentRelatedAuthority exists for the given student
-        print("No associated authority found for the student.")
-
-
-    #Retrieve the certificate type associated with the student
-    # certificate_type = student_instance.certificate_type
-    # print(certificate_type)
-
-    # Retrieve the authorities related to that certificate type
-    # authorities = certificate_type.authorities.all()
-
-    # print(authorities)
-
-    #Decide how you want to select the authority and retrieve its signature image URL
-    #Check if the authority with the specified ID exists
-    # if authorities.exists():
-    #     related_authority = authorities.first()# Assuming you want to select the authority based on its ID
-    #     print(related_authority)
-    #     if related_authority:
-    #         signature_image_url = str(related_authority.signature)
-    #         print(signature_image_url)
-    #         c.drawImage('media/' + signature_image_url, 4.4 * inch, 0.1 * inch, width=100, height=50, mask=None)
-
+        c.drawImage('media/' + signature_image_url, 4.4 * inch, 0 * inch, width=100, height=50, mask=None)
 
     
     #c.drawImage('pictures/Nebu-John-SIgn.png',4.4*inch, 0.1*inch, width=100, height=50,mask=None)
 
-    font_path = 'static/fonts/Quattrocento-Regular.ttf'
-    pdfmetrics.registerFont(TTFont('Quattrocento', font_path))
-    c.setFont('Quattrocento', 12)
+    font_path = 'static/fonts/Quattrocento-Bold.ttf'
+    pdfmetrics.registerFont(TTFont('Quattrocento-Bold', font_path))
+    c.setFont('Quattrocento-Bold', 12)
     c.setFillColorRGB(0,0,0)
-    # c.drawString(4.7*inch, 0.4*inch, str(student_instance.end_date))
     c.drawString( 0.8*inch, 0.08*inch, str(datetime.now().strftime("%Y-%m-%d")))
 
 
@@ -395,6 +408,7 @@ def download_selected_certificates(request):
 
     else:
         return JsonResponse({'error': 'Method not allowed'}, status=405)
+
 
 
 @login_required(login_url='login')
