@@ -11,11 +11,11 @@ from django.urls import reverse
 from django.conf import settings
 import csv
 import os
-import tempfile
-from django.http import FileResponse
+# import tempfile
+# from django.http import FileResponse
 from django.utils.text import slugify
 from django.template import loader
-from reportlab.lib.enums import TA_JUSTIFY, TA_LEFT, TA_CENTER, TA_RIGHT
+# from reportlab.lib.enums import TA_JUSTIFY, TA_LEFT, TA_CENTER, TA_RIGHT
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import inch
 from reportlab.lib.pagesizes import letter,A4
@@ -59,14 +59,18 @@ def my_view(request):
             issued_date = timezone.now().date()
             certificate_type_id = request.POST.get('certificate_type')
             authority_ids = request.POST.getlist('authority')
-            course_name = request.POST.get('course_name')
-
+            course_id = request.POST.get('courses')
+            print("id:",course_id)
             # Fetch the CertificateTypes instance based on the provided certificate_type_id
             certificate_type = CertificateTypes.objects.get(id=certificate_type_id)
-            
-            # Fetch or create the Course instance based on the provided course_name
-            course = Course.objects.get_or_create(course_name=course_name)
-            
+            print("certificate_type:",certificate_type)
+            # Fetch the Course instance based on the provided course_id
+            course = Course.objects.get(id=course_id)
+            print("course:",course)
+
+            #Assign the selected course to the student through the CertificateTypes instance
+            certificate_type.courses.add(course) 
+            print("Added course:", course)
 
             student = Student.objects.create(
                 name=name,
@@ -75,15 +79,14 @@ def my_view(request):
                 end_date=end_date,
                 mentor_name=mentor_name,
                 issued_date=issued_date,
-                certificate_type_id=certificate_type_id
+                certificate_type_id=certificate_type_id,
+                course=course
             )
+
             # Add selected authorities to the student
             for authority_id in authority_ids:
                 authority = Authority.objects.get(id=authority_id)
                 StudentRelatedAuthority.objects.create(std=student, authority=authority)
-
-            # Assign the course to the student through the CertificateTypes instance
-            course.certificate_types.add(certificate_type)
 
             return redirect('display_students')  # Redirect to the display students page
         
@@ -97,42 +100,40 @@ def my_view(request):
                 for row in reader:
                     start_date = timezone.datetime.strptime(row['start_date'], '%d-%m-%Y').strftime('%Y-%m-%d')
                     end_date = timezone.datetime.strptime(row['end_date'], '%d-%m-%Y').strftime('%Y-%m-%d')
-                    authorities = row.get('authority', '').split(',')
-                    course_name = row.get('course')
+                    authorities = row.get('authority_id', '').split(',')
 
-                    if course_name:
-                        try:
-                            # Fetch or create Course object based on the course_name
-                            course, created = Course.objects.get_or_create(course_name=course_name)
+                    for authority_id in authorities:
+                        authority = Authority.objects.get(id=authority_id)  # Get Authority instance based on ID
 
-                            for authority_id in authorities:
-                                authority = Authority.objects.get(id=authority_id)  # Get Authority instance based on ID
+                        # Fetch or create the Course instance based on the provided course_name
+                        course_name = row.get('course_name')
+                        course, created = Course.objects.get_or_create(course_name=course_name)
 
-                                # Create Student instance for the current row
-                                student = Student.objects.create(
-                                    name=row.get('name', ''),
-                                    college_name=row.get('college_name', ''),
-                                    start_date=start_date,
-                                    end_date=end_date,
-                                    mentor_name=row.get('mentor_name', ''),
-                                    issued_date=timezone.now().date(),
-                                    certificate_type_id=row.get('certificate_type_id', ''),
-                                )
 
-                                # Create StudentRelatedAuthority instance linking student with authority
-                                StudentRelatedAuthority.objects.create(std=student, authority=authority)
+                        # Create Student instance for the current row
+                        student = Student.objects.create(
+                        name=row.get('name', ''),
+                        college_name=row.get('college_name', ''),
+                        start_date=start_date,
+                        end_date=end_date,
+                        mentor_name=row.get('mentor_name', ''),
+                        issued_date=timezone.now().date(),
+                        certificate_type_id=row.get('certificate_type_id', ''),
+                        course=course
+                        # course=row.get('course_name','')
+                        )
 
-                                # Assign the course to the student
-                                student.course = course
-                                student.save()
+                        # Create StudentRelatedAuthority instance linking student with authority
+                        StudentRelatedAuthority.objects.create(std=student, authority=authority)
 
-                            # Print a message indicating successful processing
-                            print("CSV file processed successfully")
+                        # Assign the course to the student
+                        # student.course = course
+                        # student.save()
 
-                        except IntegrityError as e:
-                            print(f"IntegrityError occurred: {e}")
-                    else:
-                        print("Course name is empty, skipping row")
+                        # Print a message indicating successful processing
+                        print("CSV file processed successfully")
+
+                        
 
                 return redirect('display_students')
             else:
@@ -157,7 +158,7 @@ def get_courses(request):
 # display all students
 @login_required(login_url='login')
 def display_students(request):
-    students = Student.objects.all()
+    students = Student.objects.all().order_by('-created_at')  # Order by created_at descending
     return render(request, 'table.html', {'students': students})
 
 
@@ -226,42 +227,46 @@ def render_pdf_view(request, student_id):
     font_path = 'static/fonts/MTCORSVA.TTF'
     pdfmetrics.registerFont(TTFont('MonteCarlo', font_path))
 
-
+    
+    
     # Example name
     name = student_instance.name
 
     # Set the font for the name
-    c.setFont('MonteCarlo', 40)
-    c.setFillColor(HexColor('#c46608'))
-    # Calculate the width of the name in points
+    # c.setFont('MonteCarlo', font_size)
+    # c.setFillColor(HexColor('#c46608'))
+
+    # Define font size thresholds and corresponding font sizes
+    font_size_threshold = 30
+    default_font_size = 40
+    reduced_font_size = 30
+    
+    # Calculate the width of the name string
     name_width = c.stringWidth(name)
-
-    # Calculate the center coordinates of the canvas
-    center_x = desired_width / 2
-
+    
+    # Calculate the center of the page
+    center_x = letter[0] / 2
+    
     # Calculate the starting x-coordinate to center the text
-    if len(name) < 10:
+    if len(name) < font_size_threshold:
         start_x = 3.2 * inch
-
-    elif len(name)<20:
-        start_x =3 * inch
+        font_size = default_font_size
     else:
-        # For longer names, we'll need to adjust the starting x-coordinate to ensure proper center alignment
-        start_x = center_x - (name_width / 2)
+        # For longer names, reduce the font size and adjust the starting x-coordinate
+        start_x = 3.2 * inch
+        # start_x = center_x - (name_width / 2)
+        font_size = reduced_font_size
+    
+    align_y = 1.9 * inch
+    
+    # Set the font size
+    c.setFont('MonteCarlo', font_size)
+    c.setFillColor(HexColor('#c46608'))
         
     align_y = 1.9 * inch    
     c.drawCentredString(start_x, align_y, name)
     
 
-    # my_Style = ParagraphStyle(
-    #     'My Para style',
-    #     fontName='Minion Pro',
-    #     fontSize=12,
-    #     leading=12,  # Line height
-    #     charSpace=5.0,  # Character spacing
-    #     alignment=2,
-    #     HexColor='#3c3a3f',
-    # )
     
     font_path = 'static/fonts/Minion-It.ttf'
     pdfmetrics.registerFont(TTFont('Minion Pro', font_path))
@@ -269,10 +274,7 @@ def render_pdf_view(request, student_id):
 
     # Define your custom style
     my_Style = getSampleStyleSheet()['BodyText']
-    # my_Style.fontName = 'Minion Pro'
-    # bold_style = ParagraphStyle(name='BoldText', parent=my_Style)
-    # bold_style.textColor = colors.black 
-    # bold_style.fontName = 'Minion-BoldIt'
+    
     my_Style.alignment = 1 
     p1 = Paragraph(f'''<i>Student of <b>{student_instance.college_name}</b>, has successfully completed the academic internship
         program at <b>SinroRobotics Pvt Ltd</b> on <b>{courses}</b> from <b>{student_instance.start_date}</b> to <b>{student_instance.end_date}</b>.</i>''', my_Style)
@@ -297,7 +299,7 @@ def render_pdf_view(request, student_id):
         signature_image_url = str(authority.signature)
         print("Signature Image URL:", signature_image_url)
 
-        c.drawImage('media/' + signature_image_url, 4.4 * inch, 0 * inch, width=100, height=50, mask=None)
+        c.drawImage('media/' + signature_image_url, 4.4 * inch, 0 * inch, width=80, height=40, mask=None)
 
     
     #c.drawImage('pictures/Nebu-John-SIgn.png',4.4*inch, 0.1*inch, width=100, height=50,mask=None)

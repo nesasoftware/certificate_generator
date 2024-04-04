@@ -3,7 +3,7 @@ from django.utils import timezone
 
 
 class Authority(models.Model):
-    authority_id = models.CharField(max_length=3,null=True)
+    auth_id = models.IntegerField(null=True)
     organization = models.CharField(max_length=255, null=True)
     name = models.CharField(max_length=255, null=True)
     designation = models.CharField(max_length=255)
@@ -13,22 +13,20 @@ class Authority(models.Model):
         return self.name
 
 
-
-
 class Course(models.Model):
-    course_name = models.CharField(max_length=100)
+    course_name = models.CharField(max_length=100, null=True)
 
     def __str__(self):
-        return self.course_name
-
+        return self.course_name if self.course_name else ''
 
 
 class CertificateTypes(models.Model):
+    certify_type_id=models.IntegerField(null=True)
     certificate_type = models.CharField(max_length=100)
-    courses = models.ManyToManyField(Course, related_name='certificate_types', null=True)
+    courses = models.ManyToManyField(Course, related_name='certificate_types')
     
     def __str__(self):
-        return self.certificate_type
+        return self.certificate_type if self.certificate_type else ''
     
 
 class Student(models.Model): 
@@ -39,12 +37,16 @@ class Student(models.Model):
     mentor_name = models.CharField(max_length=255, blank=True, default='')
     issued_date = models.DateField(default=timezone.now)
     certificate_type = models.ForeignKey(CertificateTypes, on_delete=models.CASCADE, related_name='students', default=None)
-    #authorities = models.ManyToManyField(Authority, related_name='students') 
+    course= models.ForeignKey(Course, on_delete=models.CASCADE, related_name='students', default=None)
 
+    created_at = models.DateTimeField( default=timezone.now)  # Add this field to store creation time
+    
     def save(self, *args, **kwargs):
         # Set issued_date to the current date if it's not already set
         if not self.issued_date:
             self.issued_date = timezone.now().date()
+        if not self.pk:  # If the instance is being created (not updated)
+            self.created_at = self.issued_date  # Set created_at to issued_date
         super().save(*args, **kwargs)
 
     def __str__(self):
