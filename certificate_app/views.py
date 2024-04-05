@@ -100,40 +100,53 @@ def my_view(request):
                 for row in reader:
                     start_date = timezone.datetime.strptime(row['start_date'], '%d-%m-%Y').strftime('%Y-%m-%d')
                     end_date = timezone.datetime.strptime(row['end_date'], '%d-%m-%Y').strftime('%Y-%m-%d')
-                    authorities = row.get('authority_id', '').split(',')
 
-                    for authority_id in authorities:
-                        authority = Authority.objects.get(id=authority_id)  # Get Authority instance based on ID
+                    authorities = row.get('auth_id', '').split(',')
 
+                    for auth_id in authorities:
+                        try:
+                            # Get Authority instance based on the custom ID (auth_id)
+                            authority = Authority.objects.get(auth_id=auth_id)
+                        except Authority.DoesNotExist:
+                             # Handle the case where the Authority instance with the provided auth_id doesn't exist
+                            print(f"Authority with auth_id {auth_id} does not exist. Skipping this auth_id.")
+                            continue
+                        
                         # Fetch or create the Course instance based on the provided course_name
                         course_name = row.get('course_name')
                         course, created = Course.objects.get_or_create(course_name=course_name)
 
+                        # Fetch certificate_type_id from row data
+                        certificate_type_id = row.get('certificate_type_id')
+                        print("certificate_type_id:", certificate_type_id)
+
+                        try:
+                            # Get CertificateTypes instance based on the custom ID
+                            certificate_type = CertificateTypes.objects.get(certify_type_id=certificate_type_id)
+                        except CertificateTypes.DoesNotExist:
+                            # Handle the case where the CertificateTypes instance with the provided certificate_type_id doesn't exist
+                            print(f"CertificateTypes with certificate_type_id {certificate_type_id} does not exist. Skipping this row.")
+                            continue
+
 
                         # Create Student instance for the current row
                         student = Student.objects.create(
-                        name=row.get('name', ''),
-                        college_name=row.get('college_name', ''),
-                        start_date=start_date,
-                        end_date=end_date,
-                        mentor_name=row.get('mentor_name', ''),
-                        issued_date=timezone.now().date(),
-                        certificate_type_id=row.get('certificate_type_id', ''),
-                        course=course
+                            name=row.get('name', ''),
+                            college_name=row.get('college_name', ''),
+                            start_date=start_date,
+                            end_date=end_date,
+                            mentor_name=row.get('mentor_name', ''),
+                            issued_date=timezone.now().date(),
+                            certificate_type=certificate_type,  
+                            course=course
                         # course=row.get('course_name','')
                         )
 
                         # Create StudentRelatedAuthority instance linking student with authority
                         StudentRelatedAuthority.objects.create(std=student, authority=authority)
 
-                        # Assign the course to the student
-                        # student.course = course
-                        # student.save()
-
                         # Print a message indicating successful processing
-                        print("CSV file processed successfully")
-
-                        
+                        print("CSV file processed successfully")                       
 
                 return redirect('display_students')
             else:
@@ -159,7 +172,18 @@ def get_courses(request):
 @login_required(login_url='login')
 def display_students(request):
     students = Student.objects.all().order_by('-created_at')  # Order by created_at descending
-    return render(request, 'table.html', {'students': students})
+    certificate_type_id = request.GET.get('certificate_type_id')
+    courses = Course.objects.all()  # Fetch all courses initially
+    
+    if certificate_type_id:
+        try:
+            certificate_type = CertificateTypes.objects.get(id=certificate_type_id)
+            courses = certificate_type.courses.all()  # Filter courses by the selected certificate type
+        except CertificateTypes.DoesNotExist:
+            pass  # Handle the case where the CertificateTypes instance does not exist
+
+    certificate_types = CertificateTypes.objects.all()
+    return render(request, 'table.html', {'students': students, 'courses': courses, 'certificate_types': certificate_types})
 
 
 # show the certificate

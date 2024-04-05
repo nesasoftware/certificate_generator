@@ -36,8 +36,8 @@ class Student(models.Model):
     end_date = models.DateField(default=timezone.now)
     mentor_name = models.CharField(max_length=255, blank=True, default='')
     issued_date = models.DateField(default=timezone.now)
-    certificate_type = models.ForeignKey(CertificateTypes, on_delete=models.CASCADE, related_name='students', default=None)
-    course= models.ForeignKey(Course, on_delete=models.CASCADE, related_name='students', default=None)
+    certificate_type = models.ForeignKey(CertificateTypes, on_delete=models.CASCADE, related_name='students', null=True)
+    course= models.ForeignKey(Course, on_delete=models.CASCADE, related_name='enrolled_students', null=True)
 
     created_at = models.DateTimeField( default=timezone.now)  # Add this field to store creation time
     
@@ -60,6 +60,7 @@ class StudentRelatedAuthority(models.Model):
     def __str__(self):
         return self.std
     
+
 # class StudentRelatedCourse(models.Model):
 #     std = models.ForeignKey(Student, on_delete=models.CASCADE)
 #     course = models.ForeignKey(Course, on_delete=models.CASCADE)

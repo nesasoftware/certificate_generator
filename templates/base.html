@@ -51,8 +51,8 @@
                 <div class="header-mobile__bar">
                     <div class="container-fluid">
                         <div class="header-mobile-inner">
-                            <a class="logo" href="#">
-                                <img src="{% static 'images/icon/certify_logo.png' %}" alt="Certify Logo" />
+                            <a href="#">
+                                <img src="{% static 'images/icon/certify_logo.png' %}" alt="Certify Logo" width="200" height="50">
                             </a>
                             <button class="hamburger hamburger--slider" type="button">
                                 <span class="hamburger-box">
@@ -64,10 +64,11 @@
                 </div>
                 <nav class="navbar-mobile">
                     <div class="container-fluid">
+                        <a href="#">
+                            <img src="{% static 'images/icon/certify_logo.png' %}" alt="Certify Logo" width="200" height="50">
+                        </a>
                         <ul class="navbar-mobile__list list-unstyled">
-                            <li >
-                                <a class="btn btn-primary p-2 dashboard-btn" href="{% url 'student_form' %}">Generate certificate</a>
-                            </li>
+                           
                             <li class="has-sub">
                                 <a class="js-arrow" href="{% url 'index' %}">
                                     <i class="fas fa-tachometer-alt"></i>Dashboard</a>
@@ -85,6 +86,9 @@
                                 <a href="{% url 'student_form' %}">
                                     <i class="far fa-check-square"></i>Add Student Data</a>
                             </li>
+                            <li >
+                                <a class="btn btn-primary p-2 dashboard-btn" href="{% url 'student_form' %}">Generate certificate</a>
+                            </li>
                           
                         </ul>
                     </div>
@@ -96,11 +100,14 @@
             <aside class="menu-sidebar d-none d-lg-block">
                 
                 <div class="menu-sidebar__content js-scrollbar1">
+                    
                     <nav class="navbar-sidebar">
+                        <a href="#">
+                            <img src="{% static 'images/icon/certify_logo.png' %}" alt="Certify Logo" width="200" height="50"/>
+                        </a>
                         <ul class="list-unstyled navbar__list">
-                            <li class="mb-2">
-                                <a class="btn btn-primary p-2 dashboard-btn" href="{% url 'student_form' %}">Generate certificate</a>
-                            </li>
+                           
+                           
                             <li class="has-sub nav_item">
                                 <a class="js-arrow nav-link" href="{% url 'index' %}">
                                     <i class="fas fa-tachometer-alt"></i>Dashboard</a>
@@ -114,7 +121,9 @@
                                 <a href="{% url 'display_students' %}" class="nav-link">
                                     <i class="fas fa-table"></i>Student Data</a>
                             </li>
-                            
+                            <li >
+                                <a class="btn btn-primary p-2 dashboard-btn" href="{% url 'student_form' %}">Generate certificate</a>
+                            </li>
                            
                         </ul>
                     </nav>
