@@ -4242,18 +4242,19 @@ section {
     font-size: 16px;
     color: #fff;
     vertical-align: middle;
+    text-align: center;
     font-weight: 400;
     text-transform: capitalize;
     line-height: 1;
-    padding: 22px 40px;
+    /* padding: 22px 40px; */
     white-space: nowrap;
-    text-align: center;
+    
 }
 
-.table-earning thead th.text-right {
+/* .table-earning thead th.text-right {
     padding-left: 15px;
     padding-right: 65px;
-}
+} */
 
 .table-earning tbody td {
     color: #808080;

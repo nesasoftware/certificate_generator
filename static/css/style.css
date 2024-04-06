@@ -374,3 +374,10 @@ tbody{
 li{
     list-style: none;
 }
+
+#courseDropdown {
+    display: none;
+}
+/* #certificatetypeDropdown{
+    margin-bottom: 10px;
+} */

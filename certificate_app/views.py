@@ -171,19 +171,28 @@ def get_courses(request):
 # display all students
 @login_required(login_url='login')
 def display_students(request):
-    students = Student.objects.all().order_by('-created_at')  # Order by created_at descending
-    certificate_type_id = request.GET.get('certificate_type_id')
-    courses = Course.objects.all()  # Fetch all courses initially
-    
-    if certificate_type_id:
-        try:
-            certificate_type = CertificateTypes.objects.get(id=certificate_type_id)
-            courses = certificate_type.courses.all()  # Filter courses by the selected certificate type
-        except CertificateTypes.DoesNotExist:
-            pass  # Handle the case where the CertificateTypes instance does not exist
-
+    students = Student.objects.all().order_by('-created_at')
     certificate_types = CertificateTypes.objects.all()
-    return render(request, 'table.html', {'students': students, 'courses': courses, 'certificate_types': certificate_types})
+    
+    return render(request, 'table.html', {'students': students, 'certificate_types': certificate_types})
+
+
+# def display_students(request):
+#     students = Student.objects.all().order_by('-created_at')  # Order by created_at descending
+#     courses = Course.objects.all()  # Fetch all courses initially
+#     certificate_types = CertificateTypes.objects.all()
+#     certificate_type_id = request.GET.get('certificate_type_id')
+#     print(certificate_type_id)
+    
+#     selected_course_name = request.GET.get('course_name')
+    
+#     if selected_course_name:
+#         # Filter students based on the selected course name
+#         students = Student.objects.filter(course__course_name=selected_course_name).order_by('-created_at')
+#     else:
+#         students = Student.objects.all().order_by('-created_at')
+#     return render(request, 'table.html', {'students': students, 'courses': courses, 'certificate_types': certificate_types})
+
 
 
 # show the certificate

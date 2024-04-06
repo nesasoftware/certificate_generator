@@ -26,8 +26,8 @@ class CertificateTypes(models.Model):
     courses = models.ManyToManyField(Course, related_name='certificate_types')
     
     def __str__(self):
-        return self.certificate_type if self.certificate_type else ''
-    
+        course_list = ', '.join([course.course_name for course in self.courses.all()])
+        return f"{self.certificate_type} - Courses: {course_list}"
 
 class Student(models.Model): 
     name = models.CharField(max_length=255, blank=True, default='')
@@ -38,7 +38,6 @@ class Student(models.Model):
     issued_date = models.DateField(default=timezone.now)
     certificate_type = models.ForeignKey(CertificateTypes, on_delete=models.CASCADE, related_name='students', null=True)
     course= models.ForeignKey(Course, on_delete=models.CASCADE, related_name='enrolled_students', null=True)
-
     created_at = models.DateTimeField( default=timezone.now)  # Add this field to store creation time
     
     def save(self, *args, **kwargs):
