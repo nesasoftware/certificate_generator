@@ -374,10 +374,12 @@ tbody{
 li{
     list-style: none;
 }
-
-#courseDropdown {
-    display: none;
+.certify-logo{
+    padding: 20px 0px 0px 40px;
 }
+/* #courseDropdown {
+    display: none;
+} */
 /* #certificatetypeDropdown{
     margin-bottom: 10px;
 } */

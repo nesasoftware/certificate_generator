@@ -32,13 +32,15 @@
                         <div class="mb-3">
                             <label for="sort_order">Filter by:</label>
 
-                            <select id="certificatetypeDropdown" class="form-control" onchange="showCourseDropdown()">
+                            <select id="certificatetypeDropdown" class="form-control mb-3"
+                                onchange="showCourseDropdown()">
                                 <option value="">All Certificates</option>
                                 {% for certificate_type in certificate_types %}
-                                <option value="{{ certificate_type.certificate_type}}">{{certificate_type.certificate_type }}</option>
+                                <option value="{{ certificate_type.certificate_type}}">
+                                    {{certificate_type.certificate_type }}</option>
                                 {% endfor %}
                             </select>
-                            <select id="courseDropdown" class="form-control">
+                            <select id="courseDropdown" class="form-control" onchange="filterStudents()">
                                 <option value="">All Courses</option>
                                 {% for course in courses %}
                                 <option value="{{ course.course_name }}">{{ course.course_name }}</option>
@@ -154,41 +156,42 @@
     }
 
     function filterStudents() {
-        var courseFilter = document.getElementById("course_filter").value;
+        var courseFilter = document.getElementById("courseDropdown").value; // Corrected ID
         var studentRows = document.querySelectorAll("#student_table_body tr");
 
         studentRows.forEach(function (row) {
-            var courseCell = row.cells[3]; // Assuming course information is in the 4th column
-            var courseName = courseCell.innerText.trim();
-
-            if (courseFilter === "" || courseName === courseFilter) {
+            var courseCell = row.cells[3].innerText.trim(); // Assuming course information is in the 4th column
+            if (courseFilter === "" || courseCell === courseFilter) {
                 row.style.display = ""; // Show the row if the course name matches or no course is selected
             } else {
                 row.style.display = "none"; // Hide the row if the course name does not match
             }
         });
     }
+
     
     function showCourseDropdown() {
-    var certificatetypeDropdown = document.getElementById("certificatetypeDropdown");
-    var courseDropdown = document.getElementById("courseDropdown");
+        var certificatetypeDropdown = document.getElementById("certificatetypeDropdown");
+        var courseDropdown = document.getElementById("courseDropdown");
 
-    var selectedCertificateType = certificatetypeDropdown.value;
+        var selectedCertificateType = certificatetypeDropdown.value;
 
-    if (selectedCertificateType !== "") {
-        courseDropdown.style.display = "block";
-        for (var i = 0; i < courseDropdown.options.length; i++) {
-            var option = courseDropdown.options[i];
-            if (option.dataset.parent === selectedCertificateType || option.value === "") {
-                option.style.display = "block";
-            } else {
-                option.style.display = "none";
+        if (selectedCertificateType !== "") {
+            courseDropdown.style.display = "block";
+            for (var i = 0; i < courseDropdown.options.length; i++) {
+                var option = courseDropdown.options[i];
+                if (option.dataset.parent === selectedCertificateType || option.value === "") {
+                    option.style.display = "block";
+
+                }
             }
+        } else {
+            courseDropdown.style.display = "none";
         }
-    } else {
-        courseDropdown.style.display = "none";
     }
-}
+
+
+
 
 </script>
 

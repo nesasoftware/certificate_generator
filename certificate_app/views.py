@@ -114,7 +114,7 @@ def my_view(request):
                         
                         # Fetch or create the Course instance based on the provided course_name
                         course_name = row.get('course_name')
-                        course, created = Course.objects.get_or_create(course_name=course_name)
+                        course = Course.objects.get_or_create(course_name=course_name)
 
                         # Fetch certificate_type_id from row data
                         certificate_type_id = row.get('certificate_type_id')
@@ -174,7 +174,18 @@ def display_students(request):
     students = Student.objects.all().order_by('-created_at')
     certificate_types = CertificateTypes.objects.all()
     
-    return render(request, 'table.html', {'students': students, 'certificate_types': certificate_types})
+    # First, you need to retrieve an instance of CertificateTypes
+    certificate_type_instance = CertificateTypes.objects.get(pk=2)  # Assuming you're getting the instance by primary key
+    
+    # Now you can access the courses related to this instance
+    courses = certificate_type_instance.courses.all()
+    print(courses)
+
+    # You can iterate over the courses or access individual attributes
+    # for course in courses:
+    #     print(course.course_name)
+
+    return render(request, 'table.html', {'students': students, 'certificate_types': certificate_types,'courses':courses})
 
 
 # def display_students(request):
@@ -254,7 +265,7 @@ def render_pdf_view(request, student_id):
     pdfmetrics.registerFont(TTFont('Cascadia', font_path))
     c.setFont('Cascadia', 12)  
     current_year = datetime.now().strftime("%Y")
-    c.drawString(5.1* inch, 4.75 * inch, f"SRC/{current_year}/{student_instance.id}")
+    c.drawString(5.1* inch, 4.75 * inch, f"SRC{current_year}{student_instance.id}")
     
     # Register Dancing Script font
     font_path = 'static/fonts/MTCORSVA.TTF'
@@ -370,7 +381,7 @@ def render_pdf_view(request, student_id):
     height=50
     # Draw the QR code image on the PDF
     qr_image = ImageReader(qr_buffer)
-    c.drawImage(qr_image, x, y, width, height)
+    # c.drawImage(qr_image, x, y, width, height)
 
     
     c.showPage()

@@ -29,6 +29,7 @@ class CertificateTypes(models.Model):
         course_list = ', '.join([course.course_name for course in self.courses.all()])
         return f"{self.certificate_type} - Courses: {course_list}"
 
+
 class Student(models.Model): 
     name = models.CharField(max_length=255, blank=True, default='')
     college_name = models.CharField(max_length=255, blank=True, default='')
