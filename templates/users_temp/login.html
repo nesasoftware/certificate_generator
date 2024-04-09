@@ -22,26 +22,27 @@
 
 </head>
 
-<body>
-    <div class="ceritfy-logo">
-        <a href="#">
-            <img src="{% static 'images/icon/certify_logo.png' %}" alt="Certify Logo" width="215" height="86">
-        </a>
-    </div>
+<body class="acc-form">
+    
     <div class="container">
         <div class="row">
             <div class="col-md-6 mx-auto">
 
                 <div class="card text-justify mt-5">
-                    <div class="card-body form-body p-5 mx-auto">
+                    <div class="card-body form-body p-5 ">
+                        <div class="ceritfy-logo  mt-3 text-center mb-5">
+                            <a href="#">
+                                <img src="{% static 'images/icon/certify_logo.png' %}" alt="Certify Logo" height="100">
+                            </a>
+                        </div>
                         <h5 class="card-title text-center">Login Form</h5>
-                        <p class="card-text ">
-                        <form method="post" action="{% url 'login' %}?next={{ request.GET.next }}">
-                            {% csrf_token %}
-                            {{ form.as_p }}
-                            <input class="btn btn-primary mb-3" type="submit" value="submit">
-                        </form>
-                        <p>Don't have an account? <a href="{% url 'register' %}">Register here</a>.</p>
+                        <p class="card-text">
+                           <form method="post" action="{% url 'login' %}?next={{ request.GET.next }}" class="login_frm">
+                             {% csrf_token %}
+                             {{ form.as_p }}
+                             <input class="btn btn-primary mb-5 mt-3" type="submit" value="submit">
+                           </form>
+                            <p>Don't have an account? <a href="{% url 'register' %}">Register here</a>.</p>
                         </p>
                     </div>
                 </div>

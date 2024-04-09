@@ -60,17 +60,17 @@ def my_view(request):
             certificate_type_id = request.POST.get('certificate_type')
             authority_ids = request.POST.getlist('authority')
             course_id = request.POST.get('courses')
-            print("id:",course_id)
+            
             # Fetch the CertificateTypes instance based on the provided certificate_type_id
             certificate_type = CertificateTypes.objects.get(id=certificate_type_id)
-            print("certificate_type:",certificate_type)
+         
             # Fetch the Course instance based on the provided course_id
             course = Course.objects.get(id=course_id)
-            print("course:",course)
+      
 
             #Assign the selected course to the student through the CertificateTypes instance
             certificate_type.courses.add(course) 
-            print("Added course:", course)
+  
 
             student = Student.objects.create(
                 name=name,
@@ -118,7 +118,7 @@ def my_view(request):
 
                         # Fetch certificate_type_id from row data
                         certificate_type_id = row.get('certificate_type_id')
-                        print("certificate_type_id:", certificate_type_id)
+                        
 
                         try:
                             # Get CertificateTypes instance based on the custom ID
@@ -179,7 +179,7 @@ def display_students(request):
     
     # Now you can access the courses related to this instance
     courses = certificate_type_instance.courses.all()
-    print(courses)
+    # print(courses)
 
     # You can iterate over the courses or access individual attributes
     # for course in courses:
@@ -280,7 +280,7 @@ def render_pdf_view(request, student_id):
     # c.setFont('MonteCarlo', font_size)
     # c.setFillColor(HexColor('#c46608'))
 
-    # Define font size thresholds and corresponding font sizes
+    # Define font size thresholds and corresponding font -
     font_size_threshold = 30
     default_font_size = 40
     reduced_font_size = 30
@@ -333,7 +333,7 @@ def render_pdf_view(request, student_id):
 
     # Accessing the related Student ID
     student_id = student_related_authority.std.id
-    print("Related Student ID:", student_id)
+    
 
     # Accessing the related Authority instance
     authority = student_related_authority.authority
@@ -399,6 +399,701 @@ def render_pdf_view(request, student_id):
 
     return response
 
+def render_pdf_workshop(request, student_id):
+
+    # Get the specific Student object based on student_id
+    student_instance = get_object_or_404(Student, id=student_id)
+
+    # Get the certificate type associated with the student
+    certificate_type_id = student_instance.certificate_type_id
+    certificate_type = get_object_or_404(CertificateTypes, id=certificate_type_id)
+
+    # Get the courses related to the certificate type
+    courses = certificate_type.courses.first()
+
+    # Create a BytesIO buffer to store the PDF content
+    buffer = io.BytesIO()
+
+    file_name=f"{student_instance.id}_{slugify(student_instance.name)}_certificate"
+
+    # # Create the response object and it shows pdf page in other tab without downloading
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="{file_name}.pdf"'
+
+    # Create the response object and it directly download pdf page 
+    # response = HttpResponse(content_type='application/pdf')
+    # response['Content-Disposition'] = f'attachment; filename="{file_name}.pdf"'
+
+
+    #pdf page format
+    custom_page_size = (600, 440)
+    c = canvas.Canvas(buffer, bottomup=1, pagesize=custom_page_size)
+    c.translate(inch, inch)
+
+    desired_width = 596
+    desired_height = 436
+
+    
+    c.drawImage('pictures\Certificate of Participation Blank.jpg', -0.97*inch, -0.97*inch, width=desired_width, height=desired_height, mask=None)
+    font_path = 'static/fonts/Cascadia.ttf'
+    pdfmetrics.registerFont(TTFont('Cascadia', font_path))
+    c.setFont('Cascadia', 12)  
+    current_year = datetime.now().strftime("%Y")
+    c.drawString(5.1* inch, 4.75 * inch, f"SRC{current_year}{student_instance.id}")
+    
+    # Register Dancing Script font
+    font_path = 'static/fonts/MTCORSVA.TTF'
+    pdfmetrics.registerFont(TTFont('MonteCarlo', font_path))
+
+    
+    
+    # Example name
+    name = student_instance.name
+
+    # Set the font for the name
+    # c.setFont('MonteCarlo', font_size)
+    # c.setFillColor(HexColor('#c46608'))
+
+    # Define font size thresholds and corresponding font -
+    font_size_threshold = 30
+    default_font_size = 40
+    reduced_font_size = 30
+    
+    # Calculate the width of the name string
+    name_width = c.stringWidth(name)
+    
+    # Calculate the center of the page
+    center_x = letter[0] / 2
+    
+    # Calculate the starting x-coordinate to center the text
+    if len(name) < font_size_threshold:
+        start_x = 3.2 * inch
+        font_size = default_font_size
+    else:
+        # For longer names, reduce the font size and adjust the starting x-coordinate
+        start_x = 3.2 * inch
+        # start_x = center_x - (name_width / 2)
+        font_size = reduced_font_size
+    
+    align_y = 1.9 * inch
+    
+    # Set the font size
+    c.setFont('MonteCarlo', font_size)
+    c.setFillColor(HexColor('#c46608'))
+        
+    align_y = 1.9 * inch    
+    c.drawCentredString(start_x, align_y, name)
+    
+
+    
+    font_path = 'static/fonts/Minion-It.ttf'
+    pdfmetrics.registerFont(TTFont('Minion Pro', font_path))
+    c.setFont('Minion Pro', 12)
+
+    # Define your custom style
+    my_Style = getSampleStyleSheet()['BodyText']
+    
+    my_Style.alignment = 1 
+    p1 = Paragraph(f'''<i>Student of <b>{student_instance.college_name}</b>, has successfully completed the academic internship
+        program at <b>SinroRobotics Pvt Ltd</b> on <b>{courses}</b> from <b>{student_instance.start_date}</b> to <b>{student_instance.end_date}</b>.</i>''', my_Style)
+    
+    width = 940
+    height = 500
+    p1.wrapOn(c, 450, 50)
+    p1.drawOn(c, width-930, height-405)
+
+    # Get the StudentRelatedAuthority instance for the given student_id
+    student_related_authority = get_object_or_404(StudentRelatedAuthority, std_id=student_id)
+
+    # Accessing the related Student ID
+    student_id = student_related_authority.std.id
+    
+
+    # Accessing the related Authority instance
+    authority = student_related_authority.authority
+
+    if authority:
+        # Accessing the signature attribute of the related Authority instance
+        signature_image_url = str(authority.signature)
+        print("Signature Image URL:", signature_image_url)
+
+        c.drawImage('media/' + signature_image_url, 4.4 * inch, 0 * inch, width=80, height=40, mask=None)
+
+    
+    #c.drawImage('pictures/Nebu-John-SIgn.png',4.4*inch, 0.1*inch, width=100, height=50,mask=None)
+
+    font_path = 'static/fonts/Quattrocento-Bold.ttf'
+    pdfmetrics.registerFont(TTFont('Quattrocento-Bold', font_path))
+    c.setFont('Quattrocento-Bold', 12)
+    c.setFillColorRGB(0,0,0)
+    c.drawString( 0.8*inch, 0.08*inch, str(datetime.now().strftime("%Y-%m-%d")))
+
+
+    # Generate QR code
+    base_url = request.build_absolute_uri('/')
+    qr_data = f"{base_url}certificate_verify/{student_instance.id}/"
+    qr = pyqrcode.create(qr_data)
+
+    # Save the QR code as BytesIO
+    qr_buffer = io.BytesIO()
+    qr.png(qr_buffer, scale=6)
+
+    # Save the QR code as a file on the server
+    qr_filename = f"qr_code_{student_instance.id}.png"
+    qr_path = os.path.join(settings.MEDIA_ROOT, qr_filename)
+    print("QR Code Path:", qr_path)
+    qr.png(qr_path, scale=6)
+
+    # Pass the URL or path of the QR code image to the context
+    context = {'qr_code_path': qr_path}
+
+    x = 6.4* inch
+    y = 4.3 * inch
+    # x = 200
+    # y = -10
+    width=50
+    height=50
+    # Draw the QR code image on the PDF
+    qr_image = ImageReader(qr_buffer)
+    # c.drawImage(qr_image, x, y, width, height)
+
+    
+    c.showPage()
+    c.save()
+
+    # Rewind the buffer to the beginning
+    buffer.seek(0)
+
+    # Write the buffer content to the response
+    response.write(buffer.getvalue())
+
+    # Close the buffers
+    buffer.close()
+    qr_buffer.close()
+
+    return response
+
+def render_pdf_tronix(request, student_id):
+
+    # Get the specific Student object based on student_id
+    student_instance = get_object_or_404(Student, id=student_id)
+
+    # Get the certificate type associated with the student
+    certificate_type_id = student_instance.certificate_type_id
+    certificate_type = get_object_or_404(CertificateTypes, id=certificate_type_id)
+
+    # Get the courses related to the certificate type
+    courses = certificate_type.courses.first()
+
+    # Create a BytesIO buffer to store the PDF content
+    buffer = io.BytesIO()
+
+    file_name=f"{student_instance.id}_{slugify(student_instance.name)}_certificate"
+
+    # # Create the response object and it shows pdf page in other tab without downloading
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="{file_name}.pdf"'
+
+    # Create the response object and it directly download pdf page 
+    # response = HttpResponse(content_type='application/pdf')
+    # response['Content-Disposition'] = f'attachment; filename="{file_name}.pdf"'
+
+
+    #pdf page format
+    custom_page_size = (600, 440)
+    c = canvas.Canvas(buffer, bottomup=1, pagesize=custom_page_size)
+    c.translate(inch, inch)
+
+    desired_width = 596
+    desired_height = 436
+
+    
+    c.drawImage('pictures\Certificate of Participation Blank.jpg', -0.97*inch, -0.97*inch, width=desired_width, height=desired_height, mask=None)
+    font_path = 'static/fonts/Cascadia.ttf'
+    pdfmetrics.registerFont(TTFont('Cascadia', font_path))
+    c.setFont('Cascadia', 12)  
+    current_year = datetime.now().strftime("%Y")
+    c.drawString(5.1* inch, 4.75 * inch, f"SRC{current_year}{student_instance.id}")
+    
+    # Register Dancing Script font
+    font_path = 'static/fonts/MTCORSVA.TTF'
+    pdfmetrics.registerFont(TTFont('MonteCarlo', font_path))
+
+    
+    
+    # Example name
+    name = student_instance.name
+
+    # Set the font for the name
+    # c.setFont('MonteCarlo', font_size)
+    # c.setFillColor(HexColor('#c46608'))
+
+    # Define font size thresholds and corresponding font -
+    font_size_threshold = 30
+    default_font_size = 40
+    reduced_font_size = 30
+    
+    # Calculate the width of the name string
+    name_width = c.stringWidth(name)
+    
+    # Calculate the center of the page
+    center_x = letter[0] / 2
+    
+    # Calculate the starting x-coordinate to center the text
+    if len(name) < font_size_threshold:
+        start_x = 3.2 * inch
+        font_size = default_font_size
+    else:
+        # For longer names, reduce the font size and adjust the starting x-coordinate
+        start_x = 3.2 * inch
+        # start_x = center_x - (name_width / 2)
+        font_size = reduced_font_size
+    
+    align_y = 1.9 * inch
+    
+    # Set the font size
+    c.setFont('MonteCarlo', font_size)
+    c.setFillColor(HexColor('#c46608'))
+        
+    align_y = 1.9 * inch    
+    c.drawCentredString(start_x, align_y, name)
+    
+
+    
+    font_path = 'static/fonts/Minion-It.ttf'
+    pdfmetrics.registerFont(TTFont('Minion Pro', font_path))
+    c.setFont('Minion Pro', 12)
+
+    # Define your custom style
+    my_Style = getSampleStyleSheet()['BodyText']
+    
+    my_Style.alignment = 1 
+    p1 = Paragraph(f'''<i>Student of <b>{student_instance.college_name}</b>, has successfully completed the academic internship
+        program at <b>SinroRobotics Pvt Ltd</b> on <b>{courses}</b> from <b>{student_instance.start_date}</b> to <b>{student_instance.end_date}</b>.</i>''', my_Style)
+    
+    width = 940
+    height = 500
+    p1.wrapOn(c, 450, 50)
+    p1.drawOn(c, width-930, height-405)
+
+    # Get the StudentRelatedAuthority instance for the given student_id
+    student_related_authority = get_object_or_404(StudentRelatedAuthority, std_id=student_id)
+
+    # Accessing the related Student ID
+    student_id = student_related_authority.std.id
+    
+
+    # Accessing the related Authority instance
+    authority = student_related_authority.authority
+
+    if authority:
+        # Accessing the signature attribute of the related Authority instance
+        signature_image_url = str(authority.signature)
+        print("Signature Image URL:", signature_image_url)
+
+        c.drawImage('media/' + signature_image_url, 4.4 * inch, 0 * inch, width=80, height=40, mask=None)
+
+    
+    #c.drawImage('pictures/Nebu-John-SIgn.png',4.4*inch, 0.1*inch, width=100, height=50,mask=None)
+
+    font_path = 'static/fonts/Quattrocento-Bold.ttf'
+    pdfmetrics.registerFont(TTFont('Quattrocento-Bold', font_path))
+    c.setFont('Quattrocento-Bold', 12)
+    c.setFillColorRGB(0,0,0)
+    c.drawString( 0.8*inch, 0.08*inch, str(datetime.now().strftime("%Y-%m-%d")))
+
+
+    # Generate QR code
+    base_url = request.build_absolute_uri('/')
+    qr_data = f"{base_url}certificate_verify/{student_instance.id}/"
+    qr = pyqrcode.create(qr_data)
+
+    # Save the QR code as BytesIO
+    qr_buffer = io.BytesIO()
+    qr.png(qr_buffer, scale=6)
+
+    # Save the QR code as a file on the server
+    qr_filename = f"qr_code_{student_instance.id}.png"
+    qr_path = os.path.join(settings.MEDIA_ROOT, qr_filename)
+    print("QR Code Path:", qr_path)
+    qr.png(qr_path, scale=6)
+
+    # Pass the URL or path of the QR code image to the context
+    context = {'qr_code_path': qr_path}
+
+    x = 6.4* inch
+    y = 4.3 * inch
+    # x = 200
+    # y = -10
+    width=50
+    height=50
+    # Draw the QR code image on the PDF
+    qr_image = ImageReader(qr_buffer)
+    # c.drawImage(qr_image, x, y, width, height)
+
+    
+    c.showPage()
+    c.save()
+
+    # Rewind the buffer to the beginning
+    buffer.seek(0)
+
+    # Write the buffer content to the response
+    response.write(buffer.getvalue())
+
+    # Close the buffers
+    buffer.close()
+    qr_buffer.close()
+
+    return response
+
+def render_pdf_summercamp(request, student_id):
+
+    # Get the specific Student object based on student_id
+    student_instance = get_object_or_404(Student, id=student_id)
+
+    # Get the certificate type associated with the student
+    certificate_type_id = student_instance.certificate_type_id
+    certificate_type = get_object_or_404(CertificateTypes, id=certificate_type_id)
+
+    # Get the courses related to the certificate type
+    courses = certificate_type.courses.first()
+
+    # Create a BytesIO buffer to store the PDF content
+    buffer = io.BytesIO()
+
+    file_name=f"{student_instance.id}_{slugify(student_instance.name)}_certificate"
+
+    # # Create the response object and it shows pdf page in other tab without downloading
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="{file_name}.pdf"'
+
+    # Create the response object and it directly download pdf page 
+    # response = HttpResponse(content_type='application/pdf')
+    # response['Content-Disposition'] = f'attachment; filename="{file_name}.pdf"'
+
+
+    #pdf page format
+    custom_page_size = (600, 440)
+    c = canvas.Canvas(buffer, bottomup=1, pagesize=custom_page_size)
+    c.translate(inch, inch)
+
+    desired_width = 596
+    desired_height = 436
+
+    
+    c.drawImage('pictures\Certificate of Participation Blank.jpg', -0.97*inch, -0.97*inch, width=desired_width, height=desired_height, mask=None)
+    font_path = 'static/fonts/Cascadia.ttf'
+    pdfmetrics.registerFont(TTFont('Cascadia', font_path))
+    c.setFont('Cascadia', 12)  
+    current_year = datetime.now().strftime("%Y")
+    c.drawString(5.1* inch, 4.75 * inch, f"SRC{current_year}{student_instance.id}")
+    
+    # Register Dancing Script font
+    font_path = 'static/fonts/MTCORSVA.TTF'
+    pdfmetrics.registerFont(TTFont('MonteCarlo', font_path))
+
+    
+    
+    # Example name
+    name = student_instance.name
+
+    # Set the font for the name
+    # c.setFont('MonteCarlo', font_size)
+    # c.setFillColor(HexColor('#c46608'))
+
+    # Define font size thresholds and corresponding font -
+    font_size_threshold = 30
+    default_font_size = 40
+    reduced_font_size = 30
+    
+    # Calculate the width of the name string
+    name_width = c.stringWidth(name)
+    
+    # Calculate the center of the page
+    center_x = letter[0] / 2
+    
+    # Calculate the starting x-coordinate to center the text
+    if len(name) < font_size_threshold:
+        start_x = 3.2 * inch
+        font_size = default_font_size
+    else:
+        # For longer names, reduce the font size and adjust the starting x-coordinate
+        start_x = 3.2 * inch
+        # start_x = center_x - (name_width / 2)
+        font_size = reduced_font_size
+    
+    align_y = 1.9 * inch
+    
+    # Set the font size
+    c.setFont('MonteCarlo', font_size)
+    c.setFillColor(HexColor('#c46608'))
+        
+    align_y = 1.9 * inch    
+    c.drawCentredString(start_x, align_y, name)
+    
+
+    
+    font_path = 'static/fonts/Minion-It.ttf'
+    pdfmetrics.registerFont(TTFont('Minion Pro', font_path))
+    c.setFont('Minion Pro', 12)
+
+    # Define your custom style
+    my_Style = getSampleStyleSheet()['BodyText']
+    
+    my_Style.alignment = 1 
+    p1 = Paragraph(f'''<i>Student of <b>{student_instance.college_name}</b>, has successfully completed the academic internship
+        program at <b>SinroRobotics Pvt Ltd</b> on <b>{courses}</b> from <b>{student_instance.start_date}</b> to <b>{student_instance.end_date}</b>.</i>''', my_Style)
+    
+    width = 940
+    height = 500
+    p1.wrapOn(c, 450, 50)
+    p1.drawOn(c, width-930, height-405)
+
+    # Get the StudentRelatedAuthority instance for the given student_id
+    student_related_authority = get_object_or_404(StudentRelatedAuthority, std_id=student_id)
+
+    # Accessing the related Student ID
+    student_id = student_related_authority.std.id
+    
+
+    # Accessing the related Authority instance
+    authority = student_related_authority.authority
+
+    if authority:
+        # Accessing the signature attribute of the related Authority instance
+        signature_image_url = str(authority.signature)
+        print("Signature Image URL:", signature_image_url)
+
+        c.drawImage('media/' + signature_image_url, 4.4 * inch, 0 * inch, width=80, height=40, mask=None)
+
+    
+    #c.drawImage('pictures/Nebu-John-SIgn.png',4.4*inch, 0.1*inch, width=100, height=50,mask=None)
+
+    font_path = 'static/fonts/Quattrocento-Bold.ttf'
+    pdfmetrics.registerFont(TTFont('Quattrocento-Bold', font_path))
+    c.setFont('Quattrocento-Bold', 12)
+    c.setFillColorRGB(0,0,0)
+    c.drawString( 0.8*inch, 0.08*inch, str(datetime.now().strftime("%Y-%m-%d")))
+
+
+    # Generate QR code
+    base_url = request.build_absolute_uri('/')
+    qr_data = f"{base_url}certificate_verify/{student_instance.id}/"
+    qr = pyqrcode.create(qr_data)
+
+    # Save the QR code as BytesIO
+    qr_buffer = io.BytesIO()
+    qr.png(qr_buffer, scale=6)
+
+    # Save the QR code as a file on the server
+    qr_filename = f"qr_code_{student_instance.id}.png"
+    qr_path = os.path.join(settings.MEDIA_ROOT, qr_filename)
+    print("QR Code Path:", qr_path)
+    qr.png(qr_path, scale=6)
+
+    # Pass the URL or path of the QR code image to the context
+    context = {'qr_code_path': qr_path}
+
+    x = 6.4* inch
+    y = 4.3 * inch
+    # x = 200
+    # y = -10
+    width=50
+    height=50
+    # Draw the QR code image on the PDF
+    qr_image = ImageReader(qr_buffer)
+    # c.drawImage(qr_image, x, y, width, height)
+
+    
+    c.showPage()
+    c.save()
+
+    # Rewind the buffer to the beginning
+    buffer.seek(0)
+
+    # Write the buffer content to the response
+    response.write(buffer.getvalue())
+
+    # Close the buffers
+    buffer.close()
+    qr_buffer.close()
+
+    return response
+
+def render_pdf_industrialvisit(request, student_id):
+
+    # Get the specific Student object based on student_id
+    student_instance = get_object_or_404(Student, id=student_id)
+
+    # Get the certificate type associated with the student
+    certificate_type_id = student_instance.certificate_type_id
+    certificate_type = get_object_or_404(CertificateTypes, id=certificate_type_id)
+
+    # Get the courses related to the certificate type
+    courses = certificate_type.courses.first()
+
+    # Create a BytesIO buffer to store the PDF content
+    buffer = io.BytesIO()
+
+    file_name=f"{student_instance.id}_{slugify(student_instance.name)}_certificate"
+
+    # # Create the response object and it shows pdf page in other tab without downloading
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="{file_name}.pdf"'
+
+    # Create the response object and it directly download pdf page 
+    # response = HttpResponse(content_type='application/pdf')
+    # response['Content-Disposition'] = f'attachment; filename="{file_name}.pdf"'
+
+
+    #pdf page format
+    custom_page_size = (600, 440)
+    c = canvas.Canvas(buffer, bottomup=1, pagesize=custom_page_size)
+    c.translate(inch, inch)
+
+    desired_width = 596
+    desired_height = 436
+
+    
+    c.drawImage('pictures\Certificate of Participation Blank.jpg', -0.97*inch, -0.97*inch, width=desired_width, height=desired_height, mask=None)
+    font_path = 'static/fonts/Cascadia.ttf'
+    pdfmetrics.registerFont(TTFont('Cascadia', font_path))
+    c.setFont('Cascadia', 12)  
+    current_year = datetime.now().strftime("%Y")
+    c.drawString(5.1* inch, 4.75 * inch, f"SRC{current_year}{student_instance.id}")
+    
+    # Register Dancing Script font
+    font_path = 'static/fonts/MTCORSVA.TTF'
+    pdfmetrics.registerFont(TTFont('MonteCarlo', font_path))
+
+    
+    
+    # Example name
+    name = student_instance.name
+
+    # Set the font for the name
+    # c.setFont('MonteCarlo', font_size)
+    # c.setFillColor(HexColor('#c46608'))
+
+    # Define font size thresholds and corresponding font -
+    font_size_threshold = 30
+    default_font_size = 40
+    reduced_font_size = 30
+    
+    # Calculate the width of the name string
+    name_width = c.stringWidth(name)
+    
+    # Calculate the center of the page
+    center_x = letter[0] / 2
+    
+    # Calculate the starting x-coordinate to center the text
+    if len(name) < font_size_threshold:
+        start_x = 3.2 * inch
+        font_size = default_font_size
+    else:
+        # For longer names, reduce the font size and adjust the starting x-coordinate
+        start_x = 3.2 * inch
+        # start_x = center_x - (name_width / 2)
+        font_size = reduced_font_size
+    
+    align_y = 1.9 * inch
+    
+    # Set the font size
+    c.setFont('MonteCarlo', font_size)
+    c.setFillColor(HexColor('#c46608'))
+        
+    align_y = 1.9 * inch    
+    c.drawCentredString(start_x, align_y, name)
+    
+
+    
+    font_path = 'static/fonts/Minion-It.ttf'
+    pdfmetrics.registerFont(TTFont('Minion Pro', font_path))
+    c.setFont('Minion Pro', 12)
+
+    # Define your custom style
+    my_Style = getSampleStyleSheet()['BodyText']
+    
+    my_Style.alignment = 1 
+    p1 = Paragraph(f'''<i>Student of <b>{student_instance.college_name}</b>, has successfully completed the academic internship
+        program at <b>SinroRobotics Pvt Ltd</b> on <b>{courses}</b> from <b>{student_instance.start_date}</b> to <b>{student_instance.end_date}</b>.</i>''', my_Style)
+    
+    width = 940
+    height = 500
+    p1.wrapOn(c, 450, 50)
+    p1.drawOn(c, width-930, height-405)
+
+    # Get the StudentRelatedAuthority instance for the given student_id
+    student_related_authority = get_object_or_404(StudentRelatedAuthority, std_id=student_id)
+
+    # Accessing the related Student ID
+    student_id = student_related_authority.std.id
+    
+
+    # Accessing the related Authority instance
+    authority = student_related_authority.authority
+
+    if authority:
+        # Accessing the signature attribute of the related Authority instance
+        signature_image_url = str(authority.signature)
+        print("Signature Image URL:", signature_image_url)
+
+        c.drawImage('media/' + signature_image_url, 4.4 * inch, 0 * inch, width=80, height=40, mask=None)
+
+    
+    #c.drawImage('pictures/Nebu-John-SIgn.png',4.4*inch, 0.1*inch, width=100, height=50,mask=None)
+
+    font_path = 'static/fonts/Quattrocento-Bold.ttf'
+    pdfmetrics.registerFont(TTFont('Quattrocento-Bold', font_path))
+    c.setFont('Quattrocento-Bold', 12)
+    c.setFillColorRGB(0,0,0)
+    c.drawString( 0.8*inch, 0.08*inch, str(datetime.now().strftime("%Y-%m-%d")))
+
+
+    # Generate QR code
+    base_url = request.build_absolute_uri('/')
+    qr_data = f"{base_url}certificate_verify/{student_instance.id}/"
+    qr = pyqrcode.create(qr_data)
+
+    # Save the QR code as BytesIO
+    qr_buffer = io.BytesIO()
+    qr.png(qr_buffer, scale=6)
+
+    # Save the QR code as a file on the server
+    qr_filename = f"qr_code_{student_instance.id}.png"
+    qr_path = os.path.join(settings.MEDIA_ROOT, qr_filename)
+    print("QR Code Path:", qr_path)
+    qr.png(qr_path, scale=6)
+
+    # Pass the URL or path of the QR code image to the context
+    context = {'qr_code_path': qr_path}
+
+    x = 6.4* inch
+    y = 4.3 * inch
+    # x = 200
+    # y = -10
+    width=50
+    height=50
+    # Draw the QR code image on the PDF
+    qr_image = ImageReader(qr_buffer)
+    # c.drawImage(qr_image, x, y, width, height)
+
+    
+    c.showPage()
+    c.save()
+
+    # Rewind the buffer to the beginning
+    buffer.seek(0)
+
+    # Write the buffer content to the response
+    response.write(buffer.getvalue())
+
+    # Close the buffers
+    buffer.close()
+    qr_buffer.close()
+
+    return response
 
 
 @login_required(login_url='login')

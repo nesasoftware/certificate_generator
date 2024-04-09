@@ -269,7 +269,39 @@ input, textarea {
 .register{
     padding: 10px;
 }
-
+.register-form input[type="submit"],
+.register-form input[type="password"],
+.register-form input[type="text"],
+.register-form input[type="email"],
+.register-form label{
+      width:100%;
+      border: none !important;
+      
+}
+.register-form input[type="password"],
+.register-form input[type="text"],
+.register-form input[type="email"]{
+    padding-bottom: 15px;
+    box-shadow: 1px solid #6e6a6a;
+    background-color: #dadada;
+    border-radius: 5px;
+}
+.register-form input[type="submit"]{
+    padding-bottom: 15px;
+}
+.register-form label{
+    margin-bottom: 10px;
+    color: #778085;
+    font-size: 1.2rem;
+}
+.form-body h5{
+    text-align: center;
+    margin: 0 0 50px 0;
+    font-weight: 100;
+    font-size: 60px;
+    /* color: #615DEC; */
+    color: #000000;
+}
 
 /* registration end */
 
@@ -280,6 +312,31 @@ table, th, td {
   }
 
   /**** login.html****/
+  .acc-form{
+    background-color: #cae8f5;
+  }
+  .login_frm input[type="submit"],
+  .login_frm input[type="password"],
+  .login_frm input[type="text"],
+  .login_frm label{
+        width:100%;
+        border:none !important;
+  }
+  .login_frm input[type="text"],
+  .login_frm input[type="password"]{
+        padding-bottom: 15px;
+        box-shadow: 1px solid #6e6a6a;
+        background-color: #dadada;
+        border-radius: 5px;
+  }
+  .login_frm input[type="submit"]{
+    padding-bottom: 15px;
+}
+  .login_frm label{
+    margin-bottom: 10px;
+    color: #778085;
+    font-size: 1.1rem;
+}
   /* .signup_link{
     margin-top:30px;
   } */
@@ -375,7 +432,9 @@ li{
     list-style: none;
 }
 .certify-logo{
-    padding: 20px 0px 0px 40px;
+    padding: 0px 0px 0px 0px;
+    margin-bottom: 50px;
+
 }
 /* #courseDropdown {
     display: none;
