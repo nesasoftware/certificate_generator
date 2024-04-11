@@ -398,8 +398,10 @@ tbody{
 }
 /******* courses.html ******/
 .course-box{
-    padding: 0px 0px 0px 0px;
+    /* padding: 0px 0px 0px 0px; */
+    min-height: 90%;
 }
+
 .dashboard-btn{
     color: white !important;
 }

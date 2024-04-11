@@ -1,0 +1,33 @@
+<!-- student_form.html -->
+{% extends 'base.html' %}
+{% load static %}
+{% block body %}
+<!-- <div class="animsition">
+  <div class="page-wrapper"> -->
+    <div class="main-content">
+      <div class="section__content section__content--p30">
+        <div class="container">
+          <div class="row">
+            <div class="col-md-6 col-sm-12 mx-auto">
+            
+              <div class="card text-justify mt-5">
+                <div class="card-body form-body p-5">
+                  <h5 class="card-title text-center">Student Data delete Form</h5>
+                  <p class="card-text">
+                  <form method="post" action="" class="frm">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <input class="btn btn-primary" type="submit" name="submit_form" value="submit">
+                  </form>
+
+                  
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  <!-- </div>
+</div> -->
+{% endblock %}

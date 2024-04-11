@@ -32,6 +32,7 @@
             <td>{{ student.start_date }}</td>
             <td>{{ student.end_date }}</td>
             <td>{{ student.mentor_name }}</td>
+            
             <td><a href="{% url 'render_pdf' student.id %}" class="btn btn-secondary m-2">Download</a></td>
             
         </tr>
