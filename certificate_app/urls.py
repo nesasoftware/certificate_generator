@@ -11,6 +11,7 @@ urlpatterns = [
     path('edit/<pk>',views.edit,name='edit'),
     path('delete/<pk>', views.delete, name='delete'),
     path('search/', views.search_students, name='search_students'),
+    # path('display-student/search_popup.html', views.search_popup_view, name='search_popup'),
     path('render-pdf/<int:student_id>/', views.render_pdf_view, name='render_pdf'),
     path('render-pdf-workshop/<int:student_id>/', views.render_pdf_workshop, name='render_pdf_workshop'),
     path('render-pdf-summercamp/<int:student_id>/', views.render_pdf_summercamp, name='render_pdf_summercamp'),

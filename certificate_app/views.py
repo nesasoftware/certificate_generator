@@ -159,6 +159,7 @@ def my_view(request):
     return render(request, 'student_form.html', {'certificate_types': certificate_types, 'authorities': authorities, 'upload_form': upload_form})
 
     
+    
 def get_courses(request):
     certificate_type_id = request.GET.get('certificate_type_id')
     certificate_type = CertificateTypes.objects.get(id=certificate_type_id)
@@ -320,8 +321,10 @@ def render_pdf_view(request, student_id):
     my_Style = getSampleStyleSheet()['BodyText']
     
     my_Style.alignment = 1 
+    # Create Paragraph with student information including courses
+    courses_str = ", ".join([course.course_name for course in courses])
     p1 = Paragraph(f'''<i>Student of <b>{student_instance.college_name}</b>, has successfully completed the academic internship
-        program at <b>SinroRobotics Pvt Ltd</b> on <b>{courses}</b> from <b>{student_instance.start_date}</b> to <b>{student_instance.end_date}</b>.</i>''', my_Style)
+        program at <b>SinroRobotics Pvt Ltd</b> on <b>{courses_str}</b> from <b>{student_instance.start_date}</b> to <b>{student_instance.end_date}</b>.</i>''', my_Style)
     
     width = 940
     height = 500
@@ -495,7 +498,7 @@ def render_pdf_workshop(request, student_id):
     my_Style = getSampleStyleSheet()['BodyText']
     
     my_Style.alignment = 1 
-    p1 = Paragraph(f'''<i>Student of <b>{student_instance.college_name}</b>, has successfully completed the academic internship
+    p1 = Paragraph(f'''<i>Student of <b>{student_instance.college_name}</b>, has successfully completed the workshop
         program at <b>SinroRobotics Pvt Ltd </b>under guidance of <b>{student_instance.mentor_name}</b> on <b>{courses}</b> from <b>{student_instance.start_date}</b> to <b>{student_instance.end_date}</b>.</i>''', my_Style)
     
     width = 940
@@ -670,7 +673,7 @@ def render_pdf_summercamp(request, student_id):
     my_Style = getSampleStyleSheet()['BodyText']
     
     my_Style.alignment = 1 
-    p1 = Paragraph(f'''<i>Student of <b>{student_instance.college_name}</b>, has successfully completed the academic internship
+    p1 = Paragraph(f'''<i>Student of <b>{student_instance.college_name}</b>, has successfully completed the Summercamp
         program at <b>SinroRobotics Pvt Ltd</b> on <b>{courses}</b> from <b>{student_instance.start_date}</b> to <b>{student_instance.end_date}</b>.</i>''', my_Style)
     
     width = 940
