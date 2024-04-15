@@ -114,7 +114,7 @@ def my_view(request):
                         
                         # Fetch or create the Course instance based on the provided course_name
                         course_name = row.get('course_name')
-                        course = Course.objects.get_or_create(course_name=course_name)
+                        course,create = Course.objects.get_or_create(course_name=course_name)
 
                         # Fetch certificate_type_id from row data
                         certificate_type_id = row.get('certificate_type_id')
@@ -139,7 +139,7 @@ def my_view(request):
                             issued_date=timezone.now().date(),
                             certificate_type=certificate_type,  
                             course=course
-                        # course=row.get('course_name','')
+                            # course=row.get('course_name','')
                         )
 
                         # Create StudentRelatedAuthority instance linking student with authority
@@ -174,36 +174,34 @@ def get_courses(request):
 def display_students(request):
     students = Student.objects.all().order_by('-created_at')
     certificate_types = CertificateTypes.objects.all()
-    
-    # First, you need to retrieve an instance of CertificateTypes
-    certificate_type_instance = CertificateTypes.objects.get(pk=2)  # Assuming you're getting the instance by primary key
-    
-    # Now you can access the courses related to this instance
-    courses = certificate_type_instance.courses.all()
-    # print(courses)
+    certificate_courses = {}
 
-    # You can iterate over the courses or access individual attributes
-    # for course in courses:
-    #     print(course.course_name)
+    for certificate_type_instance in certificate_types:
+        certificate_type_pk = certificate_type_instance.pk
+        # Now you can use certificate_type_pk as needed, for example:
+        # print(f"Primary key of CertificateTypes instance: {certificate_type_pk}")
 
-    return render(request, 'table.html', {'students': students, 'certificate_types': certificate_types,'courses':courses})
+        # Access the courses related to this instance
+        current_courses = certificate_type_instance.courses.all()
+
+        # Store the related courses for this certificate type
+        certificate_courses[certificate_type_pk] = current_courses
+
+        # Iterate over each Course instance related to the current certificate type
+        for course_instance in current_courses:
+            # Retrieve the related CertificateTypes for the current Course instance
+            certificate_types_related_to_course = course_instance.certificate_types.all()
+        
+            # Iterate over each related CertificateTypes instance
+            for certificate_type_instance_related_to_course in certificate_types_related_to_course:
+                certificate_type_pk_related_to_course = certificate_type_instance_related_to_course.pk
+                # Now you can use certificate_type_pk_related_to_course as needed, for example:
+                # print(f"Primary key of CertificateTypes instance related to Course '{course_instance.course_name}': {certificate_type_pk_related_to_course}")
+
+    return render(request, 'table.html', {'students': students, 'certificate_types': certificate_types, 'certificate_courses': certificate_courses})
 
 
-# def display_students(request):
-#     students = Student.objects.all().order_by('-created_at')  # Order by created_at descending
-#     courses = Course.objects.all()  # Fetch all courses initially
-#     certificate_types = CertificateTypes.objects.all()
-#     certificate_type_id = request.GET.get('certificate_type_id')
-#     print(certificate_type_id)
-    
-#     selected_course_name = request.GET.get('course_name')
-    
-#     if selected_course_name:
-#         # Filter students based on the selected course name
-#         students = Student.objects.filter(course__course_name=selected_course_name).order_by('-created_at')
-#     else:
-#         students = Student.objects.all().order_by('-created_at')
-#     return render(request, 'table.html', {'students': students, 'courses': courses, 'certificate_types': certificate_types})
+
 
 
 

@@ -20,7 +20,7 @@
                         {% csrf_token %}
                         <button type="submit" class="btn btn-secondary m-2">Download Selected Certificates</button>
 
-                        <!-- Filter options -->
+                        <!-- sort options -->
                         <div class="mb-3">
                             <label for="sort_order">Sort by:</label>
                             <select id="sort_order" class="form-control" onchange="sortStudents()">
@@ -28,9 +28,9 @@
                                 <option value="alphabetical">Alphabetical Order</option>
                             </select>
                         </div>
+                        <!-- Filter options -->
                         <div class="mb-3">
                             <label for="sort_order">Filter by:</label>
-
                             <select id="certificatetypeDropdown" class="form-control mb-3"
                                 onchange="showCourseDropdown()">
                                 <option value="">All Certificates</option>
@@ -41,12 +41,35 @@
                             </select>
                             <select id="courseDropdown" class="form-control" onchange="filterStudents()">
                                 <option value="">All Courses</option>
+                                {% for certificate_type in certificate_types %}
+                                    <optgroup label="{{ certificate_type.certificate_type }}">
+                                        {% for course in certificate_type.courses.all %}
+                                            <option value="{{ course.course_name }}">{{ course.course_name }}</option>
+                                        {% endfor %}
+                                    </optgroup>
+                                {% endfor %}
+                            </select>
+                            
+                            
+                        </div>
+                        <!-- <div class="mb-3">
+                            <label for="sort_order">Filter by:</label>
+
+                            <select id="certificatetypeDropdown" class="form-control mb-3" onchange="showCourseDropdown()">
+                                <option value="">All Certificates</option>
+                                {% for certificate_type in certificate_types %}
+                                <option value="{{ certificate_type.id }}">
+                                    {{certificate_type.certificate_type }}</option>
+                                {% endfor %}
+                            </select>
+                            <select id="courseDropdown" class="form-control" onchange="filterStudents()">
+                                <option value="">All Courses</option>
                                 {% for course in courses %}
                                 <option value="{{ course.course_name }}">{{ course.course_name }}</option>
                                 {% endfor %}
                             </select>
 
-                        </div>
+                        </div> -->
                         <!-- <div class="mb-3">
                             <label for="sort_order">Filter by:</label>
                             <select id="course_filter" class="form-control" onchange="filterStudents()">
@@ -76,9 +99,12 @@
                                         <th>Start Date</th>
                                         <th>End Date</th>
                                         <th>Mentor Name</th>
-                                        <th>Issued Date <input type="text" id="searchInput" placeholder="Search by Issued Date">
+                                        <th>Issued Date 
+                                            <span id="searchIcon" class="search-icon" onclick="toggleSearchInput()">🔍</span>
+                                            <input type="text" id="searchInput" placeholder="Search by Issued Date" style="display: none;">
+                                        
                                         </th>
-                                        <!-- <th>Issued Date <span class="search-icon" onclick="openSearchPopup()">🔍</span></th> -->
+                                      
                                         <th>Download Certificate</th>
                                         <th>Edit</th>
                                         <th>Delete</th>
@@ -144,19 +170,7 @@
 </div>
 
 <script>
-//     function openSearchPopup() {
-//         // Open a popup window for search
-//         window.open('search_popup.html', '_blank', 'width=400,height=200');
-//     }
 
-//     $(document).ready(function() {
-//     $('#search_button').click(function() {
-//         var issuedDate = $('#issued_date_search').val();
-//         // Implement your search logic here
-//         console.log("Search Issued Date:", issuedDate);
-//         // You can use AJAX to send the search query to the server and update the table accordingly
-//     });
-//    });
         // Attach an event listener to the input field to detect changes in the input value
     document.getElementById("searchInput").addEventListener("input", function() {
         var query = this.value.toLowerCase().trim(); // Get the search query
@@ -176,7 +190,12 @@
             }
         });
     });
-    
+     // Function to toggle the visibility of the search input
+     function toggleSearchInput() {
+        var searchInput = document.getElementById("searchInput");
+        searchInput.style.display = (searchInput.style.display === "none") ? "inline-block" : "none";
+    }
+
 
     function confirmDelete(event) {
         event.preventDefault(); // Prevent default form submission

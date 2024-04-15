@@ -420,6 +420,9 @@ tbody{
     height: 400px;
     overflow-y: visible;
 }
+#searchIcon{
+    cursor:pointer;
+}
 /********Search_results.html  *******/
 .search-results{
     margin: 50px auto 0px;
