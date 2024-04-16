@@ -51,7 +51,22 @@ class Student(models.Model):
 
     def __str__(self):
         return self.name
+  
     
+class StudentIV(models.Model):
+    name = models.CharField(max_length=255, blank=True, default='')
+    sem_year =models.CharField(max_length=100, blank=True, default='')
+    dept =models.CharField(max_length=255, blank=True, default='')
+    college_name = models.CharField(max_length=255, blank=True, default='')
+    duration = models.CharField(max_length=255, blank=True, default='')
+    mentor_name = models.CharField(max_length=255, blank=True, default='')
+    conducted_date = models.DateField(default=timezone.now)
+    issued_date = models.DateField(default=timezone.now)
+    created_at = models.DateTimeField( default=timezone.now)  # Add this field to store creation time
+    certificate_type = models.ForeignKey(CertificateTypes, on_delete=models.CASCADE,  null=True)
+    course= models.ForeignKey(Course, on_delete=models.CASCADE, null=True)
+    
+
 
 class StudentRelatedAuthority(models.Model):
     std = models.ForeignKey(Student, on_delete=models.CASCADE)

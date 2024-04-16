@@ -31,8 +31,7 @@
                         <!-- Filter options -->
                         <div class="mb-3">
                             <label for="sort_order">Filter by:</label>
-                            <select id="certificatetypeDropdown" class="form-control mb-3"
-                                onchange="showCourseDropdown()">
+                            <select id="certificatetypeDropdown" class="form-control mb-3" onchange="showCourseDropdown()">
                                 <option value="">All Certificates</option>
                                 {% for certificate_type in certificate_types %}
                                 <option value="{{ certificate_type.certificate_type}}">
@@ -42,15 +41,15 @@
                             <select id="courseDropdown" class="form-control" onchange="filterStudents()">
                                 <option value="">All Courses</option>
                                 {% for certificate_type in certificate_types %}
-                                    <optgroup label="{{ certificate_type.certificate_type }}">
-                                        {% for course in certificate_type.courses.all %}
-                                            <option value="{{ course.course_name }}">{{ course.course_name }}</option>
-                                        {% endfor %}
-                                    </optgroup>
+                                <optgroup label="{{ certificate_type.certificate_type }}">
+                                    {% for course in certificate_type.courses.all %}
+                                    <option value="{{ course.course_name }}">{{ course.course_name }}</option>
+                                    {% endfor %}
+                                </optgroup>
                                 {% endfor %}
                             </select>
-                            
-                            
+
+
                         </div>
                         <!-- <div class="mb-3">
                             <label for="sort_order">Filter by:</label>
@@ -93,19 +92,22 @@
                                 <thead>
                                     <tr>
                                         <th>Select</th>
+                                        <th>Download</th>
                                         <th>Name</th>
                                         <th>Institution Name</th>
                                         <th>Course / Item</th>
                                         <th>Start Date</th>
                                         <th>End Date</th>
                                         <th>Mentor Name</th>
-                                        <th>Issued Date 
-                                            <span id="searchIcon" class="search-icon" onclick="toggleSearchInput()">🔍</span>
-                                            <input type="text" id="searchInput" placeholder="Search by Issued Date" style="display: none;">
-                                        
+                                        <th>Issued Date
+                                            <span id="searchIcon" class="search-icon"
+                                                onclick="toggleSearchInput()">🔍</span>
+                                            <input type="text" id="searchInput" placeholder="Search by Issued Date"
+                                                style="display: none;">
+
                                         </th>
-                                      
-                                        <th>Download Certificate</th>
+
+                                        
                                         <th>Edit</th>
                                         <th>Delete</th>
 
@@ -116,6 +118,25 @@
                                     <tr>
                                         <td><input type="checkbox" name="selected_students" value="{{ student.id }}"
                                                 class="m-2"></td>
+                                        <td>
+                                            <a href="{% if student.certificate_type.certificate_type == 'Workshop' %}{% url 'render_pdf_workshop' student.id %}
+                                                    {% elif student.certificate_type.certificate_type == 'Summer Camp' %}{% url 'render_pdf_summercamp' student.id %}
+                                                    {% elif student.certificate_type.certificate_type == 'Internship' %}{% url 'render_pdf' student.id %}
+                                                    {% elif student.certificate_type.certificate_type == 'Tronix' %}{% url 'render_pdf_tronix' student.id %}
+                                                    {% elif student.certificate_type.certificate_type == 'Industrial Visit' %}{% url 'render_pdf_industrialvisit' student.id %}
+                                                    {% else %}
+                                                    {% url 'render_pdf' student.id %}{% endif %}"
+                                                class="btn btn-secondary m-2"><i class="fas fa-download"></i>
+                                            </a>
+                                            <!-- {% if student.certificate_type.certificate_type == 'Workshop' %}
+                                            <p>Certificate Type: Workshop</p>
+                                            {% elif student.certificate_type.certificate_type == 'Summer Camp' %}
+                                            <p>Certificate Type: Summer Camp</p>
+                                            {% else %}
+                                            <p>Certificate Type: Internship</p> -->
+                                            <!-- {% endif %} -->
+
+                                        </td>
                                         <td>{{ student.name }}</td>
                                         <td>{{ student.college_name }}</td>
                                         <td>{{ student.course }} </td>
@@ -126,24 +147,7 @@
                                         <!-- <td><a href="{% url 'render_pdf' student.id %}"
                                                 class="btn btn-secondary m-2">Download</a>
                                         </td> -->
-                                        <td>
-                                            <a href="{% if student.certificate_type.certificate_type == 'Workshop' %}{% url 'render_pdf_workshop' student.id %}
-                                            {% elif student.certificate_type.certificate_type == 'Summer Camp' %}{% url 'render_pdf_summercamp' student.id %}
-                                            {% elif student.certificate_type.certificate_type == 'Internship' %}{% url 'render_pdf' student.id %}
-                                            
-                                            {% else %}
-                                             {% url 'render_pdf' student.id %}{% endif %}"
-                                                class="btn btn-secondary m-2">Download
-                                            </a>
-                                            {% if student.certificate_type.certificate_type == 'Workshop' %}
-                                             <p>Certificate Type: Workshop</p>
-                                            {% elif student.certificate_type.certificate_type == 'Summer Camp' %}
-                                             <p>Certificate Type: Summer Camp</p>
-                                            {% else %}
-                                             <p>Certificate Type: Internship</p>
-                                            {% endif %}
 
-                                        </td>
 
                                         <td><a href="{% url 'edit' student.id %}" class="btn btn-secondary m-2">Edit</a>
                                         </td>
@@ -171,15 +175,15 @@
 
 <script>
 
-        // Attach an event listener to the input field to detect changes in the input value
-    document.getElementById("searchInput").addEventListener("input", function() {
+    // Attach an event listener to the input field to detect changes in the input value
+    document.getElementById("searchInput").addEventListener("input", function () {
         var query = this.value.toLowerCase().trim(); // Get the search query
 
         // Get all table rows
         var rows = document.querySelectorAll("#student_table_body tr");
 
         // Loop through each row
-        rows.forEach(function(row) {
+        rows.forEach(function (row) {
             var issuedDate = row.cells[7].textContent.trim().toLowerCase(); // Get the Issued Date from the 8th column
 
             // If the Issued Date contains the search query, show the row; otherwise, hide it
@@ -190,8 +194,8 @@
             }
         });
     });
-     // Function to toggle the visibility of the search input
-     function toggleSearchInput() {
+    // Function to toggle the visibility of the search input
+    function toggleSearchInput() {
         var searchInput = document.getElementById("searchInput");
         searchInput.style.display = (searchInput.style.display === "none") ? "inline-block" : "none";
     }

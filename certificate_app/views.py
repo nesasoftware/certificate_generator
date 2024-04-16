@@ -264,7 +264,7 @@ def render_pdf_view(request, student_id):
     pdfmetrics.registerFont(TTFont('Cascadia', font_path))
     c.setFont('Cascadia', 12)  
     current_year = datetime.now().strftime("%Y")
-    c.drawString(5.1* inch, 4.75 * inch, f"SRC{current_year}{student_instance.id}")
+    c.drawString(5.4* inch, 4.75 * inch, f"SRC{current_year}{student_instance.id}")
     
     # Register Dancing Script font
     font_path = 'static/fonts/MTCORSVA.TTF'
@@ -319,15 +319,22 @@ def render_pdf_view(request, student_id):
     my_Style = getSampleStyleSheet()['BodyText']
     
     my_Style.alignment = 1 
+
+    # Retrieve the course name directly from the Course object
+    course_name = student_instance.course.course_name
+
     # Create Paragraph with student information including courses
-    courses_str = ", ".join([course.course_name for course in courses])
+    # courses_str = ", ".join([course.course_name for course in courses])
+
+    
+        
     p1 = Paragraph(f'''<i>Student of <b>{student_instance.college_name}</b>, has successfully completed the academic internship
-        program at <b>SinroRobotics Pvt Ltd</b> on <b>{courses_str}</b> from <b>{student_instance.start_date}</b> to <b>{student_instance.end_date}</b>.</i>''', my_Style)
+        program at <b>SinroRobotics Pvt Ltd</b> on <b>{course_name}</b> from <b>{student_instance.start_date}</b> to <b>{student_instance.end_date}</b>.</i>''', my_Style)
     
     width = 940
     height = 500
     p1.wrapOn(c, 450, 50)
-    p1.drawOn(c, width-930, height-405)
+    p1.drawOn(c, width-930, height-415)
 
     # Get the StudentRelatedAuthority instance for the given student_id
     student_related_authority = get_object_or_404(StudentRelatedAuthority, std_id=student_id)
@@ -399,6 +406,7 @@ def render_pdf_view(request, student_id):
     qr_buffer.close()
 
     return response
+
 
 @login_required(login_url='login')
 def render_pdf_workshop(request, student_id):
@@ -496,13 +504,17 @@ def render_pdf_workshop(request, student_id):
     my_Style = getSampleStyleSheet()['BodyText']
     
     my_Style.alignment = 1 
+
+    # Retrieve the course name directly from the Course object
+    course_name = student_instance.course.course_name
+
     p1 = Paragraph(f'''<i>Student of <b>{student_instance.college_name}</b>, has successfully completed the workshop
-        program at <b>SinroRobotics Pvt Ltd </b>under guidance of <b>{student_instance.mentor_name}</b> on <b>{courses}</b> from <b>{student_instance.start_date}</b> to <b>{student_instance.end_date}</b>.</i>''', my_Style)
+        program at <b>SinroRobotics Pvt Ltd </b>under guidance of <b>{student_instance.mentor_name}</b> on <b>{course_name}</b> from <b>{student_instance.start_date}</b> to <b>{student_instance.end_date}</b>.</i>''', my_Style)
     
     width = 940
     height = 500
     p1.wrapOn(c, 450, 50)
-    p1.drawOn(c, width-930, height-405)
+    p1.drawOn(c, width-930, height-410)
 
     # Get the StudentRelatedAuthority instance for the given student_id
     student_related_authority = get_object_or_404(StudentRelatedAuthority, std_id=student_id)
@@ -574,6 +586,8 @@ def render_pdf_workshop(request, student_id):
     qr_buffer.close()
 
     return response
+
+
 
 @login_required(login_url='login')
 def render_pdf_summercamp(request, student_id):
@@ -671,13 +685,22 @@ def render_pdf_summercamp(request, student_id):
     my_Style = getSampleStyleSheet()['BodyText']
     
     my_Style.alignment = 1 
-    p1 = Paragraph(f'''<i>Student of <b>{student_instance.college_name}</b>, has successfully completed the Summercamp
-        program at <b>SinroRobotics Pvt Ltd</b> on <b>{courses}</b> from <b>{student_instance.start_date}</b> to <b>{student_instance.end_date}</b>.</i>''', my_Style)
+
+    # Retrieve the course name directly from the Course object
+    course_name = student_instance.course.course_name
+
+    # Create Paragraph with student information including courses
+    # courses_str = ", ".join([course.course_name for course in courses])
+
+    
+
+    p1 = Paragraph(f'''<i>Student of <b>{student_instance.college_name}</b>, has successfully completed the Summer Camp
+        program at <b>SinroRobotics Pvt Ltd</b> on <b>{course_name}</b> from <b>{student_instance.start_date}</b> to <b>{student_instance.end_date}</b>.</i>''', my_Style)
     
     width = 940
     height = 500
     p1.wrapOn(c, 450, 50)
-    p1.drawOn(c, width-930, height-405)
+    p1.drawOn(c, width-930, height-410)
 
     # Get the StudentRelatedAuthority instance for the given student_id
     student_related_authority = get_object_or_404(StudentRelatedAuthority, std_id=student_id)
@@ -749,6 +772,7 @@ def render_pdf_summercamp(request, student_id):
     qr_buffer.close()
 
     return response
+
 
 @login_required(login_url='login')
 def render_pdf_tronix(request, student_id):
@@ -846,13 +870,17 @@ def render_pdf_tronix(request, student_id):
     my_Style = getSampleStyleSheet()['BodyText']
     
     my_Style.alignment = 1 
-    p1 = Paragraph(f'''<i>Student of <b>{student_instance.college_name}</b>, has successfully completed the academic internship
-        program at <b>SinroRobotics Pvt Ltd</b> on <b>{courses}</b> from <b>{student_instance.start_date}</b> to <b>{student_instance.end_date}</b>.</i>''', my_Style)
+
+    # Retrieve the course name directly from the Course object
+    course_name = student_instance.course.course_name
+
+    p1 = Paragraph(f'''<i>Student of <b>{student_instance.college_name}</b>, has successfully completed the tronix
+        program at <b>SinroRobotics Pvt Ltd</b> on <b>{course_name}</b> from <b>{student_instance.start_date}</b> to <b>{student_instance.end_date}</b>.</i>''', my_Style)
     
     width = 940
     height = 500
     p1.wrapOn(c, 450, 50)
-    p1.drawOn(c, width-930, height-405)
+    p1.drawOn(c, width-930, height-410)
 
     # Get the StudentRelatedAuthority instance for the given student_id
     student_related_authority = get_object_or_404(StudentRelatedAuthority, std_id=student_id)
@@ -924,6 +952,7 @@ def render_pdf_tronix(request, student_id):
     qr_buffer.close()
 
     return response
+
 
 
 def render_pdf_industrialvisit(request, student_id):
@@ -1021,13 +1050,17 @@ def render_pdf_industrialvisit(request, student_id):
     my_Style = getSampleStyleSheet()['BodyText']
     
     my_Style.alignment = 1 
-    p1 = Paragraph(f'''<i>Student of <b>{student_instance.college_name}</b>, has successfully completed the summercamp
-        program at <b>SinroRobotics Pvt Ltd</b> on <b>{courses}</b> from <b>{student_instance.start_date}</b> to <b>{student_instance.end_date}</b>.</i>''', my_Style)
+
+    # Retrieve the course name directly from the Course object
+    course_name = student_instance.course.course_name
+
+    p1 = Paragraph(f'''<i>Student of <b>{student_instance.college_name}</b>, has successfully completed the industrial visit
+        program at <b>SinroRobotics Pvt Ltd</b> on <b>{course_name}</b> from <b>{student_instance.start_date}</b> to <b>{student_instance.end_date}</b>.</i>''', my_Style)
     
     width = 940
     height = 500
     p1.wrapOn(c, 450, 50)
-    p1.drawOn(c, width-930, height-405)
+    p1.drawOn(c, width-930, height-410)
 
     # Get the StudentRelatedAuthority instance for the given student_id
     student_related_authority = get_object_or_404(StudentRelatedAuthority, std_id=student_id)
