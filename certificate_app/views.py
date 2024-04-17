@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, JsonResponse
-from certificate_app.models import Student, CertificateTypes,Course, Authority, StudentRelatedAuthority
+from certificate_app.models import Student, CertificateTypes,Course, Authority, StudentRelatedAuthority, StudentIV
 from django.contrib.auth.models import User
 from django.db.models import Q, Prefetch
 from django.db import IntegrityError
@@ -158,8 +158,129 @@ def my_view(request):
 
     return render(request, 'student_form.html', {'certificate_types': certificate_types, 'authorities': authorities, 'upload_form': upload_form})
 
-    
-    
+
+
+@login_required(login_url='login')
+def student_iv_submit(request):
+    certificate_types = CertificateTypes.objects.all()
+    authorities = Authority.objects.all()
+    upload_form = UploadFileForm()
+
+    if request.method == 'POST':
+        if 'iv_submit_form' in request.POST:
+            name = request.POST.get('name')
+            sem_year = request.POST.get('sem_year')
+            dept = request.POST.get('dept')
+            college_name = request.POST.get('college_name')
+            duration = request.POST.get('duration')
+            conducted_date = request.POST.get('conducted_date')
+            mentor_name = request.POST.get('mentor_name')
+            issued_date = timezone.now().date()
+            certificate_type_id = request.POST.get('certificate_type')
+            authority_ids = request.POST.getlist('authority')
+            course_id = request.POST.get('courses')
+            
+            # Fetch the CertificateTypes instance based on the provided certificate_type_id
+            certificate_type = CertificateTypes.objects.get(id=certificate_type_id)
+         
+            # Fetch the Course instance based on the provided course_id
+            course = Course.objects.get(id=course_id)
+      
+            #Assign the selected course to the student through the CertificateTypes instance
+            certificate_type.courses.add(course) 
+  
+            iv_student = StudentIV.objects.create(
+                name=name,
+                sem_year =sem_year,
+                dept=dept,
+                college_name=college_name,
+                duration= duration,
+                conducted_date=conducted_date,
+                mentor_name=mentor_name,
+                issued_date=issued_date,
+                certificate_type_id=certificate_type_id,
+                course=course
+            )
+
+            # Add selected authorities to the student
+            for authority_id in authority_ids:
+                authority = Authority.objects.get(id=authority_id)
+                StudentRelatedAuthority.objects.create(std_iv=iv_student, authority=authority)
+
+            return redirect('display_students')  # Redirect to the display students page
+        
+
+        elif 'upload_csv' in request.POST:
+            upload_form = UploadFileForm(request.POST, request.FILES)
+            if upload_form.is_valid():
+                csv_file = request.FILES['csv_file']
+                decoded_file = csv_file.read().decode('utf-8').splitlines()
+                reader = csv.DictReader(decoded_file)
+                for row in reader:
+                    conducted_date = timezone.datetime.strptime(row['end_date'], '%d-%m-%Y').strftime('%Y-%m-%d')
+
+                    authorities = row.get('auth_id', '').split(',')
+
+                    for auth_id in authorities:
+                        try:
+                            # Get Authority instance based on the custom ID (auth_id)
+                            authority = Authority.objects.get(auth_id=auth_id)
+                        except Authority.DoesNotExist:
+                             # Handle the case where the Authority instance with the provided auth_id doesn't exist
+                            print(f"Authority with auth_id {auth_id} does not exist. Skipping this auth_id.")
+                            continue
+                        
+                        # Fetch or create the Course instance based on the provided course_name
+                        course_name = row.get('course_name')
+                        course,create = Course.objects.get_or_create(course_name=course_name)
+
+                        # Fetch certificate_type_id from row data
+                        certificate_type_id = row.get('certificate_type_id')
+                        
+
+                        try:
+                            # Get CertificateTypes instance based on the custom ID
+                            certificate_type = CertificateTypes.objects.get(certify_type_id=certificate_type_id)
+                        except CertificateTypes.DoesNotExist:
+                            # Handle the case where the CertificateTypes instance with the provided certificate_type_id doesn't exist
+                            print(f"CertificateTypes with certificate_type_id {certificate_type_id} does not exist. Skipping this row.")
+                            continue
+
+
+                        # Create Student instance for the current row
+                        iv_student = StudentIV.objects.create(
+                            name=row.get('name', ''),
+                            college_name=row.get('college_name', ''),
+                            sem_year =row.get('sem_year',''),
+                            conducted_date=row.get('conducted_date',''),
+                            dept=row.get('dept',''),
+                            duration= row.get('duration',''),
+                            mentor_name=row.get('mentor_name', ''),
+                            issued_date=timezone.now().date(),
+                            certificate_type=certificate_type,  
+                            course=course
+                            # course=row.get('course_name','')
+                        )
+
+                        # Create StudentRelatedAuthority instance linking student with authority
+                        StudentRelatedAuthority.objects.create(std_iv=iv_student, authority=authority)
+
+                        # Print a message indicating successful processing
+                        print("CSV file processed successfully")                       
+
+                return redirect('display_students')
+            else:
+                # Print form errors if any
+                print("Form errors:", upload_form.errors)
+        else:
+            # Print if 'upload_csv' is not in request.POST
+            print("Upload CSV not found in request")
+
+    return render(request, 'student_iv_form.html', {'certificate_types': certificate_types, 'authorities': authorities, 'upload_form': upload_form})    
+
+
+
+@login_required(login_url='login')
 def get_courses(request):
     certificate_type_id = request.GET.get('certificate_type_id')
     certificate_type = CertificateTypes.objects.get(id=certificate_type_id)
@@ -173,6 +294,19 @@ def get_courses(request):
 @login_required(login_url='login')
 def display_students(request):
     students = Student.objects.all().order_by('-created_at')
+    #student_iv_data = StudentIV.objects.all().order_by('-created_at')
+
+    students_iv = StudentIV.objects.all()
+
+    # Combine the data into a single list with a type indicator
+    combined_data = [(student, 'Student') for student in students] + [(student_iv, 'StudentIV') for student_iv in students_iv]
+
+    # # Combine student data with StudentIV data based on the name field
+    # combined_data = []
+    # for student in students:
+    #     student_iv = student_iv_data.filter(name=student.name).first()
+    #     combined_data.append((student, student_iv))
+
     certificate_types = CertificateTypes.objects.all()
     certificate_courses = {}
 
@@ -198,7 +332,7 @@ def display_students(request):
                 # Now you can use certificate_type_pk_related_to_course as needed, for example:
                 # print(f"Primary key of CertificateTypes instance related to Course '{course_instance.course_name}': {certificate_type_pk_related_to_course}")
 
-    return render(request, 'table.html', {'students': students, 'certificate_types': certificate_types, 'certificate_courses': certificate_courses})
+    return render(request, 'table.html', {'combined_data': combined_data, 'certificate_types': certificate_types, 'certificate_courses': certificate_courses})
 
 
 

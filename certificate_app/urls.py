@@ -7,6 +7,7 @@ urlpatterns = [
     path('index/',views.index, name='index'),
     path('courses/',views.courses, name='courses'),
     path('data-submission/', views.my_view, name='student_form'),
+    path('iv-data-submission/', views.student_iv_submit, name='student_iv_form'),
     path('display-student/', views.display_students, name='display_students'),
     path('edit/<pk>',views.edit,name='edit'),
     path('delete/<pk>', views.delete, name='delete'),

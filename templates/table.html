@@ -31,7 +31,8 @@
                         <!-- Filter options -->
                         <div class="mb-3">
                             <label for="sort_order">Filter by:</label>
-                            <select id="certificatetypeDropdown" class="form-control mb-3" onchange="showCourseDropdown()">
+                            <select id="certificatetypeDropdown" class="form-control mb-3"
+                                onchange="showCourseDropdown()">
                                 <option value="">All Certificates</option>
                                 {% for certificate_type in certificate_types %}
                                 <option value="{{ certificate_type.certificate_type}}">
@@ -51,41 +52,6 @@
 
 
                         </div>
-                        <!-- <div class="mb-3">
-                            <label for="sort_order">Filter by:</label>
-
-                            <select id="certificatetypeDropdown" class="form-control mb-3" onchange="showCourseDropdown()">
-                                <option value="">All Certificates</option>
-                                {% for certificate_type in certificate_types %}
-                                <option value="{{ certificate_type.id }}">
-                                    {{certificate_type.certificate_type }}</option>
-                                {% endfor %}
-                            </select>
-                            <select id="courseDropdown" class="form-control" onchange="filterStudents()">
-                                <option value="">All Courses</option>
-                                {% for course in courses %}
-                                <option value="{{ course.course_name }}">{{ course.course_name }}</option>
-                                {% endfor %}
-                            </select>
-
-                        </div> -->
-                        <!-- <div class="mb-3">
-                            <label for="sort_order">Filter by:</label>
-                            <select id="course_filter" class="form-control" onchange="filterStudents()">
-                                <option value="">All Courses</option>
-                                {% for course in courses %}
-                                <option value="{{ course.course_name }}">{{ course.course_name }}</option>
-                                {% endfor %}
-                            </select>
-                        </div> -->
-
-                        <!-- {% if certificate_types %}
-                            {% for certificate_type in certificate_types %}
-                                <a href="{% url 'display_students' %}?certificate_type_id={{ certificate_type.id }}">View Students - {{ certificate_type.certificate_type }}</a>
-                            {% endfor %}
-                        {% endif %}
-                         -->
-
 
                         <div class="table-responsive table--no-card m-b-30">
                             <table class="table table-borderless table-striped table-earning">
@@ -106,63 +72,83 @@
                                                 style="display: none;">
 
                                         </th>
-
-                                        
+                                        <!-- Columns for StudentIV model -->
+                                        <th>Semester/Year</th>
+                                        <th>Department</th>
+                                        <th>Duration</th>
                                         <th>Edit</th>
                                         <th>Delete</th>
 
                                     </tr>
                                 </thead>
-                                <tbody id="student_table_body">
-                                    {% for student in students %}
-                                    <tr>
-                                        <td><input type="checkbox" name="selected_students" value="{{ student.id }}"
-                                                class="m-2"></td>
-                                        <td>
-                                            <a href="{% if student.certificate_type.certificate_type == 'Workshop' %}{% url 'render_pdf_workshop' student.id %}
+                                <!-- <tbody id="student_table_body">
+                                    {% for student, student_iv in combined_data %}
+                                        <tr>
+                                            <td><input type="checkbox" name="selected_students" value="{{ student.id }}" class="m-2"></td>
+                                            <td>
+                                                <a href="{% if student.certificate_type.certificate_type == 'Workshop' %}{% url 'render_pdf_workshop' student.id %}
                                                     {% elif student.certificate_type.certificate_type == 'Summer Camp' %}{% url 'render_pdf_summercamp' student.id %}
                                                     {% elif student.certificate_type.certificate_type == 'Internship' %}{% url 'render_pdf' student.id %}
                                                     {% elif student.certificate_type.certificate_type == 'Tronix' %}{% url 'render_pdf_tronix' student.id %}
                                                     {% elif student.certificate_type.certificate_type == 'Industrial Visit' %}{% url 'render_pdf_industrialvisit' student.id %}
                                                     {% else %}
                                                     {% url 'render_pdf' student.id %}{% endif %}"
-                                                class="btn btn-secondary m-2"><i class="fas fa-download"></i>
-                                            </a>
-                                            <!-- {% if student.certificate_type.certificate_type == 'Workshop' %}
-                                            <p>Certificate Type: Workshop</p>
-                                            {% elif student.certificate_type.certificate_type == 'Summer Camp' %}
-                                            <p>Certificate Type: Summer Camp</p>
-                                            {% else %}
-                                            <p>Certificate Type: Internship</p> -->
-                                            <!-- {% endif %} -->
-
-                                        </td>
-                                        <td>{{ student.name }}</td>
-                                        <td>{{ student.college_name }}</td>
-                                        <td>{{ student.course }} </td>
-                                        <td>{{ student.start_date }}</td>
-                                        <td>{{ student.end_date }}</td>
-                                        <td>{{ student.mentor_name }}</td>
-                                        <td>{{student.issued_date}}</td>
-                                        <!-- <td><a href="{% url 'render_pdf' student.id %}"
-                                                class="btn btn-secondary m-2">Download</a>
-                                        </td> -->
-
-
-                                        <td><a href="{% url 'edit' student.id %}" class="btn btn-secondary m-2">Edit</a>
-                                        </td>
-                                        <td>
-                                            <form action="{% url 'delete' student.id %}" method="post" id="delete-form">
-                                                {% csrf_token %}
-                                                <button type="submit" class="btn btn-secondary m-2"
-                                                    onclick="confirmDelete(event)">Delete</button>
-                                            </form>
-                                        </td>
-
-                                    </tr>
+                                                    class="btn btn-secondary m-2"><i class="fas fa-download"></i>
+                                                </a>
+                                            </td>
+                                            <td>{% if student_iv %}{{ student_iv.name }}{% else %}{{ student.name }}{% endif %}</td>
+                                            <td>{% if student_iv %}{{ student_iv.college_name }}{% else %}{{ student.college_name }}{% endif %}</td>
+                                            <td>{% if student_iv %}{{ student_iv.course }}{% else %}{{ student.course }}{% endif %}</td>
+                                            <td>{% if student_iv %}{{ student_iv.start_date }}{% else %}{{ student.start_date }}{% endif %}</td>
+                                            <td>{% if student_iv %}{{ student_iv.end_date }}{% else %}{{ student.end_date }}{% endif %}</td>
+                                            <td>{% if student_iv %}{{ student_iv.mentor_name }}{% else %}{{ student.mentor_name }}{% endif %}</td>
+                                            <td>{% if student_iv %}{{ student_iv.issued_date }}{% else %}{{ student.issued_date }}{% endif %}</td>
+                                            <td>{% if student_iv %}{{ student_iv.sem_year }}{% else %}No Data{% endif %}</td>
+                                            <td>{% if student_iv %}{{ student_iv.dept }}{% else %}No Data{% endif %}</td>
+                                            <td>{% if student_iv %}{{ student_iv.duration }}{% else %}No Data{% endif %}</td>
+                                           
+                                            <td><a href="{% url 'edit' student.id %}" class="btn btn-secondary m-2">Edit</a></td>
+                                            <td>
+                                                <form action="{% url 'delete' student.id %}" method="post" id="delete-form">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-secondary m-2" onclick="confirmDelete(event)">Delete</button>
+                                                </form>
+                                            </td>
+                                        </tr>
                                     {% endfor %}
-
+                                </tbody> -->
+                                <tbody id="student_table_body">
+                                    {% for item, item_type in combined_data %}
+                                        <tr>
+                                            <td><input type="checkbox" name="selected_students" value="{{ item.id }}" class="m-2"></td>
+                                            <td>
+                                                <a href="{% if item_type == 'Student' %}{% url 'render_pdf' item.id %}
+                                                    {% elif item_type == 'StudentIV' %}{% url 'render_pdf_industrialvisit' item.id %}
+                                                    {% endif %}"
+                                                    class="btn btn-secondary m-2"><i class="fas fa-download"></i>
+                                                </a>
+                                            </td>
+                                            <td>{{ item.name }}</td>
+                                            <td>{{ item.college_name }}</td>
+                                            <td>{{ item.course }}</td>
+                                            <td>{{ item.start_date }}</td>
+                                            <td>{{ item.end_date }}</td>
+                                            <td>{{ item.mentor_name }}</td>
+                                            <td>{{ item.issued_date }}</td>
+                                            <td>{% if item_type == 'StudentIV' %}{{ item.sem_year }}{% else %}No Data{% endif %}</td>
+                                            <td>{% if item_type == 'StudentIV' %}{{ item.dept }}{% else %}No Data{% endif %}</td>
+                                            <td>{% if item_type == 'StudentIV' %}{{ item.duration }}{% else %}No Data{% endif %}</td>
+                                            <td><a href="{% url 'edit' item.id %}" class="btn btn-secondary m-2">Edit</a></td>
+                                            <td>
+                                                <form action="{% url 'delete' item.id %}" method="post" id="delete-form">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-secondary m-2" onclick="confirmDelete(event)">Delete</button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
                                 </tbody>
+                                                                
                             </table>
                         </div>
                     </form>

@@ -56,7 +56,7 @@ class Student(models.Model):
 class StudentIV(models.Model):
     name = models.CharField(max_length=255, blank=True, default='')
     sem_year =models.CharField(max_length=100, blank=True, default='')
-    dept =models.CharField(max_length=255, blank=True, default='')
+    dept =models.CharField(max_length=255, blank=True, null=True, default='')
     college_name = models.CharField(max_length=255, blank=True, default='')
     duration = models.CharField(max_length=255, blank=True, default='')
     mentor_name = models.CharField(max_length=255, blank=True, default='')
@@ -66,11 +66,24 @@ class StudentIV(models.Model):
     certificate_type = models.ForeignKey(CertificateTypes, on_delete=models.CASCADE,  null=True)
     course= models.ForeignKey(Course, on_delete=models.CASCADE, null=True)
     
+    def save(self, *args, **kwargs):
+        # Set issued_date to the current date if it's not already set
+        if not self.issued_date:
+            self.issued_date = timezone.now().date()
+        if not self.pk:  # If the instance is being created (not updated)
+            self.created_at = self.issued_date  # Set created_at to issued_date
+        super().save(*args, **kwargs)
+
+
+    def __str__(self):
+        return self.name
+  
 
 
 class StudentRelatedAuthority(models.Model):
-    std = models.ForeignKey(Student, on_delete=models.CASCADE)
-    authority = models.ForeignKey(Authority, on_delete=models.CASCADE)
+    std = models.ForeignKey(Student, on_delete=models.CASCADE, null=True)
+    std_iv = models.ForeignKey(StudentIV, on_delete=models.CASCADE, null=True)
+    authority = models.ForeignKey(Authority, on_delete=models.CASCADE, null=True)
 
     def __str__(self):
         return self.std
