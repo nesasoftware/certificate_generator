@@ -29,7 +29,7 @@
                             </select>
                         </div>
                         <!-- Filter options -->
-                        <div class="mb-3">
+                        <!-- <div class="mb-3">
                             <label for="sort_order">Filter by:</label>
                             <select id="certificatetypeDropdown" class="form-control mb-3"
                                 onchange="showCourseDropdown()">
@@ -51,6 +51,15 @@
                             </select>
 
 
+                        </div> -->
+
+                        <div class="mb-3">
+                            <select id="courseDropdown" class="form-control" onchange="filterStudents()">
+                                <option value="">All Courses</option>
+                                    {% for course in courses %}
+                                        <option value="{{ course.course_name }}">{{ course.course_name }}</option>
+                                    {% endfor %}
+                            </select>
                         </div>
 
                         <div class="table-responsive table--no-card m-b-30">
@@ -72,17 +81,13 @@
                                                 style="display: none;">
 
                                         </th>
-                                        <!-- Columns for StudentIV model -->
-                                        <th>Semester/Year</th>
-                                        <th>Department</th>
-                                        <th>Duration</th>
                                         <th>Edit</th>
                                         <th>Delete</th>
 
                                     </tr>
                                 </thead>
-                                <!-- <tbody id="student_table_body">
-                                    {% for student, student_iv in combined_data %}
+                                <tbody id="student_table_body">
+                                    {% for student in students %}
                                         <tr>
                                             <td><input type="checkbox" name="selected_students" value="{{ student.id }}" class="m-2"></td>
                                             <td>
@@ -96,16 +101,13 @@
                                                     class="btn btn-secondary m-2"><i class="fas fa-download"></i>
                                                 </a>
                                             </td>
-                                            <td>{% if student_iv %}{{ student_iv.name }}{% else %}{{ student.name }}{% endif %}</td>
-                                            <td>{% if student_iv %}{{ student_iv.college_name }}{% else %}{{ student.college_name }}{% endif %}</td>
-                                            <td>{% if student_iv %}{{ student_iv.course }}{% else %}{{ student.course }}{% endif %}</td>
-                                            <td>{% if student_iv %}{{ student_iv.start_date }}{% else %}{{ student.start_date }}{% endif %}</td>
-                                            <td>{% if student_iv %}{{ student_iv.end_date }}{% else %}{{ student.end_date }}{% endif %}</td>
-                                            <td>{% if student_iv %}{{ student_iv.mentor_name }}{% else %}{{ student.mentor_name }}{% endif %}</td>
-                                            <td>{% if student_iv %}{{ student_iv.issued_date }}{% else %}{{ student.issued_date }}{% endif %}</td>
-                                            <td>{% if student_iv %}{{ student_iv.sem_year }}{% else %}No Data{% endif %}</td>
-                                            <td>{% if student_iv %}{{ student_iv.dept }}{% else %}No Data{% endif %}</td>
-                                            <td>{% if student_iv %}{{ student_iv.duration }}{% else %}No Data{% endif %}</td>
+                                            <td>{{ student.name }}</td>
+                                            <td>{{ student.college_name }}</td>
+                                            <td>{{ student.course }}</td>
+                                            <td>{{ student.start_date }}</td>
+                                            <td>{{ student.end_date }}</td>
+                                            <td>{{ student.mentor_name }}</td>
+                                            <td>{{ student.issued_date }}</td>
                                            
                                             <td><a href="{% url 'edit' student.id %}" class="btn btn-secondary m-2">Edit</a></td>
                                             <td>
@@ -116,38 +118,8 @@
                                             </td>
                                         </tr>
                                     {% endfor %}
-                                </tbody> -->
-                                <tbody id="student_table_body">
-                                    {% for item, item_type in combined_data %}
-                                        <tr>
-                                            <td><input type="checkbox" name="selected_students" value="{{ item.id }}" class="m-2"></td>
-                                            <td>
-                                                <a href="{% if item_type == 'Student' %}{% url 'render_pdf' item.id %}
-                                                    {% elif item_type == 'StudentIV' %}{% url 'render_pdf_industrialvisit' item.id %}
-                                                    {% endif %}"
-                                                    class="btn btn-secondary m-2"><i class="fas fa-download"></i>
-                                                </a>
-                                            </td>
-                                            <td>{{ item.name }}</td>
-                                            <td>{{ item.college_name }}</td>
-                                            <td>{{ item.course }}</td>
-                                            <td>{{ item.start_date }}</td>
-                                            <td>{{ item.end_date }}</td>
-                                            <td>{{ item.mentor_name }}</td>
-                                            <td>{{ item.issued_date }}</td>
-                                            <td>{% if item_type == 'StudentIV' %}{{ item.sem_year }}{% else %}No Data{% endif %}</td>
-                                            <td>{% if item_type == 'StudentIV' %}{{ item.dept }}{% else %}No Data{% endif %}</td>
-                                            <td>{% if item_type == 'StudentIV' %}{{ item.duration }}{% else %}No Data{% endif %}</td>
-                                            <td><a href="{% url 'edit' item.id %}" class="btn btn-secondary m-2">Edit</a></td>
-                                            <td>
-                                                <form action="{% url 'delete' item.id %}" method="post" id="delete-form">
-                                                    {% csrf_token %}
-                                                    <button type="submit" class="btn btn-secondary m-2" onclick="confirmDelete(event)">Delete</button>
-                                                </form>
-                                            </td>
-                                        </tr>
-                                    {% endfor %}
                                 </tbody>
+                                
                                                                 
                             </table>
                         </div>
@@ -201,14 +173,14 @@
 
         if (sort_order === "recent") {
             students.sort((a, b) => {
-                var dateA = new Date(a.cells[7].innerText); // Change the index according to the issued date column
-                var dateB = new Date(b.cells[7].innerText);
+                var dateA = new Date(a.cells[8].innerText); // Change the index according to the issued date column
+                var dateB = new Date(b.cells[8].innerText);
                 return dateB - dateA;
             });
         } else if (sort_order === "alphabetical") {
             students.sort((a, b) => {
-                var nameA = a.cells[1].innerText.toLowerCase(); // Change the index according to the name column
-                var nameB = b.cells[1].innerText.toLowerCase();
+                var nameA = a.cells[2].innerText.toLowerCase(); // Change the index according to the name column
+                var nameB = b.cells[2].innerText.toLowerCase();
                 return nameA.localeCompare(nameB);
             });
         }
@@ -224,40 +196,64 @@
         });
     }
 
+
+
     function filterStudents() {
-        var courseFilter = document.getElementById("courseDropdown").value; // Corrected ID
-        var studentRows = document.querySelectorAll("#student_table_body tr");
-
-        studentRows.forEach(function (row) {
-            var courseCell = row.cells[3].innerText.trim(); // Assuming course information is in the 4th column
-            if (courseFilter === "" || courseCell === courseFilter) {
-                row.style.display = ""; // Show the row if the course name matches or no course is selected
+    var selectedCourse = document.getElementById("courseDropdown").value;
+    var rows = document.getElementById("student_table_body").getElementsByTagName("tr");
+    
+    // Loop through all table rows
+    for (var i = 0; i < rows.length; i++) {
+        var cells = rows[i].getElementsByTagName("td");
+        
+        // Check if the current row contains data for the selected course
+        if (cells.length > 0 && selectedCourse != "") {
+            var courseCell = cells[4]; // Assuming the course name is in the 5th column
+            if (courseCell.textContent.trim() == selectedCourse) {
+                rows[i].style.display = ""; // Show the row if it matches the selected course
             } else {
-                row.style.display = "none"; // Hide the row if the course name does not match
-            }
-        });
-    }
-
-
-    function showCourseDropdown() {
-        var certificatetypeDropdown = document.getElementById("certificatetypeDropdown");
-        var courseDropdown = document.getElementById("courseDropdown");
-
-        var selectedCertificateType = certificatetypeDropdown.value;
-
-        if (selectedCertificateType !== "") {
-            courseDropdown.style.display = "block";
-            for (var i = 0; i < courseDropdown.options.length; i++) {
-                var option = courseDropdown.options[i];
-                if (option.dataset.parent === selectedCertificateType || option.value === "") {
-                    option.style.display = "block";
-
-                }
+                rows[i].style.display = "none"; // Hide the row if it doesn't match the selected course
             }
         } else {
-            courseDropdown.style.display = "none";
+            rows[i].style.display = ""; // Show all rows if no course is selected
         }
     }
+}
+
+    // function filterStudents() {
+    //     var courseFilter = document.getElementById("courseDropdown").value; // Corrected ID
+    //     var studentRows = document.querySelectorAll("#student_table_body tr");
+
+    //     studentRows.forEach(function (row) {
+    //         var courseCell = row.cells[3].innerText.trim(); // Assuming course information is in the 4th column
+    //         if (courseFilter === "" || courseCell === courseFilter) {
+    //             row.style.display = ""; // Show the row if the course name matches or no course is selected
+    //         } else {
+    //             row.style.display = "none"; // Hide the row if the course name does not match
+    //         }
+    //     });
+    // }
+
+
+    // function showCourseDropdown() {
+    //     var certificatetypeDropdown = document.getElementById("certificatetypeDropdown");
+    //     var courseDropdown = document.getElementById("courseDropdown");
+
+    //     var selectedCertificateType = certificatetypeDropdown.value;
+
+    //     if (selectedCertificateType !== "") {
+    //         courseDropdown.style.display = "block";
+    //         for (var i = 0; i < courseDropdown.options.length; i++) {
+    //             var option = courseDropdown.options[i];
+    //             if (option.dataset.parent === selectedCertificateType || option.value === "") {
+    //                 option.style.display = "block";
+
+    //             }
+    //         }
+    //     } else {
+    //         courseDropdown.style.display = "none";
+    //     }
+    // }
 
 
 

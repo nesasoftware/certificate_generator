@@ -7,6 +7,7 @@ from django.db import IntegrityError
 from .forms import MyForm, UploadFileForm
 from django.shortcuts import render
 from django.template.loader import get_template
+from django.core.exceptions import ValidationError
 from django.urls import reverse
 from django.conf import settings
 import csv
@@ -207,7 +208,7 @@ def student_iv_submit(request):
                 authority = Authority.objects.get(id=authority_id)
                 StudentRelatedAuthority.objects.create(std_iv=iv_student, authority=authority)
 
-            return redirect('display_students')  # Redirect to the display students page
+            return redirect('display_iv_students')  # Redirect to the display students page
         
 
         elif 'upload_csv' in request.POST:
@@ -217,7 +218,7 @@ def student_iv_submit(request):
                 decoded_file = csv_file.read().decode('utf-8').splitlines()
                 reader = csv.DictReader(decoded_file)
                 for row in reader:
-                    conducted_date = timezone.datetime.strptime(row['end_date'], '%d-%m-%Y').strftime('%Y-%m-%d')
+                    conducted_date = timezone.datetime.strptime(row['conducted_date'], '%Y-%m-%d').strftime('%Y-%m-%d')
 
                     authorities = row.get('auth_id', '').split(',')
 
@@ -248,27 +249,32 @@ def student_iv_submit(request):
 
 
                         # Create Student instance for the current row
-                        iv_student = StudentIV.objects.create(
-                            name=row.get('name', ''),
-                            college_name=row.get('college_name', ''),
-                            sem_year =row.get('sem_year',''),
-                            conducted_date=row.get('conducted_date',''),
-                            dept=row.get('dept',''),
-                            duration= row.get('duration',''),
-                            mentor_name=row.get('mentor_name', ''),
-                            issued_date=timezone.now().date(),
-                            certificate_type=certificate_type,  
-                            course=course
-                            # course=row.get('course_name','')
-                        )
+                        try:
+                            # Create Student instance for the current row
+                            iv_student = StudentIV.objects.create(
+                                name=row.get('name', ''),
+                                college_name=row.get('college_name', ''),
+                                sem_year=row.get('sem_year', ''),
+                                conducted_date=row.get('conducted_date', ''),
+                                dept=row.get('dept', ''),
+                                duration=row.get('duration', ''),
+                                mentor_name=row.get('mentor_name', ''),
+                                issued_date=timezone.now().date(),
+                                certificate_type=certificate_type,
+                                course=course
+                            )
 
-                        # Create StudentRelatedAuthority instance linking student with authority
-                        StudentRelatedAuthority.objects.create(std_iv=iv_student, authority=authority)
+                            # Create StudentRelatedAuthority instance linking student with authority
+                            StudentRelatedAuthority.objects.create(std_iv=iv_student, authority=authority)
 
-                        # Print a message indicating successful processing
-                        print("CSV file processed successfully")                       
+                            # Print a message indicating successful processing
+                            print("CSV file processed successfully")
+                        except ValidationError as e:
+                            # Display the validation error message to the user
+                            error_message = ', '.join(e.messages)
+                            print(f"Validation Error: {error_message}")                      
 
-                return redirect('display_students')
+                return redirect('display_iv_students')
             else:
                 # Print form errors if any
                 print("Form errors:", upload_form.errors)
@@ -296,16 +302,12 @@ def display_students(request):
     students = Student.objects.all().order_by('-created_at')
     #student_iv_data = StudentIV.objects.all().order_by('-created_at')
 
-    students_iv = StudentIV.objects.all()
+    # students_iv = StudentIV.objects.all().order_by('-created_at')
 
-    # Combine the data into a single list with a type indicator
-    combined_data = [(student, 'Student') for student in students] + [(student_iv, 'StudentIV') for student_iv in students_iv]
-
-    # # Combine student data with StudentIV data based on the name field
-    # combined_data = []
-    # for student in students:
-    #     student_iv = student_iv_data.filter(name=student.name).first()
-    #     combined_data.append((student, student_iv))
+    # # Combine the data into a single list with a type indicator
+    # combined_data = [(student, 'Student') for student in students] + [(student_iv, 'StudentIV') for student_iv in students_iv]
+ 
+    courses=Course.objects.all()
 
     certificate_types = CertificateTypes.objects.all()
     certificate_courses = {}
@@ -332,9 +334,48 @@ def display_students(request):
                 # Now you can use certificate_type_pk_related_to_course as needed, for example:
                 # print(f"Primary key of CertificateTypes instance related to Course '{course_instance.course_name}': {certificate_type_pk_related_to_course}")
 
-    return render(request, 'table.html', {'combined_data': combined_data, 'certificate_types': certificate_types, 'certificate_courses': certificate_courses})
+    # return render(request, 'table.html', {'students': students, 'certificate_types': certificate_types, 'certificate_courses': certificate_courses})
+    return render(request, 'table.html', {'students': students, 'certificate_types': certificate_types, 'courses': courses})
 
 
+
+
+# display all students
+@login_required(login_url='login')
+def display_iv_students(request):
+    students_iv = StudentIV.objects.all().order_by('-created_at')
+
+    courses=Course.objects.all()
+
+    # # Combine the data into a single list with a type indicator
+    # combined_data = [(student, 'Student') for student in students] + [(student_iv, 'StudentIV') for student_iv in students_iv]
+
+    certificate_types = CertificateTypes.objects.all()
+    certificate_courses = {}
+
+    for certificate_type_instance in certificate_types:
+        certificate_type_pk = certificate_type_instance.pk
+        # Now you can use certificate_type_pk as needed, for example:
+        # print(f"Primary key of CertificateTypes instance: {certificate_type_pk}")
+
+        # Access the courses related to this instance
+        current_courses = certificate_type_instance.courses.all()
+
+        # Store the related courses for this certificate type
+        certificate_courses[certificate_type_pk] = current_courses
+
+        # Iterate over each Course instance related to the current certificate type
+        for course_instance in current_courses:
+            # Retrieve the related CertificateTypes for the current Course instance
+            certificate_types_related_to_course = course_instance.certificate_types.all()
+        
+            # Iterate over each related CertificateTypes instance
+            for certificate_type_instance_related_to_course in certificate_types_related_to_course:
+                certificate_type_pk_related_to_course = certificate_type_instance_related_to_course.pk
+                # Now you can use certificate_type_pk_related_to_course as needed, for example:
+                # print(f"Primary key of CertificateTypes instance related to Course '{course_instance.course_name}': {certificate_type_pk_related_to_course}")
+
+    return render(request, 'table_iv.html', {'students_iv': students_iv, 'certificate_types': certificate_types, 'courses': courses})
 
 
 
@@ -398,16 +439,15 @@ def render_pdf_view(request, student_id):
     pdfmetrics.registerFont(TTFont('Cascadia', font_path))
     c.setFont('Cascadia', 12)  
     current_year = datetime.now().strftime("%Y")
-    c.drawString(5.4* inch, 4.75 * inch, f"SRC{current_year}{student_instance.id}")
+    c.drawString(6.0* inch, 4.75 * inch, f"SRC{current_year}{student_instance.id}")
     
     # Register Dancing Script font
     font_path = 'static/fonts/MTCORSVA.TTF'
     pdfmetrics.registerFont(TTFont('MonteCarlo', font_path))
 
     
-    
     # Example name
-    name = student_instance.name
+    name = student_instance.name.capitalize()
 
     # Set the font for the name
     # c.setFont('MonteCarlo', font_size)
@@ -443,8 +483,6 @@ def render_pdf_view(request, student_id):
     align_y = 1.9 * inch    
     c.drawCentredString(start_x, align_y, name)
     
-
-    
     font_path = 'static/fonts/Minion-It.ttf'
     pdfmetrics.registerFont(TTFont('Minion Pro', font_path))
     c.setFont('Minion Pro', 12)
@@ -453,17 +491,21 @@ def render_pdf_view(request, student_id):
     my_Style = getSampleStyleSheet()['BodyText']
     
     my_Style.alignment = 1 
+    my_Style.leading = 17  # Line height in points
 
     # Retrieve the course name directly from the Course object
     course_name = student_instance.course.course_name
 
     # Create Paragraph with student information including courses
     # courses_str = ", ".join([course.course_name for course in courses])
+    # Format start date
+    start_date_formatted = student_instance.start_date.strftime('%d-%m-%Y')
 
-    
-        
+    # Format end date
+    end_date_formatted = student_instance.end_date.strftime('%d-%m-%Y')
+
     p1 = Paragraph(f'''<i>Student of <b>{student_instance.college_name}</b>, has successfully completed the academic internship
-        program at <b>SinroRobotics Pvt Ltd</b> on <b>{course_name}</b> from <b>{student_instance.start_date}</b> to <b>{student_instance.end_date}</b>.</i>''', my_Style)
+        program at <b>SinroRobotics Pvt Ltd</b> on <b>{course_name}</b> from <b>{start_date_formatted}</b> to <b>{end_date_formatted}</b>.</i>''', my_Style)
     
     width = 940
     height = 500
@@ -525,7 +567,6 @@ def render_pdf_view(request, student_id):
     qr_image = ImageReader(qr_buffer)
     # c.drawImage(qr_image, x, y, width, height)
 
-    
     c.showPage()
     c.save()
 
@@ -1092,7 +1133,7 @@ def render_pdf_tronix(request, student_id):
 def render_pdf_industrialvisit(request, student_id):
 
     # Get the specific Student object based on student_id
-    student_instance = get_object_or_404(Student, id=student_id)
+    student_instance = get_object_or_404(StudentIV, id=student_id)
 
     # Get the certificate type associated with the student
     certificate_type_id = student_instance.certificate_type_id
@@ -1129,7 +1170,7 @@ def render_pdf_industrialvisit(request, student_id):
     pdfmetrics.registerFont(TTFont('Cascadia', font_path))
     c.setFont('Cascadia', 12)  
     current_year = datetime.now().strftime("%Y")
-    c.drawString(5.1* inch, 4.75 * inch, f"SRC{current_year}{student_instance.id}")
+    c.drawString(6.0* inch, 4.75 * inch, f"SRC{current_year}{student_instance.id}")
     
     # Register Dancing Script font
     font_path = 'static/fonts/MTCORSVA.TTF'
@@ -1138,7 +1179,7 @@ def render_pdf_industrialvisit(request, student_id):
     
     
     # Example name
-    name = student_instance.name
+    name = student_instance.name.capitalize()
 
     # Set the font for the name
     # c.setFont('MonteCarlo', font_size)
@@ -1184,23 +1225,25 @@ def render_pdf_industrialvisit(request, student_id):
     my_Style = getSampleStyleSheet()['BodyText']
     
     my_Style.alignment = 1 
+    my_Style.leading = 17  # Line height in points
+    my_Style.characterSpacing = 2.0  # Character spacing in points
 
     # Retrieve the course name directly from the Course object
     course_name = student_instance.course.course_name
 
-    p1 = Paragraph(f'''<i>Student of <b>{student_instance.college_name}</b>, has successfully completed the industrial visit
-        program at <b>SinroRobotics Pvt Ltd</b> on <b>{course_name}</b> from <b>{student_instance.start_date}</b> to <b>{student_instance.end_date}</b>.</i>''', my_Style)
+    p1 = Paragraph(f'''<i>{student_instance.sem_year} {student_instance.dept} dept. student of <b>{student_instance.college_name}</b>, has successfully completed {student_instance.duration} industrial training
+        in <b>{course_name}</b> on <b>{student_instance.conducted_date}</b>.</i>''', my_Style)
     
-    width = 940
+    width = 900
     height = 500
-    p1.wrapOn(c, 450, 50)
-    p1.drawOn(c, width-930, height-410)
+    p1.wrapOn(c, 360, 50)
+    p1.drawOn(c, width-850, height-435)
 
     # Get the StudentRelatedAuthority instance for the given student_id
-    student_related_authority = get_object_or_404(StudentRelatedAuthority, std_id=student_id)
+    student_related_authority = get_object_or_404(StudentRelatedAuthority, std_iv_id=student_id)
 
     # Accessing the related Student ID
-    student_id = student_related_authority.std.id
+    student_id = student_related_authority.std_iv.id
     
 
     # Accessing the related Authority instance
@@ -1326,7 +1369,10 @@ def download_selected_certificates(request):
 
 @login_required(login_url='login')
 def index(request):
-    total_students = Student.objects.count()
+    total_students_other = Student.objects.count()
+    total_students_iv = StudentIV.objects.count()
+    total_students =total_students_iv + total_students_other
+
     username = request.user.username  # Accessing the username of the logged-in user
     email=request.user.email
     return render(request, 'index.html',{'total_students':total_students,'username':username,'email':email})
@@ -1343,6 +1389,18 @@ def courses(request):
          # Pass the URL to the template
     }
     return render(request, 'courses.html',context)
+
+
+@login_required(login_url='login')
+def certificates_data(request):
+    username = request.user.username  # Accessing the username of the logged-in user
+    email=request.user.email
+    context = {
+        'username': username,
+        'email': email,
+         # Pass the URL to the template
+    }
+    return render(request, 'certificates_table.html',context)
 
 
 # dashboard search
