@@ -1412,26 +1412,44 @@ def search_students(request):
         # For date fields, we need to handle them differently
         try:
             # Attempt to parse the search query as a date
-            search_date = datetime.strptime(search_query, '%Y-%m-%d').date()
+            search_date = datetime.strptime(search_query, '%d-%m-%Y').date()
+
             students = Student.objects.filter(
                 Q(college_name__icontains=search_query) |
                 Q(name__icontains=search_query) |
-                Q(course__icontains=search_query) |
+                Q(certificate_type__certificate_type__icontains=search_query) |
+                Q(course__course_name__icontains=search_query) |  # Use double underscore to traverse the related field
                 Q(mentor_name__icontains=search_query) |
                 Q(start_date=search_date) |
-                Q(end_date=search_date)
+                Q(end_date=search_date) |
+                Q(issued_date=search_date)
+            )
+            students = StudentIV.objects.filter(
+                Q(name__icontains=search_query) |
+                Q(college_name__icontains=search_query) |
+                Q(dept__icontains=search_query) |
+                Q(duration__icontains=search_query) |
+                Q(certificate_type__certificate_type__icontains=search_query) |
+                Q(course__course_name__icontains=search_query) |  # Use double underscore to traverse the related field
+                Q(mentor_name__icontains=search_query) |
+                Q(conducted_date=search_date) |
+                Q(issued_date=search_date)
             )
         except ValueError:
             # If the search query is not a valid date, perform regular text search
             students = Student.objects.filter(
                 Q(college_name__icontains=search_query) |
                 Q(name__icontains=search_query) |
-                Q(course__icontains=search_query) |
+                Q(course__course_name__icontains=search_query) |  # Use double underscore to traverse the related field
                 Q(mentor_name__icontains=search_query)
             )
-        return render(request, 'search_results.html', {'students': students})
-    return render(request, 'search_results.html')
 
+        # Create a list to store unique certificate type names without courses
+        certificate_type_names = list(set([student.certificate_type.certificate_type for student in students]))
+
+
+        return render(request, 'search_results.html', {'students': students, 'certificate_type_names': certificate_type_names})
+    return render(request, 'search_results.html')
 
 
 @login_required(login_url='login')

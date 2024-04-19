@@ -12,6 +12,10 @@
                                 <li>Name : {{ student.name }}</li>
                                 <li>ID : SRC/2024/{{student.id}}</li>
                                 <li>College Name: {{ student.college_name }}</li>
+                                <!-- {% for certificate_type_name in certificate_type_names %}
+                                <li>Certificate : {{ certificate_type_name }}</li>
+                                {% endfor %} -->
+                                <li>Certificate : {{student.certificate_type.certificate_type}}</li>
                                 <li>Course Name: {{ student.course }}</li>
                                 <li>Mentor Name: {{ student.mentor_name }}</li>
                                 <li>Start Date: {{ student.start_date }}</li>
