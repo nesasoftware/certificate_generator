@@ -52,6 +52,7 @@ def my_view(request):
 
     if request.method == 'POST':
         if 'submit_form' in request.POST:
+            certificate_number =request.POST.get('certificate_number')
             name = request.POST.get('name')
             college_name = request.POST.get('college_name')
             start_date = request.POST.get('start_date')
@@ -81,7 +82,8 @@ def my_view(request):
                 mentor_name=mentor_name,
                 issued_date=issued_date,
                 certificate_type_id=certificate_type_id,
-                course=course
+                course=course,
+                certificate_number=certificate_number
             )
 
             # Add selected authorities to the student
@@ -139,7 +141,8 @@ def my_view(request):
                             mentor_name=row.get('mentor_name', ''),
                             issued_date=timezone.now().date(),
                             certificate_type=certificate_type,  
-                            course=course
+                            course=course,
+                            certificate_number=certificate_number('certificate_number','')
                             # course=row.get('course_name','')
                         )
 
@@ -169,6 +172,7 @@ def student_iv_submit(request):
 
     if request.method == 'POST':
         if 'iv_submit_form' in request.POST:
+            certificate_number =request.POST.get('certificate_number')
             name = request.POST.get('name')
             sem_year = request.POST.get('sem_year')
             dept = request.POST.get('dept')
@@ -200,7 +204,8 @@ def student_iv_submit(request):
                 mentor_name=mentor_name,
                 issued_date=issued_date,
                 certificate_type_id=certificate_type_id,
-                course=course
+                course=course,
+                certificate_number=certificate_number
             )
 
             # Add selected authorities to the student
@@ -261,7 +266,8 @@ def student_iv_submit(request):
                                 mentor_name=row.get('mentor_name', ''),
                                 issued_date=timezone.now().date(),
                                 certificate_type=certificate_type,
-                                course=course
+                                course=course,
+                                certificate_number=certificate_number('certificate_number','')
                             )
 
                             # Create StudentRelatedAuthority instance linking student with authority
@@ -312,6 +318,18 @@ def display_students(request):
     certificate_types = CertificateTypes.objects.all()
     certificate_courses = {}
 
+
+    # Get the specific Student object based on student_id
+    student = get_object_or_404(Student, pk=Student.pk)
+
+    # Once you have the student instance, you can access its certificate number attribute
+    number = student.certificate_number
+
+    current_year = datetime.now().strftime("%Y")
+    certificate_number="SRC"/current_year/number
+
+
+
     for certificate_type_instance in certificate_types:
         certificate_type_pk = certificate_type_instance.pk
         # Now you can use certificate_type_pk as needed, for example:
@@ -335,7 +353,7 @@ def display_students(request):
                 # print(f"Primary key of CertificateTypes instance related to Course '{course_instance.course_name}': {certificate_type_pk_related_to_course}")
 
     # return render(request, 'table.html', {'students': students, 'certificate_types': certificate_types, 'certificate_courses': certificate_courses})
-    return render(request, 'table.html', {'students': students, 'certificate_types': certificate_types, 'courses': courses})
+    return render(request, 'table.html', {'students': students, 'certificate_types': certificate_types, 'courses': courses, 'certificate_number':certificate_number})
 
 
 
@@ -352,6 +370,16 @@ def display_iv_students(request):
 
     certificate_types = CertificateTypes.objects.all()
     certificate_courses = {}
+    certificate_numbers = {}
+    
+
+    # Assuming you have a specific student ID or you need to iterate over all students
+    for student in students_iv:
+        number = student.certificate_number
+        current_year = datetime.now().strftime("%Y")
+        certificate_number = f"SRC/{current_year}/{number}"
+        certificate_numbers[student.id] = certificate_number  # Store the certificate number in the dictionary
+
 
     for certificate_type_instance in certificate_types:
         certificate_type_pk = certificate_type_instance.pk
@@ -375,7 +403,14 @@ def display_iv_students(request):
                 # Now you can use certificate_type_pk_related_to_course as needed, for example:
                 # print(f"Primary key of CertificateTypes instance related to Course '{course_instance.course_name}': {certificate_type_pk_related_to_course}")
 
-    return render(request, 'table_iv.html', {'students_iv': students_iv, 'certificate_types': certificate_types, 'courses': courses})
+        context = {
+        'students_iv': students_iv,
+        'certificate_types': certificate_types,
+        'courses': courses,
+        'certificate_numbers': certificate_numbers,  # Include the certificate numbers in the context
+        }
+    
+    return render(request, 'table_iv.html', context)
 
 
 
@@ -434,12 +469,12 @@ def render_pdf_view(request, student_id):
     desired_height = 436
 
     
-    c.drawImage('pictures\Certificate of Participation Blank.jpg', -0.97*inch, -0.97*inch, width=desired_width, height=desired_height, mask=None)
+    c.drawImage('pictures\Certificate of Participation Blank With Seal.jpg', -0.97*inch, -0.97*inch, width=desired_width, height=desired_height, mask=None)
     font_path = 'static/fonts/Cascadia.ttf'
     pdfmetrics.registerFont(TTFont('Cascadia', font_path))
     c.setFont('Cascadia', 12)  
     current_year = datetime.now().strftime("%Y")
-    c.drawString(6.0* inch, 4.75 * inch, f"SRC{current_year}{student_instance.id}")
+    c.drawString(6.0* inch, 4.75 * inch, f"SRC/{current_year}/{student_instance.certificate_number}")
     
     # Register Dancing Script font
     font_path = 'static/fonts/MTCORSVA.TTF'
@@ -1165,12 +1200,12 @@ def render_pdf_industrialvisit(request, student_id):
     desired_height = 436
 
     
-    c.drawImage('pictures\Certificate of Participation Blank.jpg', -0.97*inch, -0.97*inch, width=desired_width, height=desired_height, mask=None)
+    c.drawImage('pictures\Certificate of Participation Blank With Seal.jpg', -0.97*inch, -0.97*inch, width=desired_width, height=desired_height, mask=None)
     font_path = 'static/fonts/Cascadia.ttf'
     pdfmetrics.registerFont(TTFont('Cascadia', font_path))
     c.setFont('Cascadia', 12)  
     current_year = datetime.now().strftime("%Y")
-    c.drawString(6.0* inch, 4.75 * inch, f"SRC{current_year}{student_instance.id}")
+    c.drawString(6.0* inch, 4.75 * inch, f"SRC/{current_year}/{student_instance.certificate_number}")
     
     # Register Dancing Script font
     font_path = 'static/fonts/MTCORSVA.TTF'

@@ -30,7 +30,8 @@ class CertificateTypes(models.Model):
         return f"{self.certificate_type} - Courses: {course_list}"
 
 
-class Student(models.Model): 
+class Student(models.Model):
+  
     name = models.CharField(max_length=255, blank=True, default='')
     college_name = models.CharField(max_length=255, blank=True, default='')
     start_date = models.DateField(default=timezone.now)
@@ -40,7 +41,8 @@ class Student(models.Model):
     certificate_type = models.ForeignKey(CertificateTypes, on_delete=models.CASCADE, related_name='students', null=True)
     course= models.ForeignKey(Course, on_delete=models.CASCADE, related_name='enrolled_students', null=True)
     created_at = models.DateTimeField( default=timezone.now)  # Add this field to store creation time
-    
+    certificate_number = models.CharField(max_length=20, null=True, blank=True)  # Changed field name to certificate_number
+
     def save(self, *args, **kwargs):
         # Set issued_date to the current date if it's not already set
         if not self.issued_date:
@@ -65,6 +67,8 @@ class StudentIV(models.Model):
     created_at = models.DateTimeField( default=timezone.now)  # Add this field to store creation time
     certificate_type = models.ForeignKey(CertificateTypes, on_delete=models.CASCADE,  null=True)
     course= models.ForeignKey(Course, on_delete=models.CASCADE, null=True)
+    certificate_number = models.CharField(max_length=20, null=True, blank=True)  # Changed field name to certificate_number
+
     
     def save(self, *args, **kwargs):
         # Set issued_date to the current date if it's not already set

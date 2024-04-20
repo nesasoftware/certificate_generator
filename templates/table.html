@@ -91,15 +91,9 @@
                                         <tr>
                                             <td><input type="checkbox" name="selected_students" value="{{ student.id }}" class="m-2"></td>
                                             <td>
-                                                <a href="{% if student.certificate_type.certificate_type == 'Workshop' %}{% url 'render_pdf_workshop' student.id %}
-                                                    {% elif student.certificate_type.certificate_type == 'Summer Camp' %}{% url 'render_pdf_summercamp' student.id %}
-                                                    {% elif student.certificate_type.certificate_type == 'Internship' %}{% url 'render_pdf' student.id %}
-                                                    {% elif student.certificate_type.certificate_type == 'Tronix' %}{% url 'render_pdf_tronix' student.id %}
-                                                    {% elif student.certificate_type.certificate_type == 'Industrial Visit' %}{% url 'render_pdf_industrialvisit' student.id %}
-                                                    {% else %}
-                                                    {% url 'render_pdf' student.id %}{% endif %}"
-                                                    class="btn btn-secondary m-2"><i class="fas fa-download"></i>
-                                                </a>
+                                                <a href="{% url 'render_pdf' student.id %}"
+                                                class="btn btn-secondary m-2"><i class="fas fa-download"></i>
+                                            </a>
                                             </td>
                                             <td>{{ student.name }}</td>
                                             <td>{{ student.college_name }}</td>
@@ -211,12 +205,26 @@
             var courseCell = cells[4]; // Assuming the course name is in the 5th column
             if (courseCell.textContent.trim() == selectedCourse) {
                 rows[i].style.display = ""; // Show the row if it matches the selected course
+                matchFound = true; 
             } else {
                 rows[i].style.display = "none"; // Hide the row if it doesn't match the selected course
             }
         } else {
             rows[i].style.display = ""; // Show all rows if no course is selected
         }
+    }
+    // Hide the table body if no matching rows are found
+    var tableBody = document.getElementById("student_table_body");
+    tableBody.style.display = matchFound ? "" : "none"
+    
+    // Display a message if no matching rows are found
+    if (!matchFound) {
+        var messageRow = document.createElement("tr");
+        var messageCell = document.createElement("td");
+        messageCell.colSpan = 12; // Set colspan to span across all columns
+        messageCell.textContent = "No matching rows found.";
+        messageRow.appendChild(messageCell);
+        document.getElementById("student_table_body").appendChild(messageRow);
     }
 }
 

@@ -79,6 +79,7 @@
                                             <a href="{% url 'render_pdf_industrialvisit' student.id %}"
                                                 class="btn btn-secondary m-2"><i class="fas fa-download"></i>
                                             </a>
+                                            <p>{{ certificate_numbers|default_if_none:''|default:student.id }}</p>
                                         </td>
                                         <td>{{ student.name }}</td>
                                         <td>{{ student.sem_year }}</td>

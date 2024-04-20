@@ -16,6 +16,8 @@
 
               <form method="post" action="" class="frm">
                 {% csrf_token %}
+                <label for="id_certificate_number">Certificate Number:</label>
+                <input type="text" id="id_certificate_number" name="certificate_number" value="{{ student.certificate_number }}"><br>
                 <label for="id_name">Name:</label>
                 <input type="text" id="id_name" name="name" value="{{ student.name }}"><br>
                 <label for="id_college_name">College Name:</label>
