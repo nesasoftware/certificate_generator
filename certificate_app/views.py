@@ -27,6 +27,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.colors import HexColor
 from reportlab.lib.utils import ImageReader
+from reportlab.lib import colors
 import pyqrcode 
 import io
 import png 
@@ -41,6 +42,8 @@ from io import BytesIO
 from django.core.files.temp import NamedTemporaryFile
 from reportlab.lib import colors
 from certificate_app.pdf_utils import generate_certificate
+
+
 
 
 # student form page for submitting details
@@ -72,6 +75,17 @@ def my_view(request):
 
             #Assign the selected course to the student through the CertificateTypes instance
             certificate_type.courses.add(course) 
+
+
+            # Fetch the last used certificate number
+            last_certificate_number = Student.objects.order_by('-id').first().certificate_number
+    
+            # Increment the last certificate number by 1 to generate the new certificate number
+            if last_certificate_number:
+                new_certificate_number = last_certificate_number + 1
+            else:
+                new_certificate_number = 1
+
   
 
             student = Student.objects.create(
@@ -83,7 +97,7 @@ def my_view(request):
                 issued_date=issued_date,
                 certificate_type_id=certificate_type_id,
                 course=course,
-                certificate_number=certificate_number
+                certificate_number=new_certificate_number
             )
 
             # Add selected authorities to the student
@@ -319,17 +333,6 @@ def display_students(request):
     certificate_courses = {}
 
 
-    # Get the specific Student object based on student_id
-    student = get_object_or_404(Student, pk=Student.pk)
-
-    # Once you have the student instance, you can access its certificate number attribute
-    number = student.certificate_number
-
-    current_year = datetime.now().strftime("%Y")
-    certificate_number="SRC"/current_year/number
-
-
-
     for certificate_type_instance in certificate_types:
         certificate_type_pk = certificate_type_instance.pk
         # Now you can use certificate_type_pk as needed, for example:
@@ -351,9 +354,28 @@ def display_students(request):
                 certificate_type_pk_related_to_course = certificate_type_instance_related_to_course.pk
                 # Now you can use certificate_type_pk_related_to_course as needed, for example:
                 # print(f"Primary key of CertificateTypes instance related to Course '{course_instance.course_name}': {certificate_type_pk_related_to_course}")
+    
+    current_year = datetime.now().strftime("%Y")
+
+    # Iterate over each student to generate certificate numbers
+    for std in students:
+        number = std.certificate_number
+        current_year = datetime.now().strftime("%Y")
+        certificate_number = f"SRC/{current_year}/{number}"
+        #certificate_number[students.id] = certificate_number  # Map student ID to certificate number
+
+    print(certificate_number)
+    
+    context = {
+        'students': students,
+        'certificate_types': certificate_types,
+        'courses': courses,
+        'certificate_id_number': certificate_number,  # Include the certificate numbers in the context
+    }
+    
 
     # return render(request, 'table.html', {'students': students, 'certificate_types': certificate_types, 'certificate_courses': certificate_courses})
-    return render(request, 'table.html', {'students': students, 'certificate_types': certificate_types, 'courses': courses, 'certificate_number':certificate_number})
+    return render(request, 'table.html', context)
 
 
 
@@ -362,25 +384,21 @@ def display_students(request):
 @login_required(login_url='login')
 def display_iv_students(request):
     students_iv = StudentIV.objects.all().order_by('-created_at')
-
     courses=Course.objects.all()
-
-    # # Combine the data into a single list with a type indicator
-    # combined_data = [(student, 'Student') for student in students] + [(student_iv, 'StudentIV') for student_iv in students_iv]
-
     certificate_types = CertificateTypes.objects.all()
     certificate_courses = {}
     certificate_numbers = {}
     
-
+    
     # Assuming you have a specific student ID or you need to iterate over all students
-    for student in students_iv:
-        number = student.certificate_number
-        current_year = datetime.now().strftime("%Y")
-        certificate_number = f"SRC/{current_year}/{number}"
-        certificate_numbers[student.id] = certificate_number  # Store the certificate number in the dictionary
+    # for student in students_iv:
+    #     number = student.certificate_number
+    #     current_year = datetime.now().strftime("%Y")
+    #     certificate_number = f"SRC/{current_year}/{number}"
+    #     certificate_numbers[student.id] = certificate_number  # Store the certificate number in the dictionary
+    #     print(certificate_numbers)
 
-
+    
     for certificate_type_instance in certificate_types:
         certificate_type_pk = certificate_type_instance.pk
         # Now you can use certificate_type_pk as needed, for example:
@@ -402,13 +420,24 @@ def display_iv_students(request):
                 certificate_type_pk_related_to_course = certificate_type_instance_related_to_course.pk
                 # Now you can use certificate_type_pk_related_to_course as needed, for example:
                 # print(f"Primary key of CertificateTypes instance related to Course '{course_instance.course_name}': {certificate_type_pk_related_to_course}")
+        
+    current_year = datetime.now().strftime("%Y")
 
-        context = {
+    # Iterate over each student to generate certificate numbers
+    for student in students_iv:
+        number = student.certificate_number
+        current_year = datetime.now().strftime("%Y")
+        certificate_number = f"SRC/{current_year}/{number}"
+        certificate_numbers[student.id] = certificate_number  # Map student ID to certificate number
+
+    print(certificate_numbers)
+    
+    context = {
         'students_iv': students_iv,
         'certificate_types': certificate_types,
         'courses': courses,
-        'certificate_numbers': certificate_numbers,  # Include the certificate numbers in the context
-        }
+        'certificate_id_number': certificate_numbers,  # Include the certificate numbers in the context
+    }
     
     return render(request, 'table_iv.html', context)
 
@@ -455,6 +484,7 @@ def render_pdf_view(request, student_id):
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = f'inline; filename="{file_name}.pdf"'
 
+
     # Create the response object and it directly download pdf page 
     # response = HttpResponse(content_type='application/pdf')
     # response['Content-Disposition'] = f'attachment; filename="{file_name}.pdf"'
@@ -474,7 +504,7 @@ def render_pdf_view(request, student_id):
     pdfmetrics.registerFont(TTFont('Cascadia', font_path))
     c.setFont('Cascadia', 12)  
     current_year = datetime.now().strftime("%Y")
-    c.drawString(6.0* inch, 4.75 * inch, f"SRC/{current_year}/{student_instance.certificate_number}")
+    c.drawString(5.7* inch, 4.75 * inch, f"SRC/{current_year}/{student_instance.certificate_number}")
     
     # Register Dancing Script font
     font_path = 'static/fonts/MTCORSVA.TTF'
@@ -562,7 +592,7 @@ def render_pdf_view(request, student_id):
         signature_image_url = str(authority.signature)
         print("Signature Image URL:", signature_image_url)
 
-        c.drawImage('media/' + signature_image_url, 4.4 * inch, 0 * inch, width=80, height=40, mask=None)
+        c.drawImage('media/' + signature_image_url, 4.0 * inch, 0 * inch, width=80, height=40, mask=None)
 
     
     #c.drawImage('pictures/Nebu-John-SIgn.png',4.4*inch, 0.1*inch, width=100, height=50,mask=None)
@@ -616,6 +646,7 @@ def render_pdf_view(request, student_id):
     qr_buffer.close()
 
     return response
+
 
 
 @login_required(login_url='login')
@@ -737,9 +768,14 @@ def render_pdf_workshop(request, student_id):
     authority = student_related_authority.authority
 
     if authority:
+
         # Accessing the signature attribute of the related Authority instance
         signature_image_url = str(authority.signature)
         print("Signature Image URL:", signature_image_url)
+
+        # Set background color to white
+        c.setFillColor(colors.white)
+        c.rect(0, 0, width=100, height=100, fill=1)
 
         c.drawImage('media/' + signature_image_url, 4.4 * inch, 0 * inch, width=80, height=40, mask=None)
 

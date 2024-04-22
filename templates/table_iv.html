@@ -2,11 +2,13 @@
 {% load static %}
 {% block body %}
 
+
 <div class="main-content">
     <div class="section__content section__content--p30">
         <div class="container">
             <div class="row">
                 <div class="col-lg-12 text-justify">
+                
                     {% if messages %}
                     <ul class="messages">
                         {% for message in messages %}
@@ -16,6 +18,8 @@
                     {% endif %}
                 </div>
                 <div class="col-lg-12">
+                    <button class="btn btn-secondary m-2"  onclick="exportToExcel()">Export to Excel</button>
+
                     <form action="{% url 'download_selected_certificates' %}" method="post" class="mb-3">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-secondary m-2">Download Selected Certificates</button>
@@ -79,7 +83,9 @@
                                             <a href="{% url 'render_pdf_industrialvisit' student.id %}"
                                                 class="btn btn-secondary m-2"><i class="fas fa-download"></i>
                                             </a>
-                                            <p>{{ certificate_numbers|default_if_none:''|default:student.id }}</p>
+                                            <!-- <p>{{ certificate_numbers|default_if_none:''|default:student.id }}</p> -->
+
+                                            <!-- <p>{{ certificate_id_number|default_if_none:'None'}}</p> -->
                                         </td>
                                         <td>{{ student.name }}</td>
                                         <td>{{ student.sem_year }}</td>
@@ -151,34 +157,34 @@
 
 
     function sortStudents() {
-    var sort_order = document.getElementById("sort_order").value;
-    var student_table_body = document.getElementById("student_table_body");
-    var students = Array.from(student_table_body.children);
+        var sort_order = document.getElementById("sort_order").value;
+        var student_table_body = document.getElementById("student_table_body");
+        var students = Array.from(student_table_body.children);
 
-    if (sort_order === "recent") {
-        students.sort((a, b) => {
-            var dateA = new Date(a.cells[8].innerText); // Change the index according to the issued date column
-            var dateB = new Date(b.cells[8].innerText);
-            return dateB - dateA;
-        });
-    } else if (sort_order === "alphabetical") {
-        students.sort((a, b) => {
-            var nameA = a.cells[2].innerText.toLowerCase(); // Change the index according to the name column
-            var nameB = b.cells[2].innerText.toLowerCase();
-            return nameA.localeCompare(nameB);
+        if (sort_order === "recent") {
+            students.sort((a, b) => {
+                var dateA = new Date(a.cells[8].innerText); // Change the index according to the issued date column
+                var dateB = new Date(b.cells[8].innerText);
+                return dateB - dateA;
+            });
+        } else if (sort_order === "alphabetical") {
+            students.sort((a, b) => {
+                var nameA = a.cells[2].innerText.toLowerCase(); // Change the index according to the name column
+                var nameB = b.cells[2].innerText.toLowerCase();
+                return nameA.localeCompare(nameB);
+            });
+        }
+
+        // Remove existing rows
+        while (student_table_body.firstChild) {
+            student_table_body.removeChild(student_table_body.firstChild);
+        }
+
+        // Append sorted rows
+        students.forEach(student => {
+            student_table_body.appendChild(student);
         });
     }
-
-    // Remove existing rows
-    while (student_table_body.firstChild) {
-        student_table_body.removeChild(student_table_body.firstChild);
-    }
-
-    // Append sorted rows
-    students.forEach(student => {
-        student_table_body.appendChild(student);
-    });
-}
 
 
 
@@ -204,9 +210,65 @@
         }
     }
 
+  
+
+    
+    function exportToExcel() {
+        // Initialize the HTML content with the table header
+        var htmlContent = '<table>';
+        htmlContent += '<thead><tr>';
+        htmlContent += '<th>Name</th>';
+        htmlContent += '<th>Semester/Year</th>';
+        htmlContent += '<th>Department</th>';
+        htmlContent += '<th>Institution Name</th>';
+        htmlContent += '<th>Course</th>';
+        htmlContent += '<th>Duration</th>';
+        htmlContent += '<th>Conducted Date</th>';
+        htmlContent += '<th>Issued Date</th>';
+        htmlContent += '</tr></thead>';
+        htmlContent += '<tbody>';
+
+        // Loop through each table row in the table body
+        var tableBody = document.getElementById('student_table_body');
+        for (var i = 0; i < tableBody.rows.length; i++) {
+            var row = tableBody.rows[i];
+
+            // Add only the desired columns to the HTML content
+            htmlContent += '<tr>';
+            htmlContent += '<td>' + row.cells[2].innerHTML + '</td>'; // Name column
+            htmlContent += '<td>' + row.cells[3].innerHTML + '</td>'; // Semester/Year column
+            htmlContent += '<td>' + row.cells[4].innerHTML + '</td>'; // Department column
+            htmlContent += '<td>' + row.cells[5].innerHTML + '</td>'; // Institution Name column
+            htmlContent += '<td>' + row.cells[6].innerHTML + '</td>'; // Course column
+            htmlContent += '<td>' + row.cells[7].innerHTML + '</td>'; // Duration column
+            htmlContent += '<td>' + row.cells[8].innerHTML + '</td>'; // Conducted Date column
+            htmlContent += '<td>' + row.cells[9].innerHTML + '</td>'; // Issued Date column
+            htmlContent += '</tr>';
+        }
+
+        // Close the table body and table tags
+        htmlContent += '</tbody></table>';
+
+        // Create a Blob object containing the HTML content
+        var blob = new Blob([htmlContent], { type: 'application/vnd.ms-excel' });
+
+        // Create a temporary URL for the Blob
+        var url = URL.createObjectURL(blob);
+
+        // Create a link element and trigger a click event to download the Excel file
+        var link = document.createElement('a');
+        link.href = url;
+        link.download = 'student_data.xls'; // File name
+        link.click();
+
+        // Release the URL object
+        URL.revokeObjectURL(url);
+    }
 
 
 
+
+  
 </script>
 
 <!-- end document-->
