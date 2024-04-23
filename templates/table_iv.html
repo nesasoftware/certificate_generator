@@ -96,10 +96,10 @@
                                         <td>{{ student.conducted_date }}</td>
                                         <td>{{ student.issued_date }}</td>
 
-                                        <td><a href="{% url 'edit' student.id %}" class="btn btn-secondary m-2">Edit</a>
+                                        <td><a href="{% url 'edit_iv' student.id %}" class="btn btn-secondary m-2">Edit</a>
                                         </td>
                                         <td>
-                                            <form action="{% url 'delete' student.id %}" method="post" id="delete-form">
+                                            <form action="{% url 'delete_iv' student.id %}" method="post" id="delete-form">
                                                 {% csrf_token %}
                                                 <button type="submit" class="btn btn-secondary m-2"
                                                     onclick="confirmDelete(event)">Delete</button>

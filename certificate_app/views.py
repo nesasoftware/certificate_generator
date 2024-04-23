@@ -44,8 +44,6 @@ from reportlab.lib import colors
 from certificate_app.pdf_utils import generate_certificate
 
 
-
-
 # student form page for submitting details
 @login_required(login_url='login')
 def my_view(request):
@@ -79,6 +77,10 @@ def my_view(request):
 
             # Fetch the last used certificate number
             last_certificate_number = Student.objects.order_by('-id').first().certificate_number
+
+            # Convert the last certificate number to an integer (if it's not already)
+            last_certificate_number = int(last_certificate_number) if last_certificate_number else 0
+
     
             # Increment the last certificate number by 1 to generate the new certificate number
             if last_certificate_number:
@@ -86,7 +88,9 @@ def my_view(request):
             else:
                 new_certificate_number = 1
 
-  
+            # Convert the new certificate number back to a string
+            new_certificate_number_str = str(new_certificate_number)
+
 
             student = Student.objects.create(
                 name=name,
@@ -97,7 +101,7 @@ def my_view(request):
                 issued_date=issued_date,
                 certificate_type_id=certificate_type_id,
                 course=course,
-                certificate_number=new_certificate_number
+                certificate_number=new_certificate_number_str
             )
 
             # Add selected authorities to the student
@@ -144,7 +148,23 @@ def my_view(request):
                             # Handle the case where the CertificateTypes instance with the provided certificate_type_id doesn't exist
                             print(f"CertificateTypes with certificate_type_id {certificate_type_id} does not exist. Skipping this row.")
                             continue
+                        
 
+                        # Fetch the last used certificate number
+                        last_certificate_number = Student.objects.order_by('-id').first().certificate_number
+
+                        # Convert the last certificate number to an integer (if it's not already)
+                        last_certificate_number = int(last_certificate_number) if last_certificate_number else 0
+
+    
+                        # Increment the last certificate number by 1 to generate the new certificate number
+                        if last_certificate_number:
+                            new_certificate_number = last_certificate_number + 1
+                        else:
+                            new_certificate_number = 1
+
+                        # Convert the new certificate number back to a string
+                        new_certificate_number_str = str(new_certificate_number)
 
                         # Create Student instance for the current row
                         student = Student.objects.create(
@@ -156,7 +176,7 @@ def my_view(request):
                             issued_date=timezone.now().date(),
                             certificate_type=certificate_type,  
                             course=course,
-                            certificate_number=certificate_number('certificate_number','')
+                            certificate_number=new_certificate_number_str
                             # course=row.get('course_name','')
                         )
 
@@ -1523,6 +1543,7 @@ def search_students(request):
     return render(request, 'search_results.html')
 
 
+
 @login_required(login_url='login')
 def edit(request, pk):
     instance_to_be_edited = Student.objects.get(pk=pk)
@@ -1532,6 +1553,21 @@ def edit(request, pk):
         if frm.is_valid():
             frm.save()
             return redirect('display_students')  # Redirect after successful form submission
+    else:
+        frm = MyForm(instance=instance_to_be_edited)
+    
+    return render(request, 'edit.html', {'form': frm})
+
+
+@login_required(login_url='login')
+def edit_iv(request, pk):
+    instance_to_be_edited = StudentIV.objects.get(pk=pk)
+    
+    if request.method == 'POST':
+        frm = MyForm(request.POST, instance=instance_to_be_edited)
+        if frm.is_valid():
+            frm.save()
+            return redirect('display_iv_students')  # Redirect after successful form submission
     else:
         frm = MyForm(instance=instance_to_be_edited)
     
@@ -1550,3 +1586,16 @@ def delete(request, pk):
     
     print("Delete view was called for student with ID:", pk) 
     return redirect('display_students')
+
+
+@login_required(login_url='login')
+def delete_iv(request, pk):
+    try:
+        student_instance = StudentIV.objects.get(pk=pk)
+        student_instance.delete()
+        messages.success(request, 'Student record deleted successfully.')
+    except Student.DoesNotExist:
+        messages.error(request, 'Student record does not exist.')
+    
+    print("Delete view was called for student with ID:", pk) 
+    return redirect('display_iv_students')
