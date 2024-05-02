@@ -2,13 +2,11 @@
 {% load static %}
 {% block body %}
 
-
 <div class="main-content">
     <div class="section__content section__content--p30">
         <div class="container">
             <div class="row">
                 <div class="col-lg-12 text-justify">
-                
                     {% if messages %}
                     <ul class="messages">
                         {% for message in messages %}
@@ -33,20 +31,37 @@
                             </select>
                         </div>
                         <!-- Filter options -->
-                        <div class="mb-3">
+                        <!-- <div class="mb-3">
                             <label for="sort_order">Filter by:</label>
-
-
-                            <div class="mb-3">
-                                <select id="courseDropdown" class="form-control" onchange="filterStudents()">
-                                    <option value="">All Courses</option>
-                                    {% for course in courses %}
+                            <select id="certificatetypeDropdown" class="form-control mb-3"
+                                onchange="showCourseDropdown()">
+                                <option value="">All Certificates</option>
+                                {% for certificate_type in certificate_types %}
+                                <option value="{{ certificate_type.certificate_type}}">
+                                    {{certificate_type.certificate_type }}</option>
+                                {% endfor %}
+                            </select>
+                            <select id="courseDropdown" class="form-control" onchange="filterStudents()">
+                                <option value="">All Courses</option>
+                                {% for certificate_type in certificate_types %}
+                                <optgroup label="{{ certificate_type.certificate_type }}">
+                                    {% for course in certificate_type.courses.all %}
                                     <option value="{{ course.course_name }}">{{ course.course_name }}</option>
                                     {% endfor %}
-                                </select>
-                            </div>
+                                </optgroup>
+                                {% endfor %}
+                            </select>
 
 
+                        </div> -->
+
+                        <div class="mb-3">
+                            <select id="courseDropdown" class="form-control" onchange="filterStudents()">
+                                <option value="">All Courses</option>
+                                    {% for course in courses %}
+                                        <option value="{{ course.course_name }}">{{ course.course_name }}</option>
+                                    {% endfor %}
+                            </select>
                         </div>
 
                         <div class="table-responsive table--no-card m-b-30">
@@ -56,12 +71,11 @@
                                         <th>Select</th>
                                         <th>Download</th>
                                         <th>Name</th>
-                                        <th>Semester/Year</th>
-                                        <th>Department</th>
                                         <th>Institution Name</th>
-                                        <th>Course </th>
-                                        <th>Duration</th>
-                                        <th>conducted Date</th>
+                                        <th>Course / Item</th>
+                                        <th>Start Date</th>
+                                        <th>End Date</th>
+                                        <th>Mentor Name</th>
                                         <th>Issued Date
                                             <span id="searchIcon" class="search-icon"
                                                 onclick="toggleSearchInput()">🔍</span>
@@ -75,41 +89,34 @@
                                     </tr>
                                 </thead>
                                 <tbody id="student_table_body">
-                                    {% for student in students_iv %}
-                                    <tr>
-                                        <td><input type="checkbox" name="selected_students" value="{{ student.id }}"
-                                                class="m-2"></td>
-                                        <td>
-                                            <a href="{% url 'render_pdf_industrialvisit' student.id %}"
+                                    {% for student in students %}
+                                        <tr>
+                                            <td><input type="checkbox" name="selected_students" value="{{ student.id }}" class="m-2"></td>
+                                            <td>
+                                                <a href="{% url 'render_pdf' student.id %}"
                                                 class="btn btn-secondary m-2"><i class="fas fa-download"></i>
                                             </a>
-                                            <!-- <p>{{ certificate_numbers|default_if_none:''|default:student.id }}</p> -->
-
-                                            <!-- <p>{{ certificate_id_number|default_if_none:'None'}}</p> -->
-                                        </td>
-                                        <td>{{ student.name }}</td>
-                                        <td>{{ student.sem_year }}</td>
-                                        <td>{{ student.dept }}</td>
-                                        <td>{{ student.college_name }}</td>
-                                        <td>{{ student.course }}</td>
-                                        <td>{{ student.duration }}</td>
-                                        <td>{{ student.conducted_date }}</td>
-                                        <td>{{ student.issued_date }}</td>
-
-                                        <td><a href="{% url 'edit_iv' student.id %}" class="btn btn-secondary m-2">Edit</a>
-                                        </td>
-                                        <td>
-                                            <form action="{% url 'delete_iv' student.id %}" method="post" id="delete-iv-form">
-                                                {% csrf_token %}
-                                                <button type="submit" class="btn btn-secondary m-2"
-                                                    onclick="confirmDelete(event)">Delete</button>
-                                            </form>
-                                        </td>
-                                    </tr>
+                                            </td>
+                                            <td>{{ student.name }}</td>
+                                            <td>{{ student.college_name }}</td>
+                                            <td>{{ student.course }}</td>
+                                            <td>{{ student.start_date }}</td>
+                                            <td>{{ student.end_date }}</td>
+                                            <td>{{ student.mentor_name }}</td>
+                                            <td>{{ student.issued_date }}</td>
+                                           
+                                            <td><a href="{% url 'edit' student.id %}" class="btn btn-secondary m-2">Edit</a></td>
+                                            <td>
+                                                <form action="{% url 'delete' student.id %}" method="post" id="delete-form">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-secondary m-2" onclick="confirmDelete(event)">Delete</button>
+                                                </form>
+                                            </td>
+                                        </tr>
                                     {% endfor %}
                                 </tbody>
-
-
+                                
+                                                                
                             </table>
                         </div>
                     </form>
@@ -151,10 +158,9 @@
     function confirmDelete(event) {
         event.preventDefault(); // Prevent default form submission
         if (confirm('Are you sure you want to delete this student record?')) {
-            event.target.closest('#delete-iv-form').submit(); // Submit the closest form
+            event.target.closest('#delete-form').submit(); // Submit the closest form
         }
     }
-
 
     function sortStudents() {
         var sort_order = document.getElementById("sort_order").value;
@@ -189,41 +195,51 @@
 
 
     function filterStudents() {
-        var selectedCourse = document.getElementById("courseDropdown").value;
-        var rows = document.getElementById("student_table_body").getElementsByTagName("tr");
-
-        // Loop through all table rows
-        for (var i = 0; i < rows.length; i++) {
-            var cells = rows[i].getElementsByTagName("td");
-
-            // Check if the current row contains data for the selected course
-            if (cells.length > 0 && selectedCourse != "") {
-                var courseCell = cells[6]; // Assuming the course name is in the 5th column
-                if (courseCell.textContent.trim() == selectedCourse) {
-                    rows[i].style.display = ""; // Show the row if it matches the selected course
-                } else {
-                    rows[i].style.display = "none"; // Hide the row if it doesn't match the selected course
-                }
+    var selectedCourse = document.getElementById("courseDropdown").value;
+    var rows = document.getElementById("student_table_body").getElementsByTagName("tr");
+    
+    // Loop through all table rows
+    for (var i = 0; i < rows.length; i++) {
+        var cells = rows[i].getElementsByTagName("td");
+        
+        // Check if the current row contains data for the selected course
+        if (cells.length > 0 && selectedCourse != "") {
+            var courseCell = cells[4]; // Assuming the course name is in the 5th column
+            if (courseCell.textContent.trim() == selectedCourse) {
+                rows[i].style.display = ""; // Show the row if it matches the selected course
+                matchFound = true; 
             } else {
-                rows[i].style.display = ""; // Show all rows if no course is selected
+                rows[i].style.display = "none"; // Hide the row if it doesn't match the selected course
             }
+        } else {
+            rows[i].style.display = ""; // Show all rows if no course is selected
         }
     }
-
-  
-
+    // Hide the table body if no matching rows are found
+    var tableBody = document.getElementById("student_table_body");
+    tableBody.style.display = matchFound ? "" : "none"
     
+    // Display a message if no matching rows are found
+    if (!matchFound) {
+        var messageRow = document.createElement("tr");
+        var messageCell = document.createElement("td");
+        messageCell.colSpan = 12; // Set colspan to span across all columns
+        messageCell.textContent = "No matching rows found.";
+        messageRow.appendChild(messageCell);
+        document.getElementById("student_table_body").appendChild(messageRow);
+    }
+}
+
     function exportToExcel() {
         // Initialize the HTML content with the table header
         var htmlContent = '<table>';
         htmlContent += '<thead><tr>';
         htmlContent += '<th>Name</th>';
-        htmlContent += '<th>Semester/Year</th>';
-        htmlContent += '<th>Department</th>';
         htmlContent += '<th>Institution Name</th>';
         htmlContent += '<th>Course</th>';
-        htmlContent += '<th>Duration</th>';
-        htmlContent += '<th>Conducted Date</th>';
+        htmlContent += '<th>Start Date</th>';
+        htmlContent += '<th>End Date</th>';
+        htmlContent += '<th>Mentor Name</th>';
         htmlContent += '<th>Issued Date</th>';
         htmlContent += '</tr></thead>';
         htmlContent += '<tbody>';
@@ -268,7 +284,6 @@
 
 
 
-  
 </script>
 
 <!-- end document-->

@@ -30,8 +30,40 @@ class CertificateTypes(models.Model):
         return f"{self.certificate_type} - Courses: {course_list}"
 
 
+class Tronix_items(models.Model):
+    items =models.CharField(max_length=255, null=True)
+
+
+class Tronix(models.Model):
+    season =models.CharField(max_length=100, null=True)
+    place = models.CharField(max_length=255, null=True)
+    date = models.DateField(default=timezone.now)
+    item= models.ForeignKey(Tronix_items, on_delete=models.CASCADE, null=True)
+    
+
+class StudentTronix(models.Model):
+    name= models.CharField(max_length=255, null=True)
+    school= models.CharField(max_length=255, null=True)
+    issued_date = models.DateField(default=timezone.now)
+    created_at = models.DateTimeField( default=timezone.now)  # Add this field to store creation time
+    certificate_number = models.CharField(max_length=20, null=True, blank=True)  # Changed field name to certificate_number
+    tronix_details = models.ForeignKey(Tronix, on_delete=models.CASCADE, null=True)
+    certificate_type = models.ForeignKey(CertificateTypes, on_delete=models.CASCADE, null=True)
+
+    def save(self, *args, **kwargs):
+        # Set issued_date to the current date if it's not already set
+        if not self.issued_date:
+            self.issued_date = timezone.now().date()
+        if not self.pk:  # If the instance is being created (not updated)
+            self.created_at = self.issued_date  # Set created_at to issued_date
+        super().save(*args, **kwargs)
+
+
+    def __str__(self):
+        return self.name
+
+
 class Student(models.Model):
-  
     name = models.CharField(max_length=255, blank=True, default='')
     college_name = models.CharField(max_length=255, blank=True, default='')
     start_date = models.DateField(default=timezone.now)
@@ -54,7 +86,8 @@ class Student(models.Model):
     def __str__(self):
         return self.name
   
-    
+
+# model for Student of industrial visit(iv)
 class StudentIV(models.Model):
     name = models.CharField(max_length=255, blank=True, default='')
     sem_year =models.CharField(max_length=100, blank=True, default='')
@@ -87,6 +120,7 @@ class StudentIV(models.Model):
 class StudentRelatedAuthority(models.Model):
     std = models.ForeignKey(Student, on_delete=models.CASCADE, null=True)
     std_iv = models.ForeignKey(StudentIV, on_delete=models.CASCADE, null=True)
+    std_tronix = models.ForeignKey(StudentTronix, on_delete=models.CASCADE, null=True)
     authority = models.ForeignKey(Authority, on_delete=models.CASCADE, null=True)
 
     def __str__(self):

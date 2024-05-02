@@ -44,7 +44,7 @@
     <link href="{% static 'css/theme.css' %}" rel="stylesheet" media="all">
 
     </head>
-    <body class="animsition">
+    <body class="">
         <div class="page-wrapper">
             <!-- HEADER MOBILE-->
             <header class="header-mobile d-block d-lg-none">
@@ -70,7 +70,7 @@
                         <ul class="navbar-mobile__list list-unstyled">
                            
                             <li class="has-sub">
-                                <a class="js-arrow" href="{% url 'index' %}">
+                                <a  href="{% url 'index' %}">
                                     <i class="fas fa-tachometer-alt"></i>Dashboard</a>
                                
                             </li>
@@ -87,7 +87,7 @@
                                     <i class="far fa-check-square"></i>Add Student Data</a>
                             </li>
                             <li >
-                                <a class="btn btn-primary p-2 dashboard-btn" href="{% url 'student_form' %}">Generate certificate</a>
+                                <a class="btn btn-primary p-2 dashboard-btn" href="{% url 'courses' %}">Generate certificate</a>
                             </li>
                           
                         </ul>
@@ -109,7 +109,7 @@
                            
                            
                             <li class="has-sub nav_item">
-                                <a class="js-arrow nav-link" href="{% url 'index' %}">
+                                <a class="nav-link" href="{% url 'index' %}">
                                     <i class="fas fa-tachometer-alt"></i>Dashboard</a>
                                 
                             </li>
@@ -123,7 +123,7 @@
                                     <i class="fas fa-table"></i>Student Data</a>
                             </li>
                             <li >
-                                <a class="btn btn-primary p-2 dashboard-btn" href="{% url 'student_form' %}">Generate certificate</a>
+                                <a class="btn btn-primary p-2 dashboard-btn" href="{% url 'courses' %}">Generate certificate</a>
                             </li>
                            
                         </ul>

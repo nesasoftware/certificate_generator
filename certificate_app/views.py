@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, JsonResponse
-from certificate_app.models import Student, CertificateTypes,Course, Authority, StudentRelatedAuthority, StudentIV
+from certificate_app.models import Student, CertificateTypes,Course, Authority, StudentRelatedAuthority, StudentIV, StudentTronix
 from django.contrib.auth.models import User
 from django.db.models import Q, Prefetch
 from django.db import IntegrityError
@@ -195,6 +195,159 @@ def my_view(request):
             print("Upload CSV not found in request")
 
     return render(request, 'student_form.html', {'certificate_types': certificate_types, 'authorities': authorities, 'upload_form': upload_form})
+
+
+# student form page for submitting details
+@login_required(login_url='login')
+def student_tronix_submit(request):
+    certificate_types = CertificateTypes.objects.all()
+    authorities = Authority.objects.all()
+    upload_form = UploadFileForm()
+
+    if request.method == 'POST':
+        if 'submit_tronix_form' in request.POST:
+            name = request.POST.get('name')
+            school_name = request.POST.get('school_name')
+            issued_date = timezone.now().date()
+            certificate_number =request.POST.get('certificate_number')
+            certificate_type_id = request.POST.get('certificate_type')
+            season = request.POST.get('season')
+            place = request.POST.get('place')
+            date = request.POSt.get('conducted_date')
+            item = request.POST.get('item')
+            authority_ids = request.POST.getlist('authority')
+            # course_id = request.POST.get('courses')
+            
+            # Fetch the CertificateTypes instance based on the provided certificate_type_id
+            certificate_type = CertificateTypes.objects.get(id=certificate_type_id)
+         
+            # Fetch the Course instance based on the provided course_id
+            # course = Course.objects.get(id=course_id)
+      
+
+            #Assign the selected course to the student through the CertificateTypes instance
+            # certificate_type.courses.add(course) 
+
+
+            # Fetch the last used certificate number
+            last_certificate_number = StudentTronix.objects.order_by('-id').first().certificate_number
+
+            # Convert the last certificate number to an integer (if it's not already)
+            last_certificate_number = int(last_certificate_number) if last_certificate_number else 0
+
+    
+            # Increment the last certificate number by 1 to generate the new certificate number
+            if last_certificate_number:
+                new_certificate_number = last_certificate_number + 1
+            else:
+                new_certificate_number = 1
+
+            # Convert the new certificate number back to a string
+            new_certificate_number_str = str(new_certificate_number)
+
+
+            student = StudentTronix.objects.create(
+                name=name,
+                school_name=school_name,
+                issued_date=issued_date,
+                season=season,
+                place=place,
+                date=date,
+                item= item,
+                certificate_type_id=certificate_type_id,
+                certificate_number=new_certificate_number_str
+            )
+
+            # Add selected authorities to the student
+            for authority_id in authority_ids:
+                authority = Authority.objects.get(id=authority_id)
+                StudentRelatedAuthority.objects.create(std=student, authority=authority)
+
+            return redirect('display_tronix_students')  # Redirect to the display students page
+        
+
+        elif 'upload_csv' in request.POST:
+            upload_form = UploadFileForm(request.POST, request.FILES)
+            if upload_form.is_valid():
+                csv_file = request.FILES['csv_file']
+                decoded_file = csv_file.read().decode('utf-8').splitlines()
+                reader = csv.DictReader(decoded_file)
+                for row in reader:
+                    date = timezone.datetime.strptime(row['date'], '%d-%m-%Y').strftime('%Y-%m-%d')
+                    authorities = row.get('auth_id', '').split(',')
+
+                    for auth_id in authorities:
+                        try:
+                            # Get Authority instance based on the custom ID (auth_id)
+                            authority = Authority.objects.get(auth_id=auth_id)
+                        except Authority.DoesNotExist:
+                             # Handle the case where the Authority instance with the provided auth_id doesn't exist
+                            print(f"Authority with auth_id {auth_id} does not exist. Skipping this auth_id.")
+                            continue
+                        
+                        # Fetch or create the Course instance based on the provided course_name
+                        # course_name = row.get('course_name')
+                        # course,create = Course.objects.get_or_create(course_name=course_name)
+
+                        # Fetch certificate_type_id from row data
+                        certificate_type_id = row.get('certificate_type_id')
+                        
+
+                        try:
+                            # Get CertificateTypes instance based on the custom ID
+                            certificate_type = CertificateTypes.objects.get(certify_type_id=certificate_type_id)
+                        except CertificateTypes.DoesNotExist:
+                            # Handle the case where the CertificateTypes instance with the provided certificate_type_id doesn't exist
+                            print(f"CertificateTypes with certificate_type_id {certificate_type_id} does not exist. Skipping this row.")
+                            continue
+                        
+
+                        # Fetch the last used certificate number
+                        last_certificate_number = StudentTronix.objects.order_by('-id').first().certificate_number
+
+                        # Convert the last certificate number to an integer (if it's not already)
+                        last_certificate_number = int(last_certificate_number) if last_certificate_number else 0
+
+    
+                        # Increment the last certificate number by 1 to generate the new certificate number
+                        if last_certificate_number:
+                            new_certificate_number = last_certificate_number + 1
+                        else:
+                            new_certificate_number = 1
+
+                        # Convert the new certificate number back to a string
+                        new_certificate_number_str = str(new_certificate_number)
+
+                        # Create Student instance for the current row
+                        student = StudentTronix.objects.create(
+                            name=row.get('name', ''),
+                            school_name=row.get('school_name', ''),
+                            issued_date=timezone.now().date(),
+                            certificate_type=certificate_type,  
+                            season=season,
+                            place=place,
+                            date=date,
+                            item= item,
+                            certificate_number=new_certificate_number_str
+                            # course=row.get('course_name','')
+                        )
+
+                        # Create StudentRelatedAuthority instance linking student with authority
+                        StudentRelatedAuthority.objects.create(std_tronix=student, authority=authority)
+
+                        # Print a message indicating successful processing
+                        print("CSV file processed successfully")                       
+
+                return redirect('display_tronix_students')
+            else:
+                # Print form errors if any
+                print("Form errors:", upload_form.errors)
+        else:
+            # Print if 'upload_csv' is not in request.POST
+            print("Upload CSV not found in request")
+
+    return render(request, 'student_tronix_form.html', {'certificate_types': certificate_types, 'authorities': authorities, 'upload_form': upload_form})
+
 
 
 
@@ -593,7 +746,7 @@ def render_pdf_view(request, student_id):
         program at <b>SinroRobotics Pvt Ltd</b> on <b>{course_name}</b> from <b>{start_date_formatted}</b> to <b>{end_date_formatted}</b>.</i>''', my_Style)
     
     width = 940
-    height = 500
+    height = 480
     p1.wrapOn(c, 450, 50)
     p1.drawOn(c, width-930, height-415)
 
@@ -1594,7 +1747,7 @@ def delete_iv(request, pk):
         student_instance = StudentIV.objects.get(pk=pk)
         student_instance.delete()
         messages.success(request, 'Student record deleted successfully.')
-    except Student.DoesNotExist:
+    except StudentIV.DoesNotExist:
         messages.error(request, 'Student record does not exist.')
     
     print("Delete view was called for student with ID:", pk) 
