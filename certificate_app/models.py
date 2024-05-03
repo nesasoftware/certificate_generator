@@ -33,22 +33,29 @@ class CertificateTypes(models.Model):
 class Tronix_items(models.Model):
     items =models.CharField(max_length=255, null=True)
 
+    def __str__(self):
+        return self.items
+
 
 class Tronix(models.Model):
     season =models.CharField(max_length=100, null=True)
-    place = models.CharField(max_length=255, null=True)
     date = models.DateField(default=timezone.now)
     item= models.ForeignKey(Tronix_items, on_delete=models.CASCADE, null=True)
+
+    def __str__(self):
+        return self.season
     
 
 class StudentTronix(models.Model):
     name= models.CharField(max_length=255, null=True)
     school= models.CharField(max_length=255, null=True)
     issued_date = models.DateField(default=timezone.now)
+    place = models.CharField(max_length=255, null=True)
     created_at = models.DateTimeField( default=timezone.now)  # Add this field to store creation time
     certificate_number = models.CharField(max_length=20, null=True, blank=True)  # Changed field name to certificate_number
     tronix_details = models.ForeignKey(Tronix, on_delete=models.CASCADE, null=True)
     certificate_type = models.ForeignKey(CertificateTypes, on_delete=models.CASCADE, null=True)
+    position = models.CharField(max_length=255, null=True)
 
     def save(self, *args, **kwargs):
         # Set issued_date to the current date if it's not already set

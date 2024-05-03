@@ -1,0 +1,145 @@
+<!-- student_iv_form.html -->
+{% extends 'base.html' %}
+{% load static %}
+{% block body %}
+
+<div class="main-content">
+    <div class="section__content section__content--p30">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6 col-sm-12 mx-auto">
+
+                    <div class="card text-justify mt-5">
+                        <div class="card-body form-body p-5">
+                            <h5 class="card-title text-center">Student Data Form</h5>
+                            <p class="card-text">
+
+                            <form method="post" action="" class="frm">
+                                {% csrf_token %}
+                                <label for="id_certificate_number">Certificate Number: </label>
+                                <input type="text" id="id_certificate_number" name="certificate_number"
+                                    value="{{ student.certificate_number }}"><br>
+
+                                <label for="id_name">Name:</label>
+                                <input type="text" id="id_name" name="name" value="{{ student.name }}"><br>
+
+                                <label for="id_school">School Name:</label>
+                                <input type="text" id="id_school" name="school" value="{{ student.school }}" required>
+
+
+                                <label for="id_place">Conducted Place:</label>
+                                <input type="text" id="id_place" name="place" value="{{ student.place }}"><br>
+
+                                <label for="id_conducted_date">Conducted Date:</label>
+                                <input type="date" id="id_conducted_date" name="conducted_date"
+                                    value="{{ student.conducted_date }}"><br>
+
+                                <label for="id_season">Season:</label><br>
+                                <select id="id_season" name="season">
+                                    {% for tronix in tronix_list %}
+                                    <option value="{{ tronix.id }}">{{ tronix.season }}</option>
+                                    <p>{{tronix.id}}</p>
+                                    {% endfor %}
+                                </select><br>
+
+                                <label for="id_tronix_item">Tronix Item:</label><br>
+                                <select id="id_tronix_item" name="tronix_item">
+                                    {% for tronix_item in tronix_item_list %}
+                                    <option value="{{ tronix_item.id }}">{{ tronix_item.items }}</option>
+                                    <p>{{tronix_item.id}}</p>
+                                    {% endfor %}
+                                </select><br>
+
+                                <label for="id_position">Position/Participated:</label>
+                                <select name="position" id="position">
+                                    <option value="Participated">Participated</option>
+                                    <option value="First Position">First Position</option>
+                                    <option value="Second Position">Second Position</option>
+                                    <option value="Third Position">Third Position</option>
+                                </select>
+
+                                <!-- Include necessary HTML and JavaScript -->
+                                <label>Certificates:</label><br>
+                                <select id="id_certificate_type" name="certificate_type">
+                                    {% for certificate_type in certificate_types %}
+                                    <option value="{{ certificate_type.id }}">{{ certificate_type.certificate_type }}
+                                    </option>
+                                    {% endfor %}
+                                </select><br>
+
+                                <!-- Authorities checkboxes -->
+                                <label>Authorities:</label><br>
+                                {% for authority in authorities %}
+                                <div class="authority-checkbox">
+                                    <input type="checkbox" id="authority_{{ authority.pk }}" name="authority"
+                                        value="{{ authority.pk }}">
+                                    <label for="authority_{{ authority.pk }}">{{ authority.name }}</label>
+                                </div>
+                                {% endfor %}
+
+                                <!-- Courses dropdowns -->
+                                <!-- {% for certificate_type in certificate_types %}
+                <div id="courses_{{ certificate_type.id }}" class="courses">
+                  <label>Courses:</label>
+                  <select id="courses_{{ certificate_type.id }}" name="courses">
+                    {% for item in certificate_type.courses.all %}
+                    <option value="{{ course.id }}">{{ course.course_name }}</option>
+                    {% endfor %}
+                  </select><br>
+                </div>
+                {% endfor %} -->
+
+                                <input class="btn btn-primary" type="submit" name="tronix_submit_form"
+                                    value="Submit Form">
+                            </form>
+
+
+                            <p class="text-center p-3">---- Or ---</p>
+
+
+                            <h4 class="mb-4">Upload CSV File</h4>
+                            <div class="col-md-12">
+                                <form method="post" enctype="multipart/form-data" class="csv_upload_form">
+                                    {% csrf_token %}
+                                    {{ upload_form.as_p }}
+                                    <input class="btn btn-primary" type="submit" name="upload_csv" value="Upload">
+                                </form>
+                            </div>
+
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Function to show/hide courses based on selected certificate type
+    function updateCourses() {
+        // Hide all courses dropdowns
+        var coursesContainers = document.querySelectorAll('.courses');
+        coursesContainers.forEach(function (container) {
+            container.style.display = 'none';
+        });
+
+        // Get the selected certificate type
+        var certificateTypeId = document.getElementById('id_certificate_type').value;
+        var selectedCoursesContainer = document.getElementById('courses_' + certificateTypeId);
+
+        // Show courses dropdown for the selected certificate type
+        if (selectedCoursesContainer) {
+            selectedCoursesContainer.style.display = 'block';
+        }
+    }
+
+    // Add event listener to the certificate type dropdown
+    document.getElementById('id_certificate_type').addEventListener('change', updateCourses);
+
+    // Call updateCourses initially to show courses for the default certificate type
+    updateCourses();
+</script>
+
+
+{% endblock %}

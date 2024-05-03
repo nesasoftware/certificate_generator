@@ -1,13 +1,13 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, JsonResponse
-from certificate_app.models import Student, CertificateTypes,Course, Authority, StudentRelatedAuthority, StudentIV, StudentTronix
+from certificate_app.models import Student, CertificateTypes,Course, Authority, StudentRelatedAuthority, StudentIV, StudentTronix, Tronix_items, Tronix
 from django.contrib.auth.models import User
 from django.db.models import Q, Prefetch
 from django.db import IntegrityError
 from .forms import MyForm, UploadFileForm
 from django.shortcuts import render
 from django.template.loader import get_template
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.urls import reverse
 from django.conf import settings
 import csv
@@ -203,65 +203,61 @@ def student_tronix_submit(request):
     certificate_types = CertificateTypes.objects.all()
     authorities = Authority.objects.all()
     upload_form = UploadFileForm()
+    tronix_list = Tronix.objects.all()
+    tronix_item_list = Tronix_items.objects.all()
+    
 
     if request.method == 'POST':
-        if 'submit_tronix_form' in request.POST:
-            name = request.POST.get('name')
-            school_name = request.POST.get('school_name')
-            issued_date = timezone.now().date()
+        if 'tronix_submit_form' in request.POST:
             certificate_number =request.POST.get('certificate_number')
-            certificate_type_id = request.POST.get('certificate_type')
-            season = request.POST.get('season')
+            name = request.POST.get('name')
+            school = request.POST.get('school')
+            issued_date = timezone.now().date()
             place = request.POST.get('place')
-            date = request.POSt.get('conducted_date')
-            item = request.POST.get('item')
+            position = request.POST.get('position')           
+            certificate_type_id = request.POST.get('certificate_type')
             authority_ids = request.POST.getlist('authority')
-            # course_id = request.POST.get('courses')
+            season = request.POST.get('season')
+            item = request.POST.get('Item')
+
+            # tronix_id = request.POST.get('tronix')
+            # tronix_item_id = request.POST.get('tronix_item')
+
+            # Retrieve Tronix instance based on the season
+            tronix_instance_season = get_object_or_404(Tronix, season=season)
+            tronix_instance_item = get_object_or_404(Tronix, item=item)
             
-            # Fetch the CertificateTypes instance based on the provided certificate_type_id
-            certificate_type = CertificateTypes.objects.get(id=certificate_type_id)
-         
-            # Fetch the Course instance based on the provided course_id
-            # course = Course.objects.get(id=course_id)
-      
-
-            #Assign the selected course to the student through the CertificateTypes instance
-            # certificate_type.courses.add(course) 
-
-
-            # Fetch the last used certificate number
-            last_certificate_number = StudentTronix.objects.order_by('-id').first().certificate_number
-
-            # Convert the last certificate number to an integer (if it's not already)
-            last_certificate_number = int(last_certificate_number) if last_certificate_number else 0
-
-    
-            # Increment the last certificate number by 1 to generate the new certificate number
-            if last_certificate_number:
-                new_certificate_number = last_certificate_number + 1
-            else:
-                new_certificate_number = 1
-
-            # Convert the new certificate number back to a string
-            new_certificate_number_str = str(new_certificate_number)
-
-
-            student = StudentTronix.objects.create(
+            # try:
+            #     # Retrieve Tronix instance
+            #     tronix_instance = Tronix.objects.get(id=tronix_id)
+            # except ObjectDoesNotExist:
+                # Handle the case where Tronix instance doesn't exist
+                # For example, redirect to an error page or display a message to the user
+                # return HttpResponse("Tronix instance does not exist.")
+            
+            # Retrieve Tronix_items instance
+            # tronix_item_instance = Tronix_items.objects.get(id=tronix_item_id)
+            
+  
+            tronix_student = StudentTronix.objects.create(
                 name=name,
-                school_name=school_name,
+                school =school,
+                place= place,
+                #conducted_date=conducted_date,
                 issued_date=issued_date,
-                season=season,
-                place=place,
-                date=date,
-                item= item,
                 certificate_type_id=certificate_type_id,
-                certificate_number=new_certificate_number_str
+                certificate_number=certificate_number,
+                position = position,
+                season=tronix_instance_season,
+                item =tronix_instance_item
+                #tronix_details=tronix_instance,
+                #item=tronix_item_instance
             )
 
             # Add selected authorities to the student
             for authority_id in authority_ids:
                 authority = Authority.objects.get(id=authority_id)
-                StudentRelatedAuthority.objects.create(std=student, authority=authority)
+                StudentRelatedAuthority.objects.create(std_tronix=tronix_student, authority=authority)
 
             return redirect('display_tronix_students')  # Redirect to the display students page
         
@@ -273,7 +269,8 @@ def student_tronix_submit(request):
                 decoded_file = csv_file.read().decode('utf-8').splitlines()
                 reader = csv.DictReader(decoded_file)
                 for row in reader:
-                    date = timezone.datetime.strptime(row['date'], '%d-%m-%Y').strftime('%Y-%m-%d')
+                    conducted_date = timezone.datetime.strptime(row['conducted_date'], '%Y-%m-%d').strftime('%Y-%m-%d')
+
                     authorities = row.get('auth_id', '').split(',')
 
                     for auth_id in authorities:
@@ -286,8 +283,8 @@ def student_tronix_submit(request):
                             continue
                         
                         # Fetch or create the Course instance based on the provided course_name
-                        # course_name = row.get('course_name')
-                        # course,create = Course.objects.get_or_create(course_name=course_name)
+                        # item = row.get('item')
+                        # item,create = Course.objects.get_or_create(item=item)
 
                         # Fetch certificate_type_id from row data
                         certificate_type_id = row.get('certificate_type_id')
@@ -300,43 +297,33 @@ def student_tronix_submit(request):
                             # Handle the case where the CertificateTypes instance with the provided certificate_type_id doesn't exist
                             print(f"CertificateTypes with certificate_type_id {certificate_type_id} does not exist. Skipping this row.")
                             continue
-                        
 
-                        # Fetch the last used certificate number
-                        last_certificate_number = StudentTronix.objects.order_by('-id').first().certificate_number
-
-                        # Convert the last certificate number to an integer (if it's not already)
-                        last_certificate_number = int(last_certificate_number) if last_certificate_number else 0
-
-    
-                        # Increment the last certificate number by 1 to generate the new certificate number
-                        if last_certificate_number:
-                            new_certificate_number = last_certificate_number + 1
-                        else:
-                            new_certificate_number = 1
-
-                        # Convert the new certificate number back to a string
-                        new_certificate_number_str = str(new_certificate_number)
 
                         # Create Student instance for the current row
-                        student = StudentTronix.objects.create(
-                            name=row.get('name', ''),
-                            school_name=row.get('school_name', ''),
-                            issued_date=timezone.now().date(),
-                            certificate_type=certificate_type,  
-                            season=season,
-                            place=place,
-                            date=date,
-                            item= item,
-                            certificate_number=new_certificate_number_str
-                            # course=row.get('course_name','')
-                        )
+                        try:
+                            # Create Student instance for the current row
+                            tronix_student = StudentTronix.objects.create(
+                                name=row.get('name', ''),
+                                school=row.get('school', ''),
+                                season=row.get('season', ''),
+                                conducted_date=row.get('conducted_date', ''),
+                                place=row.get('place', ''),
+                                item = row.get('item'),
+                                issued_date=timezone.now().date(),
+                                certificate_type=certificate_type,
+                                certificate_number=certificate_number('certificate_number',''),
+                                position= row.get('position','')
+                            )
 
-                        # Create StudentRelatedAuthority instance linking student with authority
-                        StudentRelatedAuthority.objects.create(std_tronix=student, authority=authority)
+                            # Create StudentRelatedAuthority instance linking student with authority
+                            StudentRelatedAuthority.objects.create(std_tronix=tronix_student, authority=authority)
 
-                        # Print a message indicating successful processing
-                        print("CSV file processed successfully")                       
+                            # Print a message indicating successful processing
+                            print("CSV file processed successfully")
+                        except ValidationError as e:
+                            # Display the validation error message to the user
+                            error_message = ', '.join(e.messages)
+                            print(f"Validation Error: {error_message}")                      
 
                 return redirect('display_tronix_students')
             else:
@@ -345,9 +332,9 @@ def student_tronix_submit(request):
         else:
             # Print if 'upload_csv' is not in request.POST
             print("Upload CSV not found in request")
+  
 
-    return render(request, 'student_tronix_form.html', {'certificate_types': certificate_types, 'authorities': authorities, 'upload_form': upload_form})
-
+    return render(request, 'student_tronix_form.html', {'certificate_types': certificate_types, 'authorities': authorities,'tronix_list': tronix_list, 'tronix_item_list': tronix_item_list, 'upload_form': upload_form, 'season':season, 'item':item})    
 
 
 
@@ -614,6 +601,67 @@ def display_iv_students(request):
     
     return render(request, 'table_iv.html', context)
 
+
+# display all students
+@login_required(login_url='login')
+def display_tronix_students(request):
+    students_iv = StudentIV.objects.all().order_by('-created_at')
+    courses=Course.objects.all()
+    certificate_types = CertificateTypes.objects.all()
+    certificate_courses = {}
+    certificate_numbers = {}
+    
+    
+    # Assuming you have a specific student ID or you need to iterate over all students
+    # for student in students_iv:
+    #     number = student.certificate_number
+    #     current_year = datetime.now().strftime("%Y")
+    #     certificate_number = f"SRC/{current_year}/{number}"
+    #     certificate_numbers[student.id] = certificate_number  # Store the certificate number in the dictionary
+    #     print(certificate_numbers)
+
+    
+    for certificate_type_instance in certificate_types:
+        certificate_type_pk = certificate_type_instance.pk
+        # Now you can use certificate_type_pk as needed, for example:
+        # print(f"Primary key of CertificateTypes instance: {certificate_type_pk}")
+
+        # Access the courses related to this instance
+        current_courses = certificate_type_instance.courses.all()
+
+        # Store the related courses for this certificate type
+        certificate_courses[certificate_type_pk] = current_courses
+
+        # Iterate over each Course instance related to the current certificate type
+        for course_instance in current_courses:
+            # Retrieve the related CertificateTypes for the current Course instance
+            certificate_types_related_to_course = course_instance.certificate_types.all()
+        
+            # Iterate over each related CertificateTypes instance
+            for certificate_type_instance_related_to_course in certificate_types_related_to_course:
+                certificate_type_pk_related_to_course = certificate_type_instance_related_to_course.pk
+                # Now you can use certificate_type_pk_related_to_course as needed, for example:
+                # print(f"Primary key of CertificateTypes instance related to Course '{course_instance.course_name}': {certificate_type_pk_related_to_course}")
+        
+    current_year = datetime.now().strftime("%Y")
+
+    # Iterate over each student to generate certificate numbers
+    for student in students_iv:
+        number = student.certificate_number
+        current_year = datetime.now().strftime("%Y")
+        certificate_number = f"SRC/{current_year}/{number}"
+        certificate_numbers[student.id] = certificate_number  # Map student ID to certificate number
+
+    print(certificate_numbers)
+    
+    context = {
+        'students_iv': students_iv,
+        'certificate_types': certificate_types,
+        'courses': courses,
+        'certificate_id_number': certificate_numbers,  # Include the certificate numbers in the context
+    }
+    
+    return render(request, 'table_iv.html', context)
 
 
 
