@@ -56,9 +56,11 @@
                                         <th>Select</th>
                                         <th>Download</th>
                                         <th>Name</th>
+                                        <th>School</th>
                                         <th>Season</th>
                                         <th>Place</th>
                                         <th>Item</th>
+                                        <th>Position</th>
                                         <th>conducted Date</th>
                                         <th>Issued Date
                                             <span id="searchIcon" class="search-icon"
@@ -87,16 +89,23 @@
                                         </td>
                                         <td>{{ student.name }}</td>
                                         <td>{{ student.school }}</td>
-                                        <td>{{ student.season }}</td>
+
+                                        <td>{{ student.tronix_details.season }}</td>
+
                                         <td>{{ student.place }}</td>
-                                        <td>{{ student.item }}</td>
-                                        <td>{{ student.conducted_date }}</td>
+
+                                        <td>{{ student.tronix_details.item }}</td>
+
+                                        <td>{{ student.position }}</td>
+
+                                        <td>{{ student.tronix_details.date }}</td>
+
                                         <td>{{ student.issued_date }}</td>
 
-                                        <td><a href="{% url 'edit_iv' student.id %}" class="btn btn-secondary m-2">Edit</a>
+                                        <td><a href="{% url 'edit_tronix' student.id %}" class="btn btn-secondary m-2">Edit</a>
                                         </td>
                                         <td>
-                                            <form action="{% url 'delete_iv' student.id %}" method="post" id="delete-iv-form">
+                                            <form action="{% url 'delete_tronix' student.id %}" method="post" id="delete-tronix-form">
                                                 {% csrf_token %}
                                                 <button type="submit" class="btn btn-secondary m-2"
                                                     onclick="confirmDelete(event)">Delete</button>
@@ -219,6 +228,7 @@
         htmlContent += '<th>Season</th>';
         htmlContent += '<th>Place</th>';
         htmlContent += '<th>Item</th>';
+        htmlContent += '<th>Position?Participated</th>';
         htmlContent += '<th>Conducted Date</th>';
         htmlContent += '<th>Issued Date</th>';
         htmlContent += '</tr></thead>';
@@ -236,8 +246,9 @@
             htmlContent += '<td>' + row.cells[4].innerHTML + '</td>'; // Season column
             htmlContent += '<td>' + row.cells[5].innerHTML + '</td>'; // Place column
             htmlContent += '<td>' + row.cells[6].innerHTML + '</td>'; // item column
-            htmlContent += '<td>' + row.cells[7].innerHTML + '</td>'; // Conducted Date column
-            htmlContent += '<td>' + row.cells[8].innerHTML + '</td>'; // Issued Date column
+            htmlContent += '<td>' + row.cells[7].innerHTML + '</td>'; // position column
+            htmlContent += '<td>' + row.cells[8].innerHTML + '</td>'; // Conducted Date column
+            htmlContent += '<td>' + row.cells[9].innerHTML + '</td>'; // Issued Date column
             htmlContent += '</tr>';
         }
 

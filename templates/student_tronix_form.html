@@ -30,15 +30,14 @@
                                 <label for="id_place">Conducted Place:</label>
                                 <input type="text" id="id_place" name="place" value="{{ student.place }}"><br>
 
-                                <label for="id_conducted_date">Conducted Date:</label>
+                                <!-- <label for="id_conducted_date">Conducted Date:</label>
                                 <input type="date" id="id_conducted_date" name="conducted_date"
-                                    value="{{ student.conducted_date }}"><br>
+                                    value="{{ student.conducted_date }}"><br> -->
 
-                                <label for="id_season">Season:</label><br>
+                                <!-- <label for="id_season">Season:</label><br>
                                 <select id="id_season" name="season">
                                     {% for tronix in tronix_list %}
                                     <option value="{{ tronix.id }}">{{ tronix.season }}</option>
-                                    <p>{{tronix.id}}</p>
                                     {% endfor %}
                                 </select><br>
 
@@ -46,9 +45,42 @@
                                 <select id="id_tronix_item" name="tronix_item">
                                     {% for tronix_item in tronix_item_list %}
                                     <option value="{{ tronix_item.id }}">{{ tronix_item.items }}</option>
-                                    <p>{{tronix_item.id}}</p>
+                                    {% endfor %}
+                                </select><br> -->
+                                <!-- <label for="id_season">Season:</label><br>
+                                <select id="id_season" name="season">
+                                    {% for tronix in tronix_list %}
+                                    <option value="{{ tronix.id }}">{{ tronix.season }}</option>
                                     {% endfor %}
                                 </select><br>
+
+                                <label for="id_tronix_item">Tronix Item:</label><br>
+                                <select id="id_tronix_item" name="tronix_item">
+                                    {% for tronix_item in tronix_item_list %}
+                                    <option value="{{ tronix_item.id }}">{{ tronix_item.items }}</option>
+                                    {% endfor %}
+                                </select><br> -->
+                                <label for="id_season">Season:</label><br>
+                                <select id="id_season" name="season">
+                                    {% for tronix in tronix_list %}
+                                    <option value="{{ tronix.season }}">{{ tronix.season }}</option>
+                                    {% endfor %}
+                                </select><br>
+
+                                <label for="id_tronix_date">Tronix Date:</label><br>
+                                <select id="id_tronix_date" name="tronix_date">
+                                    {% for tronix in tronix_list %}
+                                    <option value="{{ tronix.date|date:'Y-m-d' }}">{{ tronix.date|date:'Y-m-d' }}</option>
+                                    {% endfor %}
+                                </select><br>
+
+                                <label for="id_tronix_item">Tronix Item:</label><br>
+                                <select id="id_tronix_item" name="tronix_item">
+                                    {% for tronix in tronix_list %}
+                                    <option value="{{ tronix.item }}">{{ tronix.item }}</option>
+                                    {% endfor %}
+                                </select><br>
+
 
                                 <label for="id_position">Position/Participated:</label>
                                 <select name="position" id="position">
@@ -77,20 +109,8 @@
                                 </div>
                                 {% endfor %}
 
-                                <!-- Courses dropdowns -->
-                                <!-- {% for certificate_type in certificate_types %}
-                <div id="courses_{{ certificate_type.id }}" class="courses">
-                  <label>Courses:</label>
-                  <select id="courses_{{ certificate_type.id }}" name="courses">
-                    {% for item in certificate_type.courses.all %}
-                    <option value="{{ course.id }}">{{ course.course_name }}</option>
-                    {% endfor %}
-                  </select><br>
-                </div>
-                {% endfor %} -->
-
                                 <input class="btn btn-primary" type="submit" name="tronix_submit_form"
-                                    value="Submit Form">
+                                    value="student_tronix_form">
                             </form>
 
 
@@ -115,7 +135,7 @@
     </div>
 </div>
 
-<script>
+<!-- <script>
     // Function to show/hide courses based on selected certificate type
     function updateCourses() {
         // Hide all courses dropdowns
@@ -139,7 +159,7 @@
 
     // Call updateCourses initially to show courses for the default certificate type
     updateCourses();
-</script>
+</script> -->
 
 
 {% endblock %}

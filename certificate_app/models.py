@@ -30,7 +30,7 @@ class CertificateTypes(models.Model):
         return f"{self.certificate_type} - Courses: {course_list}"
 
 
-class Tronix_items(models.Model):
+class TronixItems(models.Model):
     items =models.CharField(max_length=255, null=True)
 
     def __str__(self):
@@ -38,9 +38,9 @@ class Tronix_items(models.Model):
 
 
 class Tronix(models.Model):
-    season =models.CharField(max_length=100, null=True)
+    season = models.CharField(max_length=100, null=True)
     date = models.DateField(default=timezone.now)
-    item= models.ForeignKey(Tronix_items, on_delete=models.CASCADE, null=True)
+    item = models.ForeignKey(TronixItems, on_delete=models.CASCADE, null=True)
 
     def __str__(self):
         return self.season

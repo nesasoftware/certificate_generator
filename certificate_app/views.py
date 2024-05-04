@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, JsonResponse
-from certificate_app.models import Student, CertificateTypes,Course, Authority, StudentRelatedAuthority, StudentIV, StudentTronix, Tronix_items, Tronix
+from certificate_app.models import Student, CertificateTypes,Course, Authority, StudentRelatedAuthority, StudentIV, StudentTronix, TronixItems, Tronix
 from django.contrib.auth.models import User
 from django.db.models import Q, Prefetch
 from django.db import IntegrityError
@@ -204,137 +204,202 @@ def student_tronix_submit(request):
     authorities = Authority.objects.all()
     upload_form = UploadFileForm()
     tronix_list = Tronix.objects.all()
-    tronix_item_list = Tronix_items.objects.all()
-    
+    tronix_item_list = TronixItems.objects.all()
 
     if request.method == 'POST':
         if 'tronix_submit_form' in request.POST:
-            certificate_number =request.POST.get('certificate_number')
+            issued_date = timezone.now().date()
+            certificate_number = request.POST.get('certificate_number')
             name = request.POST.get('name')
             school = request.POST.get('school')
-            issued_date = timezone.now().date()
             place = request.POST.get('place')
-            position = request.POST.get('position')           
+            tronix_season = request.POST.get('season')  
+            tronix_date = request.POST.get('tronix_date')  
+            tronix_item_name = request.POST.get('tronix_item') 
+            #tronix_item = request.POST.get('tronix_item')  
+            position = request.POST.get('position')
             certificate_type_id = request.POST.get('certificate_type')
             authority_ids = request.POST.getlist('authority')
-            season = request.POST.get('season')
-            item = request.POST.get('Item')
 
-            # tronix_id = request.POST.get('tronix')
-            # tronix_item_id = request.POST.get('tronix_item')
+            # Get the TronixItems object based on the selected item name
+            tronix_item_obj = get_object_or_404(TronixItems, items=tronix_item_name)
 
-            # Retrieve Tronix instance based on the season
-            tronix_instance_season = get_object_or_404(Tronix, season=season)
-            tronix_instance_item = get_object_or_404(Tronix, item=item)
-            
-            # try:
-            #     # Retrieve Tronix instance
-            #     tronix_instance = Tronix.objects.get(id=tronix_id)
-            # except ObjectDoesNotExist:
-                # Handle the case where Tronix instance doesn't exist
-                # For example, redirect to an error page or display a message to the user
-                # return HttpResponse("Tronix instance does not exist.")
-            
-            # Retrieve Tronix_items instance
-            # tronix_item_instance = Tronix_items.objects.get(id=tronix_item_id)
-            
-  
+            # Parse the date string into a datetime object
+            tronix_date = datetime.strptime(request.POST.get('tronix_date'), '%Y-%m-%d')
+
+            # Get the corresponding Tronix object based on the selected values
+            tronix_obj = Tronix.objects.get(season=tronix_season, date=tronix_date, item=tronix_item_obj)
+
             tronix_student = StudentTronix.objects.create(
-                name=name,
-                school =school,
-                place= place,
-                #conducted_date=conducted_date,
                 issued_date=issued_date,
-                certificate_type_id=certificate_type_id,
                 certificate_number=certificate_number,
-                position = position,
-                season=tronix_instance_season,
-                item =tronix_instance_item
-                #tronix_details=tronix_instance,
-                #item=tronix_item_instance
+                name=name,
+                school=school,
+                place=place,
+                position=position,
+                certificate_type_id=certificate_type_id,
+                tronix_details=tronix_obj
             )
 
-            # Add selected authorities to the student
             for authority_id in authority_ids:
                 authority = Authority.objects.get(id=authority_id)
                 StudentRelatedAuthority.objects.create(std_tronix=tronix_student, authority=authority)
 
-            return redirect('display_tronix_students')  # Redirect to the display students page
+            return redirect('display_tronix_students')  
+    
+    return render(request, 'student_tronix_form.html', {'certificate_types': certificate_types, 'authorities': authorities,'tronix_list': tronix_list, 'tronix_item_list': tronix_item_list, 'upload_form': upload_form})
+
+# def student_tronix_submit(request):
+#     certificate_types = CertificateTypes.objects.all()
+#     authorities = Authority.objects.all()
+#     upload_form = UploadFileForm()
+#     tronix_list = Tronix.objects.all()
+#     tronix_item_list = Tronix_items.objects.all()
+    
+
+#     if request.method == 'POST':
+#         if 'tronix_submit_form' in request.POST:
+#             # certificate_number =request.POST.get('certificate_number')
+#             # name = request.POST.get('name')
+#             # school = request.POST.get('school')
+#             # place = request.POST.get('place')
+#             # position = request.POST.get('position')           
+#             # certificate_type_id = request.POST.get('certificate_type')
+#             # authority_ids = request.POST.getlist('authority')
+#             # season = request.POST.get('season')
+#             # item = request.POST.get('Item')
+
+#             issued_date = timezone.now().date()
+#             certificate_number = request.POST.get('certificate_number')
+#             name = request.POST.get('name')
+#             school = request.POST.get('school')
+#             place = request.POST.get('place')
+#             conducted_date = request.POST.get('conducted_date')
+#             season_id = request.POST.get('season')
+#             tronix_item_id = request.POST.get('tronix_item')
+#             position = request.POST.get('position')
+#             certificate_type_id = request.POST.get('certificate_type')
+#             authority_ids = request.POST.getlist('authority')
+          
+            
+#             # try:
+#             #     # Retrieve Tronix instance
+#             #     tronix_instance = Tronix.objects.get(id=tronix_id)
+#             # except ObjectDoesNotExist:
+#                 # Handle the case where Tronix instance doesn't exist
+#                 # For example, redirect to an error page or display a message to the user
+#                 # return HttpResponse("Tronix instance does not exist.")
+            
+#             # Retrieve Tronix_items instance
+#             # tronix_item_instance = Tronix_items.objects.get(id=tronix_item_id)
+            
+#             tronix_student = StudentTronix.objects.create(
+#                 issued_date=issued_date,
+#                 certificate_number=certificate_number,
+#                 name=name,
+#                 school=school,
+#                 place=place,
+#                 conducted_date=conducted_date,
+#                 season_id=season_id,
+#                 tronix_item_id=tronix_item_id,
+#                 position=position,
+#                 certificate_type_id=certificate_type_id
+#         )
+#             # tronix_student = StudentTronix.objects.create(
+#             #     name=name,
+#             #     school =school,
+#             #     place= place,
+#             #     #conducted_date=conducted_date,
+#             #     issued_date=issued_date,
+#             #     certificate_type_id=certificate_type_id,
+#             #     certificate_number=certificate_number,
+#             #     position = position,
+               
+#             #     #tronix_details=tronix_instance,
+#             #     #item=tronix_item_instance
+#             # )
+
+#             # Add selected authorities to the student
+#             for authority_id in authority_ids:
+#                 authority = Authority.objects.get(id=authority_id)
+#                 StudentRelatedAuthority.objects.create(std_tronix=tronix_student, authority=authority)
+
+#             return redirect('display_tronix_students')  # Redirect to the display students page
         
 
-        elif 'upload_csv' in request.POST:
-            upload_form = UploadFileForm(request.POST, request.FILES)
-            if upload_form.is_valid():
-                csv_file = request.FILES['csv_file']
-                decoded_file = csv_file.read().decode('utf-8').splitlines()
-                reader = csv.DictReader(decoded_file)
-                for row in reader:
-                    conducted_date = timezone.datetime.strptime(row['conducted_date'], '%Y-%m-%d').strftime('%Y-%m-%d')
+#         elif 'upload_csv' in request.POST:
+#             upload_form = UploadFileForm(request.POST, request.FILES)
+#             if upload_form.is_valid():
+#                 csv_file = request.FILES['csv_file']
+#                 decoded_file = csv_file.read().decode('utf-8').splitlines()
+#                 reader = csv.DictReader(decoded_file)
+#                 for row in reader:
+#                     conducted_date = timezone.datetime.strptime(row['conducted_date'], '%Y-%m-%d').strftime('%Y-%m-%d')
 
-                    authorities = row.get('auth_id', '').split(',')
+#                     authorities = row.get('auth_id', '').split(',')
 
-                    for auth_id in authorities:
-                        try:
-                            # Get Authority instance based on the custom ID (auth_id)
-                            authority = Authority.objects.get(auth_id=auth_id)
-                        except Authority.DoesNotExist:
-                             # Handle the case where the Authority instance with the provided auth_id doesn't exist
-                            print(f"Authority with auth_id {auth_id} does not exist. Skipping this auth_id.")
-                            continue
+#                     for auth_id in authorities:
+#                         try:
+#                             # Get Authority instance based on the custom ID (auth_id)
+#                             authority = Authority.objects.get(auth_id=auth_id)
+#                         except Authority.DoesNotExist:
+#                              # Handle the case where the Authority instance with the provided auth_id doesn't exist
+#                             print(f"Authority with auth_id {auth_id} does not exist. Skipping this auth_id.")
+#                             continue
                         
-                        # Fetch or create the Course instance based on the provided course_name
-                        # item = row.get('item')
-                        # item,create = Course.objects.get_or_create(item=item)
+#                         # Fetch or create the Course instance based on the provided course_name
+#                         # item = row.get('item')
+#                         # item,create = Course.objects.get_or_create(item=item)
 
-                        # Fetch certificate_type_id from row data
-                        certificate_type_id = row.get('certificate_type_id')
+#                         # Fetch certificate_type_id from row data
+#                         certificate_type_id = row.get('certificate_type_id')
                         
 
-                        try:
-                            # Get CertificateTypes instance based on the custom ID
-                            certificate_type = CertificateTypes.objects.get(certify_type_id=certificate_type_id)
-                        except CertificateTypes.DoesNotExist:
-                            # Handle the case where the CertificateTypes instance with the provided certificate_type_id doesn't exist
-                            print(f"CertificateTypes with certificate_type_id {certificate_type_id} does not exist. Skipping this row.")
-                            continue
+#                         try:
+#                             # Get CertificateTypes instance based on the custom ID
+#                             certificate_type = CertificateTypes.objects.get(certify_type_id=certificate_type_id)
+#                         except CertificateTypes.DoesNotExist:
+#                             # Handle the case where the CertificateTypes instance with the provided certificate_type_id doesn't exist
+#                             print(f"CertificateTypes with certificate_type_id {certificate_type_id} does not exist. Skipping this row.")
+#                             continue
 
 
-                        # Create Student instance for the current row
-                        try:
-                            # Create Student instance for the current row
-                            tronix_student = StudentTronix.objects.create(
-                                name=row.get('name', ''),
-                                school=row.get('school', ''),
-                                season=row.get('season', ''),
-                                conducted_date=row.get('conducted_date', ''),
-                                place=row.get('place', ''),
-                                item = row.get('item'),
-                                issued_date=timezone.now().date(),
-                                certificate_type=certificate_type,
-                                certificate_number=certificate_number('certificate_number',''),
-                                position= row.get('position','')
-                            )
+#                         # Create Student instance for the current row
+#                         try:
+#                             # Create Student instance for the current row
+#                             tronix_student = StudentTronix.objects.create(
+#                                 name=row.get('name', ''),
+#                                 school=row.get('school', ''),
+#                                 season=row.get('season', ''),
+#                                 conducted_date=row.get('conducted_date', ''),
+#                                 place=row.get('place', ''),
+#                                 item = row.get('item'),
+#                                 issued_date=timezone.now().date(),
+#                                 certificate_type=certificate_type,
+#                                 certificate_number=certificate_number('certificate_number',''),
+#                                 position= row.get('position','')
+#                             )
 
-                            # Create StudentRelatedAuthority instance linking student with authority
-                            StudentRelatedAuthority.objects.create(std_tronix=tronix_student, authority=authority)
+#                             # Create StudentRelatedAuthority instance linking student with authority
+#                             StudentRelatedAuthority.objects.create(std_tronix=tronix_student, authority=authority)
 
-                            # Print a message indicating successful processing
-                            print("CSV file processed successfully")
-                        except ValidationError as e:
-                            # Display the validation error message to the user
-                            error_message = ', '.join(e.messages)
-                            print(f"Validation Error: {error_message}")                      
+#                             # Print a message indicating successful processing
+#                             print("CSV file processed successfully")
+#                         except ValidationError as e:
+#                             # Display the validation error message to the user
+#                             error_message = ', '.join(e.messages)
+#                             print(f"Validation Error: {error_message}")                      
 
-                return redirect('display_tronix_students')
-            else:
-                # Print form errors if any
-                print("Form errors:", upload_form.errors)
-        else:
-            # Print if 'upload_csv' is not in request.POST
-            print("Upload CSV not found in request")
+#                 return redirect('display_tronix_students')
+#             else:
+#                 # Print form errors if any
+#                 print("Form errors:", upload_form.errors)
+#         else:
+#             # Print if 'upload_csv' is not in request.POST
+#             print("Upload CSV not found in request")
   
 
-    return render(request, 'student_tronix_form.html', {'certificate_types': certificate_types, 'authorities': authorities,'tronix_list': tronix_list, 'tronix_item_list': tronix_item_list, 'upload_form': upload_form, 'season':season, 'item':item})    
+#     return render(request, 'student_tronix_form.html', {'certificate_types': certificate_types, 'authorities': authorities,'tronix_list': tronix_list, 'tronix_item_list': tronix_item_list, 'upload_form': upload_form})    
 
 
 
@@ -605,21 +670,13 @@ def display_iv_students(request):
 # display all students
 @login_required(login_url='login')
 def display_tronix_students(request):
-    students_iv = StudentIV.objects.all().order_by('-created_at')
-    courses=Course.objects.all()
+    students_tronix = StudentTronix.objects.all().order_by('-created_at')
     certificate_types = CertificateTypes.objects.all()
+    tronix_list = Tronix.objects.all()
+    tronix_item_list = TronixItems.objects.all()
     certificate_courses = {}
     certificate_numbers = {}
     
-    
-    # Assuming you have a specific student ID or you need to iterate over all students
-    # for student in students_iv:
-    #     number = student.certificate_number
-    #     current_year = datetime.now().strftime("%Y")
-    #     certificate_number = f"SRC/{current_year}/{number}"
-    #     certificate_numbers[student.id] = certificate_number  # Store the certificate number in the dictionary
-    #     print(certificate_numbers)
-
     
     for certificate_type_instance in certificate_types:
         certificate_type_pk = certificate_type_instance.pk
@@ -646,7 +703,7 @@ def display_tronix_students(request):
     current_year = datetime.now().strftime("%Y")
 
     # Iterate over each student to generate certificate numbers
-    for student in students_iv:
+    for student in students_tronix:
         number = student.certificate_number
         current_year = datetime.now().strftime("%Y")
         certificate_number = f"SRC/{current_year}/{number}"
@@ -655,13 +712,14 @@ def display_tronix_students(request):
     print(certificate_numbers)
     
     context = {
-        'students_iv': students_iv,
+        'students_tronix': students_tronix,
         'certificate_types': certificate_types,
-        'courses': courses,
         'certificate_id_number': certificate_numbers,  # Include the certificate numbers in the context
+        'tronix_list': tronix_list, 
+        'tronix_item_list': tronix_item_list
     }
     
-    return render(request, 'table_iv.html', context)
+    return render(request, 'table_tronix.html', context)
 
 
 
@@ -1245,14 +1303,13 @@ def render_pdf_summercamp(request, student_id):
 def render_pdf_tronix(request, student_id):
 
     # Get the specific Student object based on student_id
-    student_instance = get_object_or_404(Student, id=student_id)
+    student_instance = get_object_or_404(StudentTronix, id=student_id)
+    tronix_list = Tronix.objects.all()
+    tronix_item_list = TronixItems.objects.all()
 
     # Get the certificate type associated with the student
     certificate_type_id = student_instance.certificate_type_id
     certificate_type = get_object_or_404(CertificateTypes, id=certificate_type_id)
-
-    # Get the courses related to the certificate type
-    courses = certificate_type.courses.first()
 
     # Create a BytesIO buffer to store the PDF content
     buffer = io.BytesIO()
@@ -1277,57 +1334,18 @@ def render_pdf_tronix(request, student_id):
     desired_height = 436
 
     
-    c.drawImage('pictures\Certificate of Participation Blank.jpg', -0.97*inch, -0.97*inch, width=desired_width, height=desired_height, mask=None)
+    c.drawImage('pictures\Certificate Tronix Blank.jpg', -0.97*inch, -0.97*inch, width=desired_width, height=desired_height, mask=None)
     font_path = 'static/fonts/Cascadia.ttf'
     pdfmetrics.registerFont(TTFont('Cascadia', font_path))
-    c.setFont('Cascadia', 12)  
-    current_year = datetime.now().strftime("%Y")
-    c.drawString(5.1* inch, 4.75 * inch, f"SRC{current_year}{student_instance.id}")
+    c.setFont('Cascadia', 9)  
+    c.drawString(6.0* inch, 4.43 * inch, f"TRS{student_instance.certificate_number}")
     
     # Register Dancing Script font
     font_path = 'static/fonts/MTCORSVA.TTF'
     pdfmetrics.registerFont(TTFont('MonteCarlo', font_path))
 
+    c.drawString(3.85* inch, 3.2 * inch,f"{student_instance.tronix_details.season.upper()}")
     
-    
-    # Example name
-    name = student_instance.name
-
-    # Set the font for the name
-    # c.setFont('MonteCarlo', font_size)
-    # c.setFillColor(HexColor('#c46608'))
-
-    # Define font size thresholds and corresponding font -
-    font_size_threshold = 30
-    default_font_size = 40
-    reduced_font_size = 30
-    
-    # Calculate the width of the name string
-    name_width = c.stringWidth(name)
-    
-    # Calculate the center of the page
-    center_x = letter[0] / 2
-    
-    # Calculate the starting x-coordinate to center the text
-    if len(name) < font_size_threshold:
-        start_x = 3.2 * inch
-        font_size = default_font_size
-    else:
-        # For longer names, reduce the font size and adjust the starting x-coordinate
-        start_x = 3.2 * inch
-        # start_x = center_x - (name_width / 2)
-        font_size = reduced_font_size
-    
-    align_y = 1.9 * inch
-    
-    # Set the font size
-    c.setFont('MonteCarlo', font_size)
-    c.setFillColor(HexColor('#c46608'))
-        
-    align_y = 1.9 * inch    
-    c.drawCentredString(start_x, align_y, name)
-    
-
     
     font_path = 'static/fonts/Minion-It.ttf'
     pdfmetrics.registerFont(TTFont('Minion Pro', font_path))
@@ -1339,22 +1357,21 @@ def render_pdf_tronix(request, student_id):
     my_Style.alignment = 1 
 
     # Retrieve the course name directly from the Course object
-    course_name = student_instance.course.course_name
+    # course_name = student_instance.course.course_name
 
-    p1 = Paragraph(f'''<i>Student of <b>{student_instance.college_name}</b>, has successfully completed the tronix
-        program at <b>SinroRobotics Pvt Ltd</b> on <b>{course_name}</b> from <b>{student_instance.start_date}</b> to <b>{student_instance.end_date}</b>.</i>''', my_Style)
+    p1 = Paragraph(f'''<i>This is to certify that <b>{student_instance.name.title()}</b>For getting <b>{student_instance.position}</b> in 
+        <b>{student_instance.tronix_details.item}</b> <b>TRONIX</b> All Kerala Inter-School Robo Chambionship {student_instance.tronix_details.season.capitalize()} conducted at <b>{student_instance.place}</b> on <b>{student_instance.tronix_details.date}</b></i>''', my_Style)
     
     width = 940
     height = 500
-    p1.wrapOn(c, 450, 50)
+    p1.wrapOn(c, 400, 50)
     p1.drawOn(c, width-930, height-410)
 
     # Get the StudentRelatedAuthority instance for the given student_id
-    student_related_authority = get_object_or_404(StudentRelatedAuthority, std_id=student_id)
+    student_related_authority = get_object_or_404(StudentRelatedAuthority, std_tronix=student_id)
 
     # Accessing the related Student ID
-    student_id = student_related_authority.std.id
-    
+    student_id = student_related_authority.std_tronix.id
 
     # Accessing the related Authority instance
     authority = student_related_authority.authority
@@ -1364,16 +1381,26 @@ def render_pdf_tronix(request, student_id):
         signature_image_url = str(authority.signature)
         print("Signature Image URL:", signature_image_url)
 
-        c.drawImage('media/' + signature_image_url, 4.4 * inch, 0 * inch, width=80, height=40, mask=None)
+        c.drawImage('media/' + signature_image_url, 4.4 * inch, 0.2 * inch, width=70, height=30, mask='auto')
 
     
     #c.drawImage('pictures/Nebu-John-SIgn.png',4.4*inch, 0.1*inch, width=100, height=50,mask=None)
 
     font_path = 'static/fonts/Quattrocento-Bold.ttf'
     pdfmetrics.registerFont(TTFont('Quattrocento-Bold', font_path))
-    c.setFont('Quattrocento-Bold', 12)
+    c.setFont('Quattrocento-Bold', 9)
     c.setFillColorRGB(0,0,0)
-    c.drawString( 0.8*inch, 0.08*inch, str(datetime.now().strftime("%Y-%m-%d")))
+    c.drawString( 0.65*inch, 0.3*inch, str(datetime.now().strftime("%d/%m/%Y")))
+
+    # Associate Partners logo
+    # partners_image_url = str(partners)
+    # print("Partners Image URL:", partners_image_url)
+    # c.drawImage('media/' + partners_image_url, 4.4 * inch, 0.2 * inch, width=70, height=30, mask=None)
+    c.drawImage('media/partners/nesa.png', -0.8 * inch, -0.7 * inch, width=80, height=28, mask='auto')
+    c.drawImage('media/partners/mkv.png', 0.4 * inch, -0.7 * inch, width=80, height=28, mask='auto')
+    c.drawImage('media/partners/10.png', 1.9 * inch, -0.7 * inch, width=64, height=29, mask='auto')
+
+    
 
 
     # Generate QR code
@@ -1507,8 +1534,7 @@ def render_pdf_industrialvisit(request, student_id):
     align_y = 1.9 * inch    
     c.drawCentredString(start_x, align_y, name)
     
-
-    
+        
     font_path = 'static/fonts/Minion-It.ttf'
     pdfmetrics.registerFont(TTFont('Minion Pro', font_path))
     c.setFont('Minion Pro', 12)
@@ -1775,6 +1801,20 @@ def edit_iv(request, pk):
     return render(request, 'edit.html', {'form': frm})
 
 
+@login_required(login_url='login')
+def edit_tronix(request, pk):
+    instance_to_be_edited = StudentTronix.objects.get(pk=pk)
+    
+    if request.method == 'POST':
+        frm = MyForm(request.POST, instance=instance_to_be_edited)
+        if frm.is_valid():
+            frm.save()
+            return redirect('display_tronix_students')  # Redirect after successful form submission
+    else:
+        frm = MyForm(instance=instance_to_be_edited)
+    
+    return render(request, 'edit.html', {'form': frm})
+
 
 @login_required(login_url='login')
 def delete(request, pk):
@@ -1800,3 +1840,16 @@ def delete_iv(request, pk):
     
     print("Delete view was called for student with ID:", pk) 
     return redirect('display_iv_students')
+
+
+@login_required(login_url='login')
+def delete_tronix(request, pk):
+    try:
+        student_instance = StudentTronix.objects.get(pk=pk)
+        student_instance.delete()
+        messages.success(request, 'Student record deleted successfully.')
+    except StudentTronix.DoesNotExist:
+        messages.error(request, 'Student record does not exist.')
+    
+    print("Delete view was called for student with ID:", pk) 
+    return redirect('display_tronix_students')
