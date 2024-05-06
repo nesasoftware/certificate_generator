@@ -230,9 +230,27 @@ def student_tronix_submit(request):
             # Get the corresponding Tronix object based on the selected values
             tronix_obj = Tronix.objects.get(season=tronix_season, date=tronix_date, item=tronix_item_obj)
 
+
+            # Fetch the last used certificate number
+            last_certificate_number = Student.objects.order_by('-id').first().certificate_number
+
+            # Convert the last certificate number to an integer (if it's not already)
+            last_certificate_number = int(last_certificate_number) if last_certificate_number else 0
+
+    
+            # Increment the last certificate number by 1 to generate the new certificate number
+            if last_certificate_number:
+                new_certificate_number = last_certificate_number + 1
+            else:
+                new_certificate_number = 1
+
+            # Convert the new certificate number back to a string
+            new_certificate_number_str = str(new_certificate_number)
+
+
             tronix_student = StudentTronix.objects.create(
                 issued_date=issued_date,
-                certificate_number=certificate_number,
+                certificate_number=new_certificate_number_str,
                 name=name,
                 school=school,
                 place=place,
@@ -245,7 +263,85 @@ def student_tronix_submit(request):
                 authority = Authority.objects.get(id=authority_id)
                 StudentRelatedAuthority.objects.create(std_tronix=tronix_student, authority=authority)
 
-            return redirect('display_tronix_students')  
+            return redirect('display_tronix_students') 
+        elif 'upload_csv' in request.POST:
+            upload_form = UploadFileForm(request.POST, request.FILES)
+            if upload_form.is_valid():
+                csv_file = request.FILES['csv_file']
+                decoded_file = csv_file.read().decode('utf-8').splitlines()
+                reader = csv.DictReader(decoded_file)
+                for row in reader:
+                    # start_date = timezone.datetime.strptime(row['start_date'], '%d-%m-%Y').strftime('%Y-%m-%d')
+                    # end_date = timezone.datetime.strptime(row['end_date'], '%d-%m-%Y').strftime('%Y-%m-%d')
+
+                    authorities = row.get('auth_id', '').split(',')
+
+                    for auth_id in authorities:
+                        try:
+                            # Get Authority instance based on the custom ID (auth_id)
+                            authority = Authority.objects.get(auth_id=auth_id)
+                        except Authority.DoesNotExist:
+                             # Handle the case where the Authority instance with the provided auth_id doesn't exist
+                            print(f"Authority with auth_id {auth_id} does not exist. Skipping this auth_id.")
+                            continue
+                        
+                       
+                        # Fetch certificate_type_id from row data
+                        certificate_type_id = row.get('certificate_type_id')
+                        
+
+                        try:
+                            # Get CertificateTypes instance based on the custom ID
+                            certificate_type = CertificateTypes.objects.get(certify_type_id=certificate_type_id)
+                        except CertificateTypes.DoesNotExist:
+                            # Handle the case where the CertificateTypes instance with the provided certificate_type_id doesn't exist
+                            print(f"CertificateTypes with certificate_type_id {certificate_type_id} does not exist. Skipping this row.")
+                            continue
+                        
+
+                        # Fetch the last used certificate number
+                        last_certificate_number = StudentTronix.objects.order_by('-id').first().certificate_number
+
+                        # Convert the last certificate number to an integer (if it's not already)
+                        last_certificate_number = int(last_certificate_number) if last_certificate_number else 0
+
+    
+                        # Increment the last certificate number by 1 to generate the new certificate number
+                        if last_certificate_number:
+                            new_certificate_number = last_certificate_number + 1
+                        else:
+                            new_certificate_number = 1
+
+                        # Convert the new certificate number back to a string
+                        new_certificate_number_str = str(new_certificate_number)
+
+                        # Create Student instance for the current row
+                        student = StudentTronix.objects.create(
+                            certificate_number=new_certificate_number_str,
+                            name=row.get('name', ''),
+                            school=row.get('school_name', ''),
+                            place=row.get('place', ''),
+                            position = row.get('position',''),
+                            issued_date=timezone.now().date(),
+                            certificate_type=certificate_type
+                            # course=row.get('course_name','')
+                        )
+
+                        # Create StudentRelatedAuthority instance linking student with authority
+                        StudentRelatedAuthority.objects.create(std_tronix=student, authority=authority)
+
+                        # Print a message indicating successful processing
+                        print("CSV file processed successfully")                       
+
+                return redirect('display_tronix_students')
+            else:
+                # Print form errors if any
+                print("Form errors:", upload_form.errors)
+        
+        else:
+            # Print if 'upload_csv' is not in request.POST
+            print("Upload CSV not found in request")
+ 
     
     return render(request, 'student_tronix_form.html', {'certificate_types': certificate_types, 'authorities': authorities,'tronix_list': tronix_list, 'tronix_item_list': tronix_item_list, 'upload_form': upload_form})
 
@@ -705,8 +801,8 @@ def display_tronix_students(request):
     # Iterate over each student to generate certificate numbers
     for student in students_tronix:
         number = student.certificate_number
-        current_year = datetime.now().strftime("%Y")
-        certificate_number = f"SRC/{current_year}/{number}"
+        #current_year = datetime.now().strftime("%Y")
+        certificate_number = f"TRS{number}"
         certificate_numbers[student.id] = certificate_number  # Map student ID to certificate number
 
     print(certificate_numbers)
@@ -1306,6 +1402,7 @@ def render_pdf_tronix(request, student_id):
     student_instance = get_object_or_404(StudentTronix, id=student_id)
     tronix_list = Tronix.objects.all()
     tronix_item_list = TronixItems.objects.all()
+    tronix_instances = Tronix.objects.all()
 
     # Get the certificate type associated with the student
     certificate_type_id = student_instance.certificate_type_id
@@ -1354,18 +1451,24 @@ def render_pdf_tronix(request, student_id):
     # Define your custom style
     my_Style = getSampleStyleSheet()['BodyText']
     
+    # center text alignment
     my_Style.alignment = 1 
+
+    # line height
+    my_Style.leading = 16
 
     # Retrieve the course name directly from the Course object
     # course_name = student_instance.course.course_name
 
-    p1 = Paragraph(f'''<i>This is to certify that <b>{student_instance.name.title()}</b>For getting <b>{student_instance.position}</b> in 
-        <b>{student_instance.tronix_details.item}</b> <b>TRONIX</b> All Kerala Inter-School Robo Chambionship {student_instance.tronix_details.season.capitalize()} conducted at <b>{student_instance.place}</b> on <b>{student_instance.tronix_details.date}</b></i>''', my_Style)
+    p1 = Paragraph(f'''<i>This is to certify that <b>{student_instance.name.title()}</b>
+        <br/>For getting <b>{student_instance.position}</b> in 
+        <b>{student_instance.tronix_details.item}</b> <b>TRONIX</b> All Kerala Inter-School 
+        <br/>Robo Chambionship {student_instance.tronix_details.season.capitalize()} conducted at <b>{student_instance.place}</b> on <b>{student_instance.tronix_details.date}</b></i>''', my_Style)
     
     width = 940
     height = 500
     p1.wrapOn(c, 400, 50)
-    p1.drawOn(c, width-930, height-410)
+    p1.drawOn(c, width-930, height-430)
 
     # Get the StudentRelatedAuthority instance for the given student_id
     student_related_authority = get_object_or_404(StudentRelatedAuthority, std_tronix=student_id)
@@ -1392,13 +1495,51 @@ def render_pdf_tronix(request, student_id):
     c.setFillColorRGB(0,0,0)
     c.drawString( 0.65*inch, 0.3*inch, str(datetime.now().strftime("%d/%m/%Y")))
 
-    # Associate Partners logo
+
+    # Arrange  Associate Partners logo
+    # Retrieve associated partner logos for the Tronix instance
+    partner_logos = student_instance.tronix_details.partner_logos.all()
+
+    # Define initial x-coordinate for the first image
+    # Retrieve associated partner logos for the Tronix instance
+    partner_logos = student_instance.tronix_details.partner_logos.all()
+
+    # Define initial x-coordinate for the first image
+    x_coord = -0.5 * inch
+    y_coord = -0.7 * inch
+
+    # Loop through the associated partner logos and draw them on the certificate
+    for partner_logo in partner_logos:
+        image_path = str(partner_logo.logo)
+        width = partner_logo.width  # Use the width from the Partner object
+        height = partner_logo.height  # Use the height from the Partner object
+
+        c.drawImage('media/' + image_path, x_coord, y_coord, width=width, height=height, mask='auto')
+
+        # Increment x-coordinate for the next image
+        x_coord += width + 0.1 * inch
+
+
+    # # List of image paths
+    # image_paths = ['media/partners/nesa.png', 'media/partners/mkv.png', 'media/partners/10.png']
+
+    # # Define initial x-coordinate for the first image
+    # x_coord = -0.7 * inch
+
+    # # Loop through the image paths
+    # for image_path in image_paths:
+    #     # Draw the image
+    #     c.drawImage(image_path, x_coord, -0.7 * inch, mask='auto')
+    #     # Increment x-coordinate for the next image
+    #     x_coord += 1.3 * inch  
+
+
     # partners_image_url = str(partners)
     # print("Partners Image URL:", partners_image_url)
     # c.drawImage('media/' + partners_image_url, 4.4 * inch, 0.2 * inch, width=70, height=30, mask=None)
-    c.drawImage('media/partners/nesa.png', -0.8 * inch, -0.7 * inch, width=80, height=28, mask='auto')
-    c.drawImage('media/partners/mkv.png', 0.4 * inch, -0.7 * inch, width=80, height=28, mask='auto')
-    c.drawImage('media/partners/10.png', 1.9 * inch, -0.7 * inch, width=64, height=29, mask='auto')
+    # c.drawImage('media/partners/nesa.png', -0.8 * inch, -0.7 * inch, width=80, height=28, mask='auto')
+    # c.drawImage('media/partners/mkv.png', 0.4 * inch, -0.7 * inch, width=80, height=28, mask='auto')
+    # c.drawImage('media/partners/10.png', 1.9 * inch, -0.7 * inch, width=64, height=29, mask='auto')
 
     
 

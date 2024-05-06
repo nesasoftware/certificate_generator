@@ -29,6 +29,15 @@ class CertificateTypes(models.Model):
         course_list = ', '.join([course.course_name for course in self.courses.all()])
         return f"{self.certificate_type} - Courses: {course_list}"
 
+class Partner(models.Model):
+    name = models.CharField(max_length=255)
+    logo = models.ImageField(upload_to='media/partners/')  # Field to store partner logo images
+    width = models.FloatField(default=100)  # Field to store the width of the logo
+    height = models.FloatField(default=50)  # Field to store the height of the logo
+
+
+    def __str__(self):
+        return self.name
 
 class TronixItems(models.Model):
     items =models.CharField(max_length=255, null=True)
@@ -41,7 +50,8 @@ class Tronix(models.Model):
     season = models.CharField(max_length=100, null=True)
     date = models.DateField(default=timezone.now)
     item = models.ForeignKey(TronixItems, on_delete=models.CASCADE, null=True)
-
+    partner_logos = models.ManyToManyField(Partner)  # Field to associate partner logos with each student
+    
     def __str__(self):
         return self.season
     
