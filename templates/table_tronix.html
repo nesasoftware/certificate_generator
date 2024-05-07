@@ -1,3 +1,5 @@
+<!-- table_tronix -->
+
 {% extends 'base.html' %}
 {% load static %}
 {% block body %}
@@ -102,7 +104,7 @@
 
                                         <td>{{ student.issued_date }}</td>
 
-                                        <td><a href="{% url 'edit_tronix' student.id %}" class="btn btn-secondary m-2">Edit</a>
+                                        <td><a href="{% url 'edit_tronix_details' student.id %}" class="btn btn-secondary m-2">Edit</a>
                                         </td>
                                         <td>
                                             <form action="{% url 'delete_tronix' student.id %}" method="post" id="delete-tronix-form">
@@ -157,7 +159,7 @@
     function confirmDelete(event) {
         event.preventDefault(); // Prevent default form submission
         if (confirm('Are you sure you want to delete this student record?')) {
-            event.target.closest('#delete-iv-form').submit(); // Submit the closest form
+            event.target.closest('#delete-tronix-form').submit(); // Submit the closest form
         }
     }
 

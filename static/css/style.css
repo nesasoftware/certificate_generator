@@ -387,7 +387,7 @@ tbody{
  color:white;
 }
 .csv_upload_form input{
-    width:250px;
+    width:100%;
 }
 .nav_item a:active{
     color:#007bff;

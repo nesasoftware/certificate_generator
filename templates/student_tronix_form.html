@@ -1,4 +1,4 @@
-<!-- student_iv_form.html -->
+<!-- student_tronix_form.html -->
 {% extends 'base.html' %}
 {% load static %}
 {% block body %}
@@ -67,7 +67,10 @@
                                     {% endfor %}
                                 </select><br>
 
-                                <label for="id_tronix_date">Tronix Date:</label><br>
+                                <label for="id_tronix_date">Conducted Date:</label><br>
+                            
+                                <!-- <input type="text" id="id_tronix_date" name="tronix_date" value="{{ tronix.date|date:'Y-m-d' }}"><br>
+                               -->
                                 <select id="id_tronix_date" name="tronix_date">
                                     {% for tronix in tronix_list %}
                                     <option value="{{ tronix.date|date:'Y-m-d' }}">{{ tronix.date|date:'Y-m-d' }}</option>
@@ -114,7 +117,7 @@
                             </form>
 
 
-                            <p class="text-center p-3">---- Or ---</p>
+                            <p class="text-center p-3">---- Or ----</p>
 
 
                             <h4 class="mb-4">Upload CSV File</h4>

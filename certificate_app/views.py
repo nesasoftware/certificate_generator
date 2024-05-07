@@ -4,7 +4,7 @@ from certificate_app.models import Student, CertificateTypes,Course, Authority, 
 from django.contrib.auth.models import User
 from django.db.models import Q, Prefetch
 from django.db import IntegrityError
-from .forms import MyForm, UploadFileForm
+from .forms import MyForm, UploadFileForm, MyTronixForm, MyIvForm
 from django.shortcuts import render
 from django.template.loader import get_template
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
@@ -205,7 +205,7 @@ def student_tronix_submit(request):
     upload_form = UploadFileForm()
     tronix_list = Tronix.objects.all()
     tronix_item_list = TronixItems.objects.all()
-
+    
     if request.method == 'POST':
         if 'tronix_submit_form' in request.POST:
             issued_date = timezone.now().date()
@@ -230,12 +230,20 @@ def student_tronix_submit(request):
             # Get the corresponding Tronix object based on the selected values
             tronix_obj = Tronix.objects.get(season=tronix_season, date=tronix_date, item=tronix_item_obj)
 
+            # Fetch the last used certificate number if any StudentTronix instances exist
+            last_student_tronix = StudentTronix.objects.order_by('-id').first()
 
-            # Fetch the last used certificate number
-            last_certificate_number = Student.objects.order_by('-id').first().certificate_number
+            if last_student_tronix is not None:
+                last_certificate_number = last_student_tronix.certificate_number
+                # Convert the last certificate number to an integer (if it's not already)
+                last_certificate_number = int(last_certificate_number) if last_certificate_number else 0
+            else:
+                # If no StudentTronix instances exist, set last_certificate_number to 0
+                last_certificate_number = 0
 
-            # Convert the last certificate number to an integer (if it's not already)
-            last_certificate_number = int(last_certificate_number) if last_certificate_number else 0
+            
+                # # Convert the last certificate number to an integer (if it's not already)
+                # last_certificate_number = int(last_certificate_number) if last_certificate_number else 0
 
     
             # Increment the last certificate number by 1 to generate the new certificate number
@@ -264,6 +272,7 @@ def student_tronix_submit(request):
                 StudentRelatedAuthority.objects.create(std_tronix=tronix_student, authority=authority)
 
             return redirect('display_tronix_students') 
+        
         elif 'upload_csv' in request.POST:
             upload_form = UploadFileForm(request.POST, request.FILES)
             if upload_form.is_valid():
@@ -271,9 +280,6 @@ def student_tronix_submit(request):
                 decoded_file = csv_file.read().decode('utf-8').splitlines()
                 reader = csv.DictReader(decoded_file)
                 for row in reader:
-                    # start_date = timezone.datetime.strptime(row['start_date'], '%d-%m-%Y').strftime('%Y-%m-%d')
-                    # end_date = timezone.datetime.strptime(row['end_date'], '%d-%m-%Y').strftime('%Y-%m-%d')
-
                     authorities = row.get('auth_id', '').split(',')
 
                     for auth_id in authorities:
@@ -315,16 +321,48 @@ def student_tronix_submit(request):
                         # Convert the new certificate number back to a string
                         new_certificate_number_str = str(new_certificate_number)
 
+                        # Parse the date string from the Excel Sheet into  the correct format
+                        conducted_date_str = row.get('conducted_date','')
+
+                        if conducted_date_str:
+                            conducted_date = datetime.strptime(conducted_date_str, '%d-%m-%Y').date()
+                        else:
+                            conducted_date = None
+
+
+                        # Get or create Tronix object
+                        # tronix_instance, created = Tronix.objects.get_or_create(
+                        #     season=row.get('season', ''),  # Assuming 'season' is a field in the Excel row
+                        #     date=conducted_date,  # Assuming 'conducted_date' is a field in the Excel row
+                        #     item_id=row.get('item_id', None)  # Assuming 'item_id' is a field in the Excel row referring to TronixItems
+                        # )
+                        
+                        # Get  Tronix object
+                        tronix_instance = Tronix.objects.get_or_create(
+                            season=row.get('season', ''),  # Assuming 'season' is a field in the Excel row
+                            date=conducted_date,  # Assuming 'conducted_date' is a field in the Excel row
+                            item_id=row.get('item_id', None)  # Assuming 'item_id' is a field in the Excel row referring to TronixItems
+                        )
+
+
+                        # Retrieve partners associated with the current Tronix instance
+                        partners = tronix_instance.partner_logos.all()
+
+                        # Iterate over partners and print their names (or do other processing)
+                        for partner in partners:
+                            print(partner.name)
+
                         # Create Student instance for the current row
                         student = StudentTronix.objects.create(
                             certificate_number=new_certificate_number_str,
                             name=row.get('name', ''),
                             school=row.get('school_name', ''),
-                            place=row.get('place', ''),
+                            place=row.get('conducted_place', ''),
                             position = row.get('position',''),
                             issued_date=timezone.now().date(),
-                            certificate_type=certificate_type
-                            # course=row.get('course_name','')
+                            certificate_type=certificate_type,
+                            tronix_details =tronix_instance
+                            
                         )
 
                         # Create StudentRelatedAuthority instance linking student with authority
@@ -1932,12 +1970,12 @@ def edit_iv(request, pk):
     instance_to_be_edited = StudentIV.objects.get(pk=pk)
     
     if request.method == 'POST':
-        frm = MyForm(request.POST, instance=instance_to_be_edited)
+        frm = MyIvForm(request.POST, instance=instance_to_be_edited)
         if frm.is_valid():
             frm.save()
             return redirect('display_iv_students')  # Redirect after successful form submission
     else:
-        frm = MyForm(instance=instance_to_be_edited)
+        frm = MyIvForm(instance=instance_to_be_edited)
     
     return render(request, 'edit.html', {'form': frm})
 
@@ -1947,14 +1985,15 @@ def edit_tronix(request, pk):
     instance_to_be_edited = StudentTronix.objects.get(pk=pk)
     
     if request.method == 'POST':
-        frm = MyForm(request.POST, instance=instance_to_be_edited)
-        if frm.is_valid():
-            frm.save()
+        tronix_frm = MyTronixForm(request.POST, instance=instance_to_be_edited)
+        if tronix_frm.is_valid():
+            tronix_frm.save()
             return redirect('display_tronix_students')  # Redirect after successful form submission
     else:
-        frm = MyForm(instance=instance_to_be_edited)
+        tronix_frm = MyTronixForm(instance=instance_to_be_edited)
     
-    return render(request, 'edit.html', {'form': frm})
+    return render(request, 'edit_tronix.html', {'form': tronix_frm})
+
 
 
 @login_required(login_url='login')
@@ -1970,6 +2009,7 @@ def delete(request, pk):
     return redirect('display_students')
 
 
+
 @login_required(login_url='login')
 def delete_iv(request, pk):
     try:
@@ -1981,6 +2021,7 @@ def delete_iv(request, pk):
     
     print("Delete view was called for student with ID:", pk) 
     return redirect('display_iv_students')
+
 
 
 @login_required(login_url='login')
