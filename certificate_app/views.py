@@ -273,6 +273,7 @@ def student_tronix_submit(request):
 
             return redirect('display_tronix_students') 
         
+        
         elif 'upload_csv' in request.POST:
             upload_form = UploadFileForm(request.POST, request.FILES)
             if upload_form.is_valid():
@@ -321,36 +322,60 @@ def student_tronix_submit(request):
                         # Convert the new certificate number back to a string
                         new_certificate_number_str = str(new_certificate_number)
 
-                        # Parse the date string from the Excel Sheet into  the correct format
-                        conducted_date_str = row.get('conducted_date','')
 
-                        if conducted_date_str:
-                            conducted_date = datetime.strptime(conducted_date_str, '%d-%m-%Y').date()
-                        else:
-                            conducted_date = None
-
-
-                        # Get or create Tronix object
-                        # tronix_instance, created = Tronix.objects.get_or_create(
-                        #     season=row.get('season', ''),  # Assuming 'season' is a field in the Excel row
-                        #     date=conducted_date,  # Assuming 'conducted_date' is a field in the Excel row
-                        #     item_id=row.get('item_id', None)  # Assuming 'item_id' is a field in the Excel row referring to TronixItems
-                        # )
+                        # Convert tronix_date string to datetime object
+                        tronix_date_str = row.get('tronix_date', '')
                         
-                        # Get  Tronix object
-                        tronix_instance = Tronix.objects.get_or_create(
-                            season=row.get('season', ''),  # Assuming 'season' is a field in the Excel row
-                            date=conducted_date,  # Assuming 'conducted_date' is a field in the Excel row
-                            item_id=row.get('item_id', None)  # Assuming 'item_id' is a field in the Excel row referring to TronixItems
-                        )
+
+                        if tronix_date_str:
+                            try:
+                                # Parse the date string into a datetime object
+                                tronix_date_parsed = datetime.strptime(tronix_date_str, '%Y-%m-%d')
+                            except ValueError:
+                                print("Invalid tronix_date format. Please provide the date in the format 'YYYY-MM-DD'.")
+                                # Handle the error or return an appropriate response
+                        else:
+                            print("tronix_date_str is empty. Please provide a valid date.")
+                            # Handle the error or return an appropriate response
+
+                        # Get the TronixItems object based on the selected item name
+                        tronix_item_obj = get_object_or_404(TronixItems, items=row.get('tronix_item', ''))
 
 
-                        # Retrieve partners associated with the current Tronix instance
-                        partners = tronix_instance.partner_logos.all()
+                        # Get or create the Tronix object based on the selected values
+                        # tronix_obj, _ = Tronix.objects.get_or_create(season=row.get('season', '').strip(), date=tronix_date_parsed, item=tronix_item_obj)
+                        
+                        # Get the season value from the row data
+                        season = row.get('season', '')
 
-                        # Iterate over partners and print their names (or do other processing)
-                        for partner in partners:
-                            print(partner.name)
+                        # Check if a Tronix object with the specified season already exists
+                        try:
+                            # Retrieve the existing Tronix object
+                            tronix_obj = Tronix.objects.get(season=season, date=tronix_date_parsed, item=tronix_item_obj)
+                            print("Existing Tronix object found:", tronix_obj)
+
+                            # Get the id of the existing Tronix object
+                            tronix_id = tronix_obj.date
+                            print("Tronix ID:",tronix_id)
+
+                            # Retrieve partners associated with the Tronix object using the Tronix id
+                            partners = tronix_obj.get_partners()
+                            print(partners)
+                            for partner in partners:
+                                print("Partner:", partner.name)  
+
+                        except Tronix.DoesNotExist:
+                            # If the Tronix object does not exist, create a new one
+                            tronix_obj = Tronix.objects.create(season=season, date=tronix_date_parsed, item=tronix_item_obj)
+                            print("New Tronix object created:", tronix_obj)
+
+                        
+                        # # Retrieve partners associated with the current Tronix instance
+                        # partners = tronix_instance.get_partners()
+
+                        # # Iterate over partners and print their names (or do other processing)
+                        # for partner in partners:
+                        #     print(partner.name)
 
                         # Create Student instance for the current row
                         student = StudentTronix.objects.create(
@@ -361,7 +386,7 @@ def student_tronix_submit(request):
                             position = row.get('position',''),
                             issued_date=timezone.now().date(),
                             certificate_type=certificate_type,
-                            tronix_details =tronix_instance
+                            tronix_details =tronix_obj
                             
                         )
 
@@ -375,7 +400,8 @@ def student_tronix_submit(request):
             else:
                 # Print form errors if any
                 print("Form errors:", upload_form.errors)
-        
+
+
         else:
             # Print if 'upload_csv' is not in request.POST
             print("Upload CSV not found in request")
@@ -843,7 +869,7 @@ def display_tronix_students(request):
         certificate_number = f"TRS{number}"
         certificate_numbers[student.id] = certificate_number  # Map student ID to certificate number
 
-    print(certificate_numbers)
+    # print(certificate_numbers)
     
     context = {
         'students_tronix': students_tronix,
@@ -1965,6 +1991,7 @@ def edit(request, pk):
     return render(request, 'edit.html', {'form': frm})
 
 
+
 @login_required(login_url='login')
 def edit_iv(request, pk):
     instance_to_be_edited = StudentIV.objects.get(pk=pk)
@@ -1978,6 +2005,7 @@ def edit_iv(request, pk):
         frm = MyIvForm(instance=instance_to_be_edited)
     
     return render(request, 'edit.html', {'form': frm})
+
 
 
 @login_required(login_url='login')
