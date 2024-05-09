@@ -28,6 +28,8 @@ urlpatterns = [
     path('render-pdf-tronix/<int:student_id>/', views.render_pdf_tronix, name='render_pdf_tronix'),
     path('pdf_view/<int:student_id>/', views.pdf_view, name='pdf_view'),
     path('download_selected_certificates/', views.download_selected_certificates, name='download_selected_certificates'),
+    path('download_selected_ivcertificates/', views.download_selected_ivcertificates, name='download_selected_ivcertificates'),
+    path('download_selected_tronixcertificates/', views.download_selected_tronixcertificates, name='download_selected_tronixcertificates'),
     path('certification_verification/<int:student_id>/', views.certificate_verification, name='certificate_verify'),
 ]
 

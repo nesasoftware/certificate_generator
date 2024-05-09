@@ -322,6 +322,8 @@ def student_tronix_submit(request):
                         # Convert the new certificate number back to a string
                         new_certificate_number_str = str(new_certificate_number)
 
+                        # Initialize tronix_date_parsed with None before the if block
+                        tronix_date_parsed = None
 
                         # Convert tronix_date string to datetime object
                         tronix_date_str = row.get('tronix_date', '')
@@ -338,37 +340,24 @@ def student_tronix_submit(request):
                             print("tronix_date_str is empty. Please provide a valid date.")
                             # Handle the error or return an appropriate response
 
-                        # Get the TronixItems object based on the selected item name
-                        tronix_item_obj = get_object_or_404(TronixItems, items=row.get('tronix_item', ''))
+
+                        # Check if tronix_date_parsed is None before using it further
+                        if tronix_date_parsed is not None:
+                            # Get the TronixItems object based on the selected item name
+                            tronix_item_obj = get_object_or_404(TronixItems, items=row.get('tronix_item', ''))
 
 
-                        # Get or create the Tronix object based on the selected values
-                        # tronix_obj, _ = Tronix.objects.get_or_create(season=row.get('season', '').strip(), date=tronix_date_parsed, item=tronix_item_obj)
-                        
-                        # Get the season value from the row data
-                        season = row.get('season', '')
+                            season = row.get('season', '')
 
-                        # Check if a Tronix object with the specified season already exists
-                        try:
-                            # Retrieve the existing Tronix object
-                            tronix_obj = Tronix.objects.get(season=season, date=tronix_date_parsed, item=tronix_item_obj)
-                            print("Existing Tronix object found:", tronix_obj)
+                            # Try to find an existing Tronix object with the same season
+                            try:
+                                tronix_obj = Tronix.objects.get(season=season)
+                                print(tronix_obj)
+                            except Tronix.DoesNotExist:
+                                # If not found, create a new Tronix object
+                                tronix_obj = Tronix.objects.create(season=season, date=tronix_date_parsed, item=tronix_item_obj)
 
-                            # Get the id of the existing Tronix object
-                            tronix_id = tronix_obj.date
-                            print("Tronix ID:",tronix_id)
-
-                            # Retrieve partners associated with the Tronix object using the Tronix id
-                            partners = tronix_obj.get_partners()
-                            print(partners)
-                            for partner in partners:
-                                print("Partner:", partner.name)  
-
-                        except Tronix.DoesNotExist:
-                            # If the Tronix object does not exist, create a new one
-                            tronix_obj = Tronix.objects.create(season=season, date=tronix_date_parsed, item=tronix_item_obj)
-                            print("New Tronix object created:", tronix_obj)
-
+                       
                         
                         # # Retrieve partners associated with the current Tronix instance
                         # partners = tronix_instance.get_partners()
@@ -376,25 +365,30 @@ def student_tronix_submit(request):
                         # # Iterate over partners and print their names (or do other processing)
                         # for partner in partners:
                         #     print(partner.name)
+                        
 
-                        # Create Student instance for the current row
-                        student = StudentTronix.objects.create(
-                            certificate_number=new_certificate_number_str,
-                            name=row.get('name', ''),
-                            school=row.get('school_name', ''),
-                            place=row.get('conducted_place', ''),
-                            position = row.get('position',''),
-                            issued_date=timezone.now().date(),
-                            certificate_type=certificate_type,
-                            tronix_details =tronix_obj
+                            # Create Student instance for the current row
+                            student = StudentTronix.objects.create(
+                                certificate_number=new_certificate_number_str,
+                                name=row.get('name', ''),
+                                school=row.get('school_name', ''),
+                                place=row.get('conducted_place', ''),
+                                position = row.get('position',''),
+                                issued_date=timezone.now().date(),
+                                certificate_type=certificate_type,
+                                tronix_details =tronix_obj
                             
-                        )
+                            )
 
-                        # Create StudentRelatedAuthority instance linking student with authority
-                        StudentRelatedAuthority.objects.create(std_tronix=student, authority=authority)
+                            # Create StudentRelatedAuthority instance linking student with authority
+                            StudentRelatedAuthority.objects.create(std_tronix=student, authority=authority)
 
-                        # Print a message indicating successful processing
-                        print("CSV file processed successfully")                       
+                            # Print a message indicating successful processing
+                            print("CSV file processed successfully")    
+                    # Handle the case where tronix_date_parsed is None
+                else:
+                    # Handle the error or return an appropriate response
+                    pass                   
 
                 return redirect('display_tronix_students')
             else:
@@ -860,7 +854,7 @@ def display_tronix_students(request):
                 # Now you can use certificate_type_pk_related_to_course as needed, for example:
                 # print(f"Primary key of CertificateTypes instance related to Course '{course_instance.course_name}': {certificate_type_pk_related_to_course}")
         
-    current_year = datetime.now().strftime("%Y")
+    #current_year = datetime.now().strftime("%Y")
 
     # Iterate over each student to generate certificate numbers
     for student in students_tronix:
@@ -870,14 +864,19 @@ def display_tronix_students(request):
         certificate_numbers[student.id] = certificate_number  # Map student ID to certificate number
 
     # print(certificate_numbers)
+
+    # Retrieve distinct seasons from the Tronix queryset
+    distinct_seasons = tronix_list.values_list('season', flat=True).distinct()
     
     context = {
         'students_tronix': students_tronix,
         'certificate_types': certificate_types,
         'certificate_id_number': certificate_numbers,  # Include the certificate numbers in the context
         'tronix_list': tronix_list, 
-        'tronix_item_list': tronix_item_list
+        'tronix_item_list': tronix_item_list,
+        'distinct_seasons':distinct_seasons
     }
+    
     
     return render(request, 'table_tronix.html', context)
 
@@ -1464,9 +1463,9 @@ def render_pdf_tronix(request, student_id):
 
     # Get the specific Student object based on student_id
     student_instance = get_object_or_404(StudentTronix, id=student_id)
-    tronix_list = Tronix.objects.all()
-    tronix_item_list = TronixItems.objects.all()
-    tronix_instances = Tronix.objects.all()
+    # tronix_list = Tronix.objects.all()
+    # tronix_item_list = TronixItems.objects.all()
+    # tronix_instances = Tronix.objects.all()
 
     # Get the certificate type associated with the student
     certificate_type_id = student_instance.certificate_type_id
@@ -1566,7 +1565,7 @@ def render_pdf_tronix(request, student_id):
 
     # Define initial x-coordinate for the first image
     # Retrieve associated partner logos for the Tronix instance
-    partner_logos = student_instance.tronix_details.partner_logos.all()
+    # partner_logos = student_instance.tronix_details.partner_logos.all()
 
     # Define initial x-coordinate for the first image
     x_coord = -0.5 * inch
@@ -1575,8 +1574,9 @@ def render_pdf_tronix(request, student_id):
     # Loop through the associated partner logos and draw them on the certificate
     for partner_logo in partner_logos:
         image_path = str(partner_logo.logo)
-        width = partner_logo.width  # Use the width from the Partner object
-        height = partner_logo.height  # Use the height from the Partner object
+        scale_factor = partner_logo.height/30 # Use scale factor to adjust height
+        width = partner_logo.width/scale_factor  # Use the width from the Partner object
+        height = partner_logo.height/scale_factor # Use the height from the Partner object
 
         c.drawImage('media/' + image_path, x_coord, y_coord, width=width, height=height, mask='auto')
 
@@ -1610,7 +1610,7 @@ def render_pdf_tronix(request, student_id):
 
     # Generate QR code
     base_url = request.build_absolute_uri('/')
-    qr_data = f"{base_url}certificate_verify/{student_instance.id}/"
+    qr_data = f"{base_url}certificate_verify/{student_instance.certificate_number}/"
     qr = pyqrcode.create(qr_data)
 
     # Save the QR code as BytesIO
@@ -1863,6 +1863,7 @@ def download_selected_certificates(request):
             for student_id in selected_student_ids:
                 # Generate PDF certificate for each selected student
                 pdf_content = render_pdf_view(request, student_id).content
+                
 
                 # Retrieve the student object based on the student_id
                 student_instance = get_object_or_404(Student, id=student_id)
@@ -1871,6 +1872,84 @@ def download_selected_certificates(request):
                 # Generate PDF certificate for the selected student
                 pdf_content = render_pdf_view(request, student_id).content
                 file_name = f"{student_id}_{student_name.replace(' ', '_')}_certificate.pdf"
+
+                # file_name = f"{student_id}_certificate.pdf"
+
+                # Add the PDF content to the ZIP file
+                zip_file.writestr(file_name, pdf_content)
+
+        # Rewind the buffer to the beginning
+        zip_buffer.seek(0)
+
+        # Create a response to serve the ZIP file
+        response = HttpResponse(zip_buffer, content_type='application/zip')
+        response['Content-Disposition'] = 'attachment; filename="certificates.zip"'
+        return response
+
+    else:
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+@login_required(login_url='login')
+def download_selected_tronixcertificates(request):
+    if request.method == 'POST':
+        selected_student_ids = request.POST.getlist('selected_students')
+
+        # Create a BytesIO buffer to store the ZIP file content
+        zip_buffer = BytesIO()
+
+        # Create a ZIP file to store the certificates
+        with zipfile.ZipFile(zip_buffer, 'a', zipfile.ZIP_DEFLATED) as zip_file:
+            for student_id in selected_student_ids:
+                # Generate PDF certificate for each selected student
+                pdf_content = render_pdf_tronix(request, student_id).content
+                
+
+                # Retrieve the student object based on the student_id
+                student_instance = get_object_or_404(StudentTronix, id=student_id)
+                student_name = student_instance.name
+
+                pdf_content = render_pdf_tronix(request, student_id).content
+                file_name = f"TRS{student_instance.certificate_number}_{student_name.replace(' ', '_')}_certificate.pdf"
+
+                # file_name = f"{student_id}_certificate.pdf"
+
+                # Add the PDF content to the ZIP file
+                zip_file.writestr(file_name, pdf_content)
+
+        # Rewind the buffer to the beginning
+        zip_buffer.seek(0)
+
+        # Create a response to serve the ZIP file
+        response = HttpResponse(zip_buffer, content_type='application/zip')
+        response['Content-Disposition'] = 'attachment; filename="certificates.zip"'
+        return response
+
+    else:
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+@login_required(login_url='login')
+def download_selected_ivcertificates(request):
+    if request.method == 'POST':
+        selected_student_ids = request.POST.getlist('selected_students')
+
+        # Create a BytesIO buffer to store the ZIP file content
+        zip_buffer = BytesIO()
+
+        # Create a ZIP file to store the certificates
+        with zipfile.ZipFile(zip_buffer, 'a', zipfile.ZIP_DEFLATED) as zip_file:
+            for student_id in selected_student_ids:
+                # Generate PDF certificate for each selected student
+                pdf_content = render_pdf_industrialvisit(request, student_id).content
+                
+
+                # Retrieve the student object based on the student_id
+                student_instance = get_object_or_404(StudentIV, id=student_id)
+                student_name = student_instance.name
+
+                # Generate PDF certificate for the selected student
+                pdf_content = render_pdf_industrialvisit(request, student_id).content
+                file_name = f"SRC{student_instance.certificate_number}_{student_name.replace(' ', '_')}_certificate.pdf"
 
                 # file_name = f"{student_id}_certificate.pdf"
 
@@ -1955,6 +2034,19 @@ def search_students(request):
                 Q(certificate_type__certificate_type__icontains=search_query) |
                 Q(course__course_name__icontains=search_query) |  # Use double underscore to traverse the related field
                 Q(mentor_name__icontains=search_query) |
+                Q(conducted_date=search_date) |
+                Q(issued_date=search_date)
+            )
+            students = StudentTronix.objects.filter(
+                Q(name__icontains=search_query) |
+                Q(school__icontains=search_query) |
+                Q(place__icontains=search_query) |
+                Q(certificate_number__icontains=search_query) |
+                Q(certificate_type__certificate_type__icontains=search_query) |
+                Q(position__icontains=search_query) |
+                Q(tronix_details__season__icontains=search_query) |  # Use double underscore to traverse the related field
+                Q(tronix_details__date__icontains=search_query) |  
+                Q(tronix_details__item__items__icontains=search_query) |
                 Q(conducted_date=search_date) |
                 Q(issued_date=search_date)
             )
