@@ -19,10 +19,20 @@ from django.urls import path,include
 from django.conf import settings
 from django.conf.urls.static import static
 
+from rest_framework import routers
+from certificate_app.views import StudentViewSet, TronixStudentViewSet
+
+router = routers.DefaultRouter()
+router.register(r'Internship-Students', StudentViewSet)
+router.register(r'Tronix-Students',TronixStudentViewSet)
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('',include('users.urls')),
     path('certificate/',include('certificate_app.urls')),
+    path('certificate/verify/', include(router.urls)),
+    path('api-auth/', include('rest_framework.urls', namespace='rest_framework'))
+
 
 ]
 

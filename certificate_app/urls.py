@@ -1,6 +1,7 @@
  
 from django.urls import path
 from .  import views
+# from .views import StudentViewSet
 
 
 urlpatterns = [
@@ -30,7 +31,6 @@ urlpatterns = [
     path('download_selected_certificates/', views.download_selected_certificates, name='download_selected_certificates'),
     path('download_selected_ivcertificates/', views.download_selected_ivcertificates, name='download_selected_ivcertificates'),
     path('download_selected_tronixcertificates/', views.download_selected_tronixcertificates, name='download_selected_tronixcertificates'),
-    path('certification_verification/<int:student_id>/', views.certificate_verification, name='certificate_verify'),
+    #path('certification_verification/<int:student_id>/', views.certificate_verification, name='certificate_verify'),
+    
 ]
-
-

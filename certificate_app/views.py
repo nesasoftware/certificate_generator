@@ -42,6 +42,8 @@ from io import BytesIO
 from django.core.files.temp import NamedTemporaryFile
 from reportlab.lib import colors
 from certificate_app.pdf_utils import generate_certificate
+from .serializers import StudentSerializer,CertificateTypesSerializer, CourseSerializer, StudentTronixSerializer,TronixSerializer,TronixItemsSerializer
+from rest_framework import viewsets
 
 
 # student form page for submitting details
@@ -892,11 +894,42 @@ def certificate_show(request, student_id):
 
 
 
+
+# verification page
+class CertificateTypesViewSet(viewsets.ModelViewSet):
+    queryset = CertificateTypes.objects.all()
+    serializer_class = CertificateTypesSerializer
+
+
+class CourseViewSet(viewsets.ModelViewSet):
+    queryset = Course.objects.all()
+    serializer_class = CourseSerializer
+
+
 # display verification page
-def certificate_verification(request, student_id):     
-    student_instance = Student.objects.get(id=student_id)
-    context = {'student_instance': student_instance}
-    return render(request, 'certificate_verification.html', context)
+class StudentViewSet(viewsets.ModelViewSet):
+    queryset = Student.objects.all()
+    serializer_class = StudentSerializer
+    #lookup_field = 'certificate_number'
+
+class TronixItemsViewSet(viewsets.ModelViewSet):
+    queryset = TronixItems.objects.all()
+    serializer_class = TronixItemsSerializer
+
+class TronixViewSet(viewsets.ModelViewSet):
+    queryset = Tronix.objects.all()
+    serializer_class = TronixSerializer
+
+class TronixStudentViewSet(viewsets.ModelViewSet):
+    queryset = StudentTronix.objects.all()
+    serializer_class = StudentTronixSerializer
+
+
+# display verification page
+# def certificate_verification(request, student_id):     
+#     student_instance = Student.objects.get(id=student_id)
+#     context = {'student_instance': student_instance}
+#     return render(request, 'certificate_verification.html', context)
 
 
 
@@ -1563,9 +1596,11 @@ def render_pdf_tronix(request, student_id):
     # Retrieve associated partner logos for the Tronix instance
     partner_logos = student_instance.tronix_details.partner_logos.all()
 
+
     # Define initial x-coordinate for the first image
     # Retrieve associated partner logos for the Tronix instance
     # partner_logos = student_instance.tronix_details.partner_logos.all()
+
 
     # Define initial x-coordinate for the first image
     x_coord = -0.5 * inch
@@ -2155,3 +2190,5 @@ def delete_tronix(request, pk):
     
     print("Delete view was called for student with ID:", pk) 
     return redirect('display_tronix_students')
+
+

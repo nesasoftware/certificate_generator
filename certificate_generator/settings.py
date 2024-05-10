@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'certificate_app',
     'users',
+    'rest_framework',
     
 ]
 
@@ -141,3 +142,13 @@ IMGKIT_CONFIG = {
 import subprocess
 
 subprocess.run(['C:/Program Files (x86)/wkhtmltopdf/bin/wkhtmltoimage.exe', '--version'])
+
+
+
+REST_FRAMEWORK = {
+    # Use Django's standard `django.contrib.auth` permissions,
+    # or allow read-only access for unauthenticated users.
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
+    ]
+}
