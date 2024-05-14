@@ -1,0 +1,6 @@
+<form method="post" action="{% url 'certificate_verify' %}">
+    {% csrf_token %}
+    Certificate Type: <input type="text" name="certificate_type"><br>
+    Certificate Number: <input type="text" name="certificate_number"><br>
+    <input type="submit" value="Submit">
+</form>

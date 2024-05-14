@@ -29,6 +29,8 @@ class CertificateTypes(models.Model):
         course_list = ', '.join([course.course_name for course in self.courses.all()])
         return f"{self.certificate_type} - Courses: {course_list}"
 
+    def get_certificate(self):
+        self.certificate_type
 
 class Partner(models.Model):
     name = models.CharField(max_length=255)
@@ -106,6 +108,13 @@ class Student(models.Model):
         if not self.pk:  # If the instance is being created (not updated)
             self.created_at = self.issued_date  # Set created_at to issued_date
         super().save(*args, **kwargs)
+
+
+    def get_certificatenumber(self):
+        if self.certificate_number:
+            return True  # Certificate is valid
+        else:
+            return False  # Certificate is invalid    
 
     def __str__(self):
         return self.name

@@ -42,8 +42,11 @@ from io import BytesIO
 from django.core.files.temp import NamedTemporaryFile
 from reportlab.lib import colors
 from certificate_app.pdf_utils import generate_certificate
-from .serializers import StudentSerializer,CertificateTypesSerializer, CourseSerializer, StudentTronixSerializer,TronixSerializer,TronixItemsSerializer
+from .serializers import StudentSerializer,CertificateTypesSerializer, CourseSerializer
 from rest_framework import viewsets
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.decorators import action
 
 
 # student form page for submitting details
@@ -900,36 +903,144 @@ class CertificateTypesViewSet(viewsets.ModelViewSet):
     queryset = CertificateTypes.objects.all()
     serializer_class = CertificateTypesSerializer
 
-
 class CourseViewSet(viewsets.ModelViewSet):
     queryset = Course.objects.all()
     serializer_class = CourseSerializer
 
 
-# display verification page
 class StudentViewSet(viewsets.ModelViewSet):
     queryset = Student.objects.all()
     serializer_class = StudentSerializer
-    #lookup_field = 'certificate_number'
+    lookup_field = 'certificate_number'
 
-class TronixItemsViewSet(viewsets.ModelViewSet):
-    queryset = TronixItems.objects.all()
-    serializer_class = TronixItemsSerializer
+    @action(detail=False, methods=['get'])
+    def verify(self, request):
+        certificate_type = request.query_params.get('certificate_type')
+        certificate_number = request.query_params.get('certificate_number')
 
-class TronixViewSet(viewsets.ModelViewSet):
-    queryset = Tronix.objects.all()
-    serializer_class = TronixSerializer
+        # Retrieve the student instance based on certificate type and number
+        instance = get_object_or_404(Student, certificate_type__certificate_type=certificate_type, certificate_number=certificate_number)
+        
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
 
-class TronixStudentViewSet(viewsets.ModelViewSet):
-    queryset = StudentTronix.objects.all()
-    serializer_class = StudentTronixSerializer
+    # def retrieve(self, request, *args, **kwargs):
+    #     certificate_number = kwargs.get('certificate_number')
+    #     instance = get_object_or_404(Student, certificate_number=certificate_number)
+        
+    #     # Check if the certificate is valid
+    #     if instance.get_certificatenumber():
+    #         # Certificate is valid, serialize the instance and return it
+    #         serializer = self.get_serializer(instance)
+    #         return Response(serializer.data, status=status.HTTP_200_OK)
+    #     else:
+    #         # Certificate is invalid, return an error response
+    #         return Response({'error_message': 'Certificate is not found'}, status=status.HTTP_400_BAD_REQUEST)
+        
+
+#check certificate number and type to retrieve data
+def certificate_verify(request):
+    if request.method == 'POST':
+        certificate_type = request.POST.get('certificate_type')
+        certificate_number = request.POST.get('certificate_number')
+        
+        # Perform verification logic
+        student = Student.objects.filter(certificate_type=certificate_type, certificate_number=certificate_number).first()
+        if student:
+            # Certificate is valid, redirect to the verified page
+            return redirect('certificate_verification', certificate_number=certificate_number)
+        else:
+            # Certificate is invalid, redirect to the error page
+            return redirect('error_page')
+    else:
+        return render(request, 'certificate_verify_form.html')    
 
 
-# display verification page
+    # def get_object(self):
+    #     queryset = self.filter_queryset(self.get_queryset())
+    #     # Get the value of the certificate_number from the URL kwargs
+    #     certificate_number = self.kwargs.get(self.lookup_field)
+    #     # Perform the lookup based on the certificate_number
+    #     obj = queryset.filter(certificate_number=certificate_number).first()
+    #     self.check_object_permissions(self.request, obj)
+    #     return obj
+
+    # def retrieve(self, request, *args, **kwargs):
+    #     instance = self.get_object()
+    #     if instance is not None:
+    #         serializer = self.get_serializer(instance)
+    #         return Response(serializer.data)
+    #     else:
+    #         return Response({"message": "Student not found"}, status=404)
+        
+   
+
+# class StudentViewSet(viewsets.ModelViewSet):
+#     queryset = Student.objects.all()
+#     serializer_class = StudentSerializer
+#     # lookup_field = 'certificate_number'
+
+#     def retrieve(self, request, *args, **kwargs):
+#         instance = self.get_object()
+#         certificate_exists = instance.get_certificatenumber()
+#         print(instance)
+#         print("Certificate exists:", certificate_exists)
+#         serializer = self.get_serializer(instance)
+#         return Response(serializer.data)
+
+    # def retrieve(self, request, *args, **kwargs):
+    #     instance = self.get_object()
+    #     serializer = self.get_serializer(instance)
+    #     return Response(serializer.data)
+    # def retrieve(self, request, *args, **kwargs):
+    #     instance = self.get_object()
+    #     # Assuming you have an HTML template named 'student_detail.html'
+    #     return render(request, 'certificate_verification.html', {'student_instance': instance})
+ 
+
+def certificate_verification(request, certificate_number):     
+    student_instance = get_object_or_404(Student, certificate_number=certificate_number)
+    print("verify:",student_instance)
+    context = {'student_instance': student_instance}
+    return render(request, 'certificate_verification.html', context)
+# def certificate_verification(request, student_id):     
+#     student_instance = get_object_or_404(Student, id=student_id)
+#     context = {'student_instance': student_instance}
+#     return render(request, 'certificate_verification.html', context)
+
+
+# # display verification page
 # def certificate_verification(request, student_id):     
 #     student_instance = Student.objects.get(id=student_id)
 #     context = {'student_instance': student_instance}
 #     return render(request, 'certificate_verification.html', context)
+
+
+# class StudentViewSet(viewsets.ModelViewSet):
+#     queryset = Student.objects.all()
+#     serializer_class = StudentSerializer
+#     # lookup_field = 'certificate_number' # Remove this
+
+#     def retrieve(self, request, *args, **kwargs):
+#         certificate_number = kwargs.get('certificate_number')
+#         instance = get_object_or_404(Student, certificate_number=certificate_number)
+        
+#         # Check if the certificate is valid
+#         if instance.certificate_verification():
+#             # Certificate is valid, proceed with default behavior
+#             serializer = self.get_serializer(instance)
+#             return Response(serializer.data, status=status.HTTP_200_OK)
+#         else:
+#             # Certificate is invalid, handle accordingly (render a different template or return an error response)
+#             context = {'error_message': 'Certificate is not valid'}
+#             return render(request, 'invalid_certificate.html', context)  # Render a template for invalid certificate
+
+# # display verification page
+# def certificate_verification(request, certificate_number):     
+#     student_instance = get_object_or_404(Student, certificate_number=certificate_number)
+#     context = {'student_instance': student_instance}
+#     return render(request, 'certificate_verification.html', context)
+
 
 
 

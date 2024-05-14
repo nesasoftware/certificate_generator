@@ -31,6 +31,12 @@ urlpatterns = [
     path('download_selected_certificates/', views.download_selected_certificates, name='download_selected_certificates'),
     path('download_selected_ivcertificates/', views.download_selected_ivcertificates, name='download_selected_ivcertificates'),
     path('download_selected_tronixcertificates/', views.download_selected_tronixcertificates, name='download_selected_tronixcertificates'),
-    #path('certification_verification/<int:student_id>/', views.certificate_verification, name='certificate_verify'),
-    
+    # path('certification_verification/<int:student_id>/', views.certificate_verification, name='certificate_verify'),
+    # path('certificate/verify/Internship-Students/<int:student_id>/', views.certificate_verification, name='certificate_verify'),
+    # path('certificate/verify/Internship-Students/', views.StudentViewSet.as_view({'get': 'list'}), name='student-list'),
+    #path('certificate/verify/Internship-Students/<str:certificate_number>/', views.certificate_verification, name='certificate_verify'),
+    path('certificate/verify/<str:certificate_number>/', views.certificate_verification, name='certificate_verification'),
+    # path('certificate/verify/Internship-Students/', views.StudentViewSet.as_view({'get': 'list'}), name='student-list'),
+    path('verify/', views.certificate_verify, name='certificate_verify'),
+
 ]
