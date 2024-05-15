@@ -39,8 +39,8 @@
                     <h5>{{student_instance.course|capfirst}}</h5>
                 </div>
                 <div class="mb-5">
-                    <p class="sub-head mb-1 p-0">Issue date: </p>
-                    <h5>{{student_instance.end_date|capfirst}}</h5>
+                    <p class="sub-head mb-1 p-0">Issued date: </p>
+                    <h5>{{student_instance.issued_date|capfirst}}</h5>
                 </div>
                 <div class="mb-5">
                     <p class="sub-head mb-1 p-0">Certificate Id: </p>
@@ -52,7 +52,8 @@
         </div>
         <div class="col-md-6 col-lg-6 text-center p-2">
             <div class="std_certificate">
-                <div class="certi-img">
+                
+                <!-- <div class="certi-img">
                     <div class="certi_verify_id">
                         <p>SRC/2024/{{ student_instance.certificate_number }}</p>
                     </div>
@@ -76,7 +77,7 @@
                         <img src="{{ qr_code_path }}" alt="QR Code">
                     </div>
 
-                </div>
+                </div> -->
             </div>
 
         </div>

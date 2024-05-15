@@ -251,7 +251,7 @@ def student_tronix_submit(request):
                 # # Convert the last certificate number to an integer (if it's not already)
                 # last_certificate_number = int(last_certificate_number) if last_certificate_number else 0
 
-    
+
             # Increment the last certificate number by 1 to generate the new certificate number
             if last_certificate_number:
                 new_certificate_number = last_certificate_number + 1
@@ -956,7 +956,7 @@ def certificate_verify(request):
         
         if student:
             # Certificate is valid, redirect to the verified page
-            return redirect('certificate_verification', certificate_number=certificate_number)
+            return redirect('certificate_verification', certificate_number=certificate_number, certificate_type=certificate_type)
         else:
             # Certificate is invalid, redirect to the error page
             return redirect('error_page')
@@ -968,21 +968,16 @@ def certificate_verify(request):
 
 
 # Function to display certificate verification information for a given certificate number.
-def certificate_verification(request, certificate_number):   
+def certificate_verification(request, certificate_number, certificate_type):   
 
-    student_instance = get_object_or_404(Student, certificate_number=certificate_number) 
-
-    # If no Student instance is found, try retrieving a StudentIV instance
-    if not student_instance:
-        student_instance = get_object_or_404(StudentIV, certificate_number=certificate_number)
-
-    # If still no instance is found, try retrieving a StudentTronix instance
-    if not student_instance:
+    if certificate_type=='2':
+        student_instance = get_object_or_404(Student, certificate_number=certificate_number) 
+    elif certificate_type == '5':
+        student_instance = get_object_or_404(StudentIV, certificate_number=certificate_number) 
+    elif certificate_type == '6':
         student_instance = get_object_or_404(StudentTronix, certificate_number=certificate_number)
-
-    # If none of the models match the certificate_number, raise a 404 error
-    if not student_instance:
-        raise Http404("No student matches the given query.")
+    else:
+        raise Http404("No student matches the given query.")       
     
     context = {'student_instance': student_instance}
     return render(request, 'certificate_verification.html', context)
