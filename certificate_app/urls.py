@@ -35,8 +35,9 @@ urlpatterns = [
     # path('certificate/verify/Internship-Students/<int:student_id>/', views.certificate_verification, name='certificate_verify'),
     # path('certificate/verify/Internship-Students/', views.StudentViewSet.as_view({'get': 'list'}), name='student-list'),
     #path('certificate/verify/Internship-Students/<str:certificate_number>/', views.certificate_verification, name='certificate_verify'),
-    path('certificate/verify/<str:certificate_number>/', views.certificate_verification, name='certificate_verification'),
     # path('certificate/verify/Internship-Students/', views.StudentViewSet.as_view({'get': 'list'}), name='student-list'),
+    path('certificate/verify/<str:certificate_number>/', views.certificate_verification, name='certificate_verification'),
     path('verify/', views.certificate_verify, name='certificate_verify'),
+    path('error-page/', views.error_page, name='error_page'),
 
 ]

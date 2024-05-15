@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, JsonResponse
+from django.http import Http404
 from certificate_app.models import Student, CertificateTypes,Course, Authority, StudentRelatedAuthority, StudentIV, StudentTronix, TronixItems, Tronix
 from django.contrib.auth.models import User
 from django.db.models import Q, Prefetch
@@ -897,22 +898,27 @@ def certificate_show(request, student_id):
 
 
 
-
-# verification page
+#### verification page
+# Viewset for handling CRUD operations on CertificateTypes instances.
 class CertificateTypesViewSet(viewsets.ModelViewSet):
     queryset = CertificateTypes.objects.all()
     serializer_class = CertificateTypesSerializer
 
+
+# Viewset for handling CRUD operations on Course instances.
 class CourseViewSet(viewsets.ModelViewSet):
     queryset = Course.objects.all()
     serializer_class = CourseSerializer
 
 
+# Viewset for handling CRUD operations on Student instances and providing a custom action for certificate verification.
 class StudentViewSet(viewsets.ModelViewSet):
     queryset = Student.objects.all()
     serializer_class = StudentSerializer
     lookup_field = 'certificate_number'
 
+
+    # Custom action for verifying student certificates based on certificate type and number.
     @action(detail=False, methods=['get'])
     def verify(self, request):
         certificate_type = request.query_params.get('certificate_type')
@@ -924,28 +930,30 @@ class StudentViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
-    # def retrieve(self, request, *args, **kwargs):
-    #     certificate_number = kwargs.get('certificate_number')
-    #     instance = get_object_or_404(Student, certificate_number=certificate_number)
-        
-    #     # Check if the certificate is valid
-    #     if instance.get_certificatenumber():
-    #         # Certificate is valid, serialize the instance and return it
-    #         serializer = self.get_serializer(instance)
-    #         return Response(serializer.data, status=status.HTTP_200_OK)
-    #     else:
-    #         # Certificate is invalid, return an error response
-    #         return Response({'error_message': 'Certificate is not found'}, status=status.HTTP_400_BAD_REQUEST)
-        
 
-#check certificate number and type to retrieve data
+# Function to render the certificate verification form with certificate types.
+    def certificate_verify_form(request):
+        certificate_types = CertificateTypes.objects.all()  # Retrieve all certificate types
+        return render(request, 'certificate_verify_form.html', {'certificate_types': certificate_types})
+
+
+# Function to verify a certificate based on its type and number.
 def certificate_verify(request):
     if request.method == 'POST':
         certificate_type = request.POST.get('certificate_type')
         certificate_number = request.POST.get('certificate_number')
         
-        # Perform verification logic
-        student = Student.objects.filter(certificate_type=certificate_type, certificate_number=certificate_number).first()
+        # Perform verification logic based on certificate type
+        if certificate_type == '2':
+            student = Student.objects.filter(certificate_number=certificate_number).first()
+        elif certificate_type == '5':
+            student = StudentIV.objects.filter(certificate_number=certificate_number).first()
+        elif certificate_type == '6':
+            student = StudentTronix.objects.filter(certificate_number=certificate_number).first()
+        else:
+            # Certificate type not recognized, redirect to error page
+            return redirect('error_page')
+        
         if student:
             # Certificate is valid, redirect to the verified page
             return redirect('certificate_verification', certificate_number=certificate_number)
@@ -953,7 +961,36 @@ def certificate_verify(request):
             # Certificate is invalid, redirect to the error page
             return redirect('error_page')
     else:
-        return render(request, 'certificate_verify_form.html')    
+        # Retrieve all certificate types for rendering the form
+        certificate_types = CertificateTypes.objects.all()
+        return render(request, 'certificate_verify_form.html', {'certificate_types': certificate_types})
+
+
+
+# Function to display certificate verification information for a given certificate number.
+def certificate_verification(request, certificate_number):   
+
+    student_instance = get_object_or_404(Student, certificate_number=certificate_number) 
+
+    # If no Student instance is found, try retrieving a StudentIV instance
+    if not student_instance:
+        student_instance = get_object_or_404(StudentIV, certificate_number=certificate_number)
+
+    # If still no instance is found, try retrieving a StudentTronix instance
+    if not student_instance:
+        student_instance = get_object_or_404(StudentTronix, certificate_number=certificate_number)
+
+    # If none of the models match the certificate_number, raise a 404 error
+    if not student_instance:
+        raise Http404("No student matches the given query.")
+    
+    context = {'student_instance': student_instance}
+    return render(request, 'certificate_verification.html', context)
+
+
+#function to display an error page to the user
+def error_page(request):
+    return render(request, 'error_page.html')
 
 
     # def get_object(self):
@@ -998,11 +1035,8 @@ def certificate_verify(request):
     #     return render(request, 'certificate_verification.html', {'student_instance': instance})
  
 
-def certificate_verification(request, certificate_number):     
-    student_instance = get_object_or_404(Student, certificate_number=certificate_number)
-    print("verify:",student_instance)
-    context = {'student_instance': student_instance}
-    return render(request, 'certificate_verification.html', context)
+
+
 # def certificate_verification(request, student_id):     
 #     student_instance = get_object_or_404(Student, id=student_id)
 #     context = {'student_instance': student_instance}
@@ -1043,7 +1077,7 @@ def certificate_verification(request, certificate_number):
 
 
 
-
+# This function generates a PDF certificate for internship completion for a specific student.
 @login_required(login_url='login')
 def render_pdf_view(request, student_id):
 
@@ -1230,7 +1264,7 @@ def render_pdf_view(request, student_id):
     return response
 
 
-
+# This function generates a PDF certificate for workshop completion for a specific student.
 @login_required(login_url='login')
 def render_pdf_workshop(request, student_id):
 
@@ -1416,7 +1450,7 @@ def render_pdf_workshop(request, student_id):
     return response
 
 
-
+# This function generates a PDF certificate for summer camp completion for a specific student.
 @login_required(login_url='login')
 def render_pdf_summercamp(request, student_id):
 
@@ -1602,6 +1636,7 @@ def render_pdf_summercamp(request, student_id):
     return response
 
 
+# This function generates a PDF certificate for tronix completion for a specific student.
 @login_required(login_url='login')
 def render_pdf_tronix(request, student_id):
 
@@ -1799,7 +1834,8 @@ def render_pdf_tronix(request, student_id):
     return response
 
 
-
+# This function generates a PDF certificate for industrial visit completion for a specific student.
+@login_required(login_url='login')
 def render_pdf_industrialvisit(request, student_id):
 
     # Get the specific Student object based on student_id
@@ -1995,7 +2031,7 @@ def pdf_view(request, student_id):
     return HttpResponse(rendered_template)
 
 
-
+# This view function handles the downloading of selected certificates of internship for multiple students as a ZIP file.
 @login_required(login_url='login')
 def download_selected_certificates(request):
     if request.method == 'POST':
@@ -2035,7 +2071,7 @@ def download_selected_certificates(request):
     else:
         return JsonResponse({'error': 'Method not allowed'}, status=405)
 
-
+# This view function handles the downloading of selected certificates of tronix for multiple students as a ZIP file.
 @login_required(login_url='login')
 def download_selected_tronixcertificates(request):
     if request.method == 'POST':
@@ -2074,6 +2110,7 @@ def download_selected_tronixcertificates(request):
     else:
         return JsonResponse({'error': 'Method not allowed'}, status=405)
 
+# This view function handles the downloading of selected certificates of iv for multiple students as a ZIP file.
 @login_required(login_url='login')
 def download_selected_ivcertificates(request):
     if request.method == 'POST':

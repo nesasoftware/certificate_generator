@@ -2,6 +2,7 @@ from django.db import models
 from django.utils import timezone
 
 
+# Model representing different authorities.
 class Authority(models.Model):
     auth_id = models.IntegerField(null=True)
     organization = models.CharField(max_length=255, null=True)
@@ -13,6 +14,7 @@ class Authority(models.Model):
         return self.name
 
 
+# Model representing different courses.
 class Course(models.Model):
     course_name = models.CharField(max_length=100, null=True)
 
@@ -20,6 +22,8 @@ class Course(models.Model):
         return self.course_name if self.course_name else ''
 
 
+
+# Model representing different types of certificates.
 class CertificateTypes(models.Model):
     certify_type_id=models.IntegerField(null=True)
     certificate_type = models.CharField(max_length=100)
@@ -32,6 +36,8 @@ class CertificateTypes(models.Model):
     def get_certificate(self):
         self.certificate_type
 
+
+# model for partner that related to tronix
 class Partner(models.Model):
     name = models.CharField(max_length=255)
     logo = models.ImageField(upload_to='media/partners/')  # Field to store partner logo images
@@ -42,6 +48,7 @@ class Partner(models.Model):
         return self.name
 
 
+# model representing items of tronix
 class TronixItems(models.Model):
     items =models.CharField(max_length=255, null=True)
 
@@ -49,6 +56,7 @@ class TronixItems(models.Model):
         return self.items
 
 
+# model for tronix details
 class Tronix(models.Model):
     season = models.CharField(max_length=100, null=True)
     date = models.DateField(default=timezone.now)
@@ -63,8 +71,9 @@ class Tronix(models.Model):
         Get partners associated with this Tronix season.
         """
         return self.partner_logos.all()
-    
 
+
+# model for student of tronix
 class StudentTronix(models.Model):
     name= models.CharField(max_length=255, null=True)
     school= models.CharField(max_length=255, null=True)
@@ -89,6 +98,7 @@ class StudentTronix(models.Model):
         return self.name
 
 
+# model for student of internship and workshop
 class Student(models.Model):
     name = models.CharField(max_length=255, blank=True, default='')
     college_name = models.CharField(max_length=255, blank=True, default='')
@@ -149,7 +159,7 @@ class StudentIV(models.Model):
         return self.name
   
 
-
+# Model representing the relationship between students and authorities.
 class StudentRelatedAuthority(models.Model):
     std = models.ForeignKey(Student, on_delete=models.CASCADE, null=True)
     std_iv = models.ForeignKey(StudentIV, on_delete=models.CASCADE, null=True)
