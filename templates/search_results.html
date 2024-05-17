@@ -7,16 +7,16 @@
             <ul class="p-3">
                 {% for student in students %}
                     <li>
-                        <div class="card p-4">
+                        <div class="card p-4 mx-auto search-results-card">
                             <ul class="result-details">
                                 <li>Name : {{ student.name }}</li>
-                                <li>ID : SRC/2024/{{student.id}}</li>
+                                <li>ID : SRC/2024/{{student.certificate_number}}</li>
                                 <li>College Name: {{ student.college_name }}</li>
                                 <!-- {% for certificate_type_name in certificate_type_names %}
                                 <li>Certificate : {{ certificate_type_name }}</li>
                                 {% endfor %} -->
                                 <li>Certificate : {{student.certificate_type.certificate_type}}</li>
-                                <li>Course Name: {{ student.course }}</li>
+                                <li>Course Name:{{ student.course }}</li>
                                 <li>Mentor Name: {{ student.mentor_name }}</li>
                                 <li>Start Date: {{ student.start_date }}</li>
                                 <li>End Date: {{ student.end_date }}</li>

@@ -21,27 +21,51 @@
         rel="stylesheet">
 
 </head>
-<body>
-<div class="container ">
-    <div class="row">
-        <div class="col-md-6 text-justify mx-auto">
-            <h4>Check Verified Certificate</h4>
-            <form method="post" action="{% url 'certificate_verify' %}">
-                {% csrf_token %}
-                 <!-- Include necessary HTML and JavaScript -->
-                 <label for="id_certificate_type">Certificate Type:</label><br>
-                <select id="id_certificate_type" name="certificate_type">
-                    <option value="">Select Certificate Type</option>
-                    {% for certificate_type in certificate_types %}
-                        <option value="{{ certificate_type.id }}">{{ certificate_type.certificate_type }}</option>
-                    {% endfor %}
-                </select><br>
-                <!-- Certificate Type: <input type="text" name="certificate_type"><br> -->
-                Certificate Number: <input type="text" name="certificate_number"><br>
-                <input type="submit" value="Submit">
-            </form>
+
+<body class="ceriti-verify-form">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6 d-flex align-items-center">
+                <!-- <img src="{% static 'images/icon/certify_logo.png' %}" alt="Certify Logo" width="215" height="86" class="mt-2"> -->
+            </div>
+        </div>
+        <div class="row">
+            
+            <div class="col-md-6 text-justify mx-auto">
+                <div class="card mt-3">
+                    <div class="card-body p-5">
+                        <img src="{% static 'images/icon/certify_logo.png' %}" alt="Certify Logo" width="215" height="86" class="mx-auto d-block">
+
+                        <h2 class="text-center mb-5 mt-4">Check Verified Certificate</h2>
+                        <form method="post" action="{% url 'certificate_verify' %}">
+                            {% csrf_token %}
+
+                            <!-- Include necessary HTML and JavaScript -->
+                            <div class="form-group">
+                                <b><label for="id_certificate_type" class="mb-2">Certificate Type:</label></b><br>
+                                <select id="id_certificate_type" name="certificate_type" class=" form-control">
+                                    <option class="verify-select-option">Select Certificate Type</option>
+                                    {% for certificate_type in certificate_types %}
+                                    <option value="{{ certificate_type.id }}">{{ certificate_type.certificate_type }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <br>
+
+                            <!-- Certificate Type: <input type="text" name="certificate_type"><br> -->
+                            <div class="form-group">
+                                <b><label for="id_certificate_number: " class="mb-2">Certificate Number: </label></b><br>
+                                <input type="text" name="certificate_number" class="form-control">
+                            </div><br>
+                                <input class="btn btn-primary btn-md btn-block" type="submit" value="Submit">
+                            
+                        </form>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-</div>
 </body>
+
 </html>
