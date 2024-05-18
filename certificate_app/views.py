@@ -1252,7 +1252,7 @@ def render_pdf_view(request, student_id):
     context = {'qr_code_path': qr_path}
 
     x = 6.4* inch
-    y = 4.0 * inch
+    y = 4.22 * inch
     # x = 200
     # y = -10
     width=50
@@ -1440,7 +1440,7 @@ def render_pdf_workshop(request, student_id):
     context = {'qr_code_path': qr_path}
 
     x = 6.4* inch
-    y = 4.3 * inch
+    y = 4.75 * inch
     # x = 200
     # y = -10
     width=50
@@ -1467,189 +1467,189 @@ def render_pdf_workshop(request, student_id):
 
 
 # This function generates a PDF certificate for summer camp completion for a specific student.
-@login_required(login_url='login')
-def render_pdf_summercamp(request, student_id):
+# @login_required(login_url='login')
+# def render_pdf_summercamp(request, student_id):
 
-    # Get the specific Student object based on student_id
-    student_instance = get_object_or_404(Student, id=student_id)
+#     # Get the specific Student object based on student_id
+#     student_instance = get_object_or_404(Student, id=student_id)
 
-    # Get the certificate type associated with the student
-    certificate_type_id = student_instance.certificate_type_id
-    certificate_type = get_object_or_404(CertificateTypes, id=certificate_type_id)
+#     # Get the certificate type associated with the student
+#     certificate_type_id = student_instance.certificate_type_id
+#     certificate_type = get_object_or_404(CertificateTypes, id=certificate_type_id)
 
-    # Get the courses related to the certificate type
-    courses = certificate_type.courses.first()
+#     # Get the courses related to the certificate type
+#     courses = certificate_type.courses.first()
 
-    # Create a BytesIO buffer to store the PDF content
-    buffer = io.BytesIO()
+#     # Create a BytesIO buffer to store the PDF content
+#     buffer = io.BytesIO()
 
-    file_name=f"{student_instance.id}_{slugify(student_instance.name)}_certificate"
+#     file_name=f"{student_instance.id}_{slugify(student_instance.name)}_certificate"
 
-    # # Create the response object and it shows pdf page in other tab without downloading
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'inline; filename="{file_name}.pdf"'
+#     # # Create the response object and it shows pdf page in other tab without downloading
+#     response = HttpResponse(content_type='application/pdf')
+#     response['Content-Disposition'] = f'inline; filename="{file_name}.pdf"'
 
-    # Create the response object and it directly download pdf page 
-    # response = HttpResponse(content_type='application/pdf')
-    # response['Content-Disposition'] = f'attachment; filename="{file_name}.pdf"'
+#     # Create the response object and it directly download pdf page 
+#     # response = HttpResponse(content_type='application/pdf')
+#     # response['Content-Disposition'] = f'attachment; filename="{file_name}.pdf"'
 
 
-    #pdf page format
-    custom_page_size = (600, 440)
-    c = canvas.Canvas(buffer, bottomup=1, pagesize=custom_page_size)
-    c.translate(inch, inch)
+#     #pdf page format
+#     custom_page_size = (600, 440)
+#     c = canvas.Canvas(buffer, bottomup=1, pagesize=custom_page_size)
+#     c.translate(inch, inch)
 
-    desired_width = 596
-    desired_height = 436
-
-    
-    c.drawImage('pictures\Certificate of Participation Blank.jpg', -0.97*inch, -0.97*inch, width=desired_width, height=desired_height, mask=None)
-    font_path = 'static/fonts/Cascadia.ttf'
-    pdfmetrics.registerFont(TTFont('Cascadia', font_path))
-    c.setFont('Cascadia', 12)  
-    current_year = datetime.now().strftime("%Y")
-    c.drawString(5.1* inch, 4.75 * inch, f"SRC{current_year}{student_instance.id}")
-    
-    # Register Dancing Script font
-    font_path = 'static/fonts/MTCORSVA.TTF'
-    pdfmetrics.registerFont(TTFont('MonteCarlo', font_path))
+#     desired_width = 596
+#     desired_height = 436
 
     
+#     c.drawImage('pictures\Certificate of Participation Blank.jpg', -0.97*inch, -0.97*inch, width=desired_width, height=desired_height, mask=None)
+#     font_path = 'static/fonts/Cascadia.ttf'
+#     pdfmetrics.registerFont(TTFont('Cascadia', font_path))
+#     c.setFont('Cascadia', 12)  
+#     current_year = datetime.now().strftime("%Y")
+#     c.drawString(5.1* inch, 4.75 * inch, f"SRC{current_year}{student_instance.id}")
     
-    # Example name
-    name = student_instance.name
+#     # Register Dancing Script font
+#     font_path = 'static/fonts/MTCORSVA.TTF'
+#     pdfmetrics.registerFont(TTFont('MonteCarlo', font_path))
 
-    # Set the font for the name
-    # c.setFont('MonteCarlo', font_size)
-    # c.setFillColor(HexColor('#c46608'))
+    
+    
+#     # Example name
+#     name = student_instance.name
 
-    # Define font size thresholds and corresponding font -
-    font_size_threshold = 30
-    default_font_size = 40
-    reduced_font_size = 30
+#     # Set the font for the name
+#     # c.setFont('MonteCarlo', font_size)
+#     # c.setFillColor(HexColor('#c46608'))
+
+#     # Define font size thresholds and corresponding font -
+#     font_size_threshold = 30
+#     default_font_size = 40
+#     reduced_font_size = 30
     
-    # Calculate the width of the name string
-    name_width = c.stringWidth(name)
+#     # Calculate the width of the name string
+#     name_width = c.stringWidth(name)
     
-    # Calculate the center of the page
-    center_x = letter[0] / 2
+#     # Calculate the center of the page
+#     center_x = letter[0] / 2
     
-    # Calculate the starting x-coordinate to center the text
-    if len(name) < font_size_threshold:
-        start_x = 3.2 * inch
-        font_size = default_font_size
-    else:
-        # For longer names, reduce the font size and adjust the starting x-coordinate
-        start_x = 3.2 * inch
-        # start_x = center_x - (name_width / 2)
-        font_size = reduced_font_size
+#     # Calculate the starting x-coordinate to center the text
+#     if len(name) < font_size_threshold:
+#         start_x = 3.2 * inch
+#         font_size = default_font_size
+#     else:
+#         # For longer names, reduce the font size and adjust the starting x-coordinate
+#         start_x = 3.2 * inch
+#         # start_x = center_x - (name_width / 2)
+#         font_size = reduced_font_size
     
-    align_y = 1.9 * inch
+#     align_y = 1.9 * inch
     
-    # Set the font size
-    c.setFont('MonteCarlo', font_size)
-    c.setFillColor(HexColor('#c46608'))
+#     # Set the font size
+#     c.setFont('MonteCarlo', font_size)
+#     c.setFillColor(HexColor('#c46608'))
         
-    align_y = 1.9 * inch    
-    c.drawCentredString(start_x, align_y, name)
+#     align_y = 1.9 * inch    
+#     c.drawCentredString(start_x, align_y, name)
     
 
     
-    font_path = 'static/fonts/Minion-It.ttf'
-    pdfmetrics.registerFont(TTFont('Minion Pro', font_path))
-    c.setFont('Minion Pro', 12)
+#     font_path = 'static/fonts/Minion-It.ttf'
+#     pdfmetrics.registerFont(TTFont('Minion Pro', font_path))
+#     c.setFont('Minion Pro', 12)
 
-    # Define your custom style
-    my_Style = getSampleStyleSheet()['BodyText']
+#     # Define your custom style
+#     my_Style = getSampleStyleSheet()['BodyText']
     
-    my_Style.alignment = 1 
+#     my_Style.alignment = 1 
 
-    # Retrieve the course name directly from the Course object
-    course_name = student_instance.course.course_name
+#     # Retrieve the course name directly from the Course object
+#     course_name = student_instance.course.course_name
 
-    # Create Paragraph with student information including courses
-    # courses_str = ", ".join([course.course_name for course in courses])
+#     # Create Paragraph with student information including courses
+#     # courses_str = ", ".join([course.course_name for course in courses])
 
-    
-
-    p1 = Paragraph(f'''<i>Student of <b>{student_instance.college_name}</b>, has successfully completed the Summer Camp
-        program at <b>SinroRobotics Pvt Ltd</b> on <b>{course_name}</b> from <b>{student_instance.start_date}</b> to <b>{student_instance.end_date}</b>.</i>''', my_Style)
-    
-    width = 940
-    height = 500
-    p1.wrapOn(c, 450, 50)
-    p1.drawOn(c, width-930, height-410)
-
-    # Get the StudentRelatedAuthority instance for the given student_id
-    student_related_authority = get_object_or_404(StudentRelatedAuthority, std_id=student_id)
-
-    # Accessing the related Student ID
-    student_id = student_related_authority.std.id
     
 
-    # Accessing the related Authority instance
-    authority = student_related_authority.authority
+#     p1 = Paragraph(f'''<i>Student of <b>{student_instance.college_name}</b>, has successfully completed the Summer Camp
+#         program at <b>SinroRobotics Pvt Ltd</b> on <b>{course_name}</b> from <b>{student_instance.start_date}</b> to <b>{student_instance.end_date}</b>.</i>''', my_Style)
+    
+#     width = 940
+#     height = 500
+#     p1.wrapOn(c, 450, 50)
+#     p1.drawOn(c, width-930, height-410)
 
-    if authority:
-        # Accessing the signature attribute of the related Authority instance
-        signature_image_url = str(authority.signature)
-        print("Signature Image URL:", signature_image_url)
+#     # Get the StudentRelatedAuthority instance for the given student_id
+#     student_related_authority = get_object_or_404(StudentRelatedAuthority, std_id=student_id)
 
-        c.drawImage('media/' + signature_image_url, 4.4 * inch, 0 * inch, width=80, height=40, mask='auto')
+#     # Accessing the related Student ID
+#     student_id = student_related_authority.std.id
+    
+
+#     # Accessing the related Authority instance
+#     authority = student_related_authority.authority
+
+#     if authority:
+#         # Accessing the signature attribute of the related Authority instance
+#         signature_image_url = str(authority.signature)
+#         print("Signature Image URL:", signature_image_url)
+
+#         c.drawImage('media/' + signature_image_url, 4.4 * inch, 0 * inch, width=80, height=40, mask='auto')
 
     
-    #c.drawImage('pictures/Nebu-John-SIgn.png',4.4*inch, 0.1*inch, width=100, height=50,mask=None)
+#     #c.drawImage('pictures/Nebu-John-SIgn.png',4.4*inch, 0.1*inch, width=100, height=50,mask=None)
 
-    font_path = 'static/fonts/Quattrocento-Bold.ttf'
-    pdfmetrics.registerFont(TTFont('Quattrocento-Bold', font_path))
-    c.setFont('Quattrocento-Bold', 12)
-    c.setFillColorRGB(0,0,0)
-    c.drawString( 0.8*inch, 0.08*inch, str(datetime.now().strftime("%Y-%m-%d")))
+#     font_path = 'static/fonts/Quattrocento-Bold.ttf'
+#     pdfmetrics.registerFont(TTFont('Quattrocento-Bold', font_path))
+#     c.setFont('Quattrocento-Bold', 12)
+#     c.setFillColorRGB(0,0,0)
+#     c.drawString( 0.8*inch, 0.08*inch, str(datetime.now().strftime("%Y-%m-%d")))
 
 
-    # Generate QR code
-    base_url = request.build_absolute_uri('/')
-    qr_data = f"{base_url}certificate_verify/{student_instance.id}/"
-    qr = pyqrcode.create(qr_data)
+#     # Generate QR code
+#     base_url = request.build_absolute_uri('/')
+#     qr_data = f"{base_url}certificate_verify/{student_instance.id}/"
+#     qr = pyqrcode.create(qr_data)
 
-    # Save the QR code as BytesIO
-    qr_buffer = io.BytesIO()
-    qr.png(qr_buffer, scale=6)
+#     # Save the QR code as BytesIO
+#     qr_buffer = io.BytesIO()
+#     qr.png(qr_buffer, scale=6)
 
-    # Save the QR code as a file on the server
-    qr_filename = f"qr_code_{student_instance.id}.png"
-    qr_path = os.path.join(settings.MEDIA_ROOT, qr_filename)
-    print("QR Code Path:", qr_path)
-    qr.png(qr_path, scale=6)
+#     # Save the QR code as a file on the server
+#     qr_filename = f"qr_code_{student_instance.id}.png"
+#     qr_path = os.path.join(settings.MEDIA_ROOT, qr_filename)
+#     print("QR Code Path:", qr_path)
+#     qr.png(qr_path, scale=6)
 
-    # Pass the URL or path of the QR code image to the context
-    context = {'qr_code_path': qr_path}
+#     # Pass the URL or path of the QR code image to the context
+#     context = {'qr_code_path': qr_path}
 
-    x = 6.4* inch
-    y = 4.3 * inch
-    # x = 200
-    # y = -10
-    width=50
-    height=50
-    # Draw the QR code image on the PDF
-    qr_image = ImageReader(qr_buffer)
-    # c.drawImage(qr_image, x, y, width, height)
+#     x = 6.4* inch
+#     y = 4.3 * inch
+#     # x = 200
+#     # y = -10
+#     width=50
+#     height=50
+#     # Draw the QR code image on the PDF
+#     qr_image = ImageReader(qr_buffer)
+#     # c.drawImage(qr_image, x, y, width, height)
 
     
-    c.showPage()
-    c.save()
+#     c.showPage()
+#     c.save()
 
-    # Rewind the buffer to the beginning
-    buffer.seek(0)
+#     # Rewind the buffer to the beginning
+#     buffer.seek(0)
 
-    # Write the buffer content to the response
-    response.write(buffer.getvalue())
+#     # Write the buffer content to the response
+#     response.write(buffer.getvalue())
 
-    # Close the buffers
-    buffer.close()
-    qr_buffer.close()
+#     # Close the buffers
+#     buffer.close()
+#     qr_buffer.close()
 
-    return response
+#     return response
 
 
 # This function generates a PDF certificate for tronix completion for a specific student.
@@ -1983,7 +1983,7 @@ def render_pdf_industrialvisit(request, student_id):
     context = {'qr_code_path': qr_path}
 
     x = 6.4* inch
-    y = 4.3 * inch
+    y = 4.75 * inch
     # x = 200
     # y = -10
     width=50
@@ -2043,10 +2043,13 @@ def download_selected_certificates(request):
                 # Retrieve the student object based on the student_id
                 student_instance = get_object_or_404(Student, id=student_id)
                 student_name = student_instance.name
+                certificate_number = student_instance.certificate_number
+                year= student_instance.created_at.year
+
 
                 # Generate PDF certificate for the selected student
                 pdf_content = render_pdf_view(request, student_id).content
-                file_name = f"{student_id}_{student_name.replace(' ', '_')}_certificate.pdf"
+                file_name = f"SRC-{year}-{certificate_number}_{student_name.replace(' ', '_')}_certificate.pdf"
 
                 # file_name = f"{student_id}_certificate.pdf"
 
@@ -2056,9 +2059,12 @@ def download_selected_certificates(request):
         # Rewind the buffer to the beginning
         zip_buffer.seek(0)
 
+        #Get the current date
+        current_date = datetime.now().date()
+
         # Create a response to serve the ZIP file
         response = HttpResponse(zip_buffer, content_type='application/zip')
-        response['Content-Disposition'] = 'attachment; filename="certificates.zip"'
+        response['Content-Disposition'] = f'attachment; filename="{current_date}_internship_certificates.zip"'
         return response
 
     else:
@@ -2084,10 +2090,12 @@ def download_selected_workshopcertificates(request):
                 # Retrieve the student object based on the student_id
                 student_instance = get_object_or_404(StudentWorkshop, id=student_id)
                 student_name = student_instance.name
+                year = student_instance.created_at.year
+              
 
                 # Generate PDF certificate for the selected student
                 pdf_content = render_pdf_workshop(request, student_id).content
-                file_name = f"{student_instance.certificate_number}_{student_name.replace(' ', '_')}_certificate.pdf"
+                file_name = f"SRC-{year}-{student_instance.certificate_number}_{student_name.replace(' ', '_')}_certificate.pdf"
 
                 # file_name = f"{student_id}_certificate.pdf"
 
@@ -2097,9 +2105,12 @@ def download_selected_workshopcertificates(request):
         # Rewind the buffer to the beginning
         zip_buffer.seek(0)
 
+        #Get the current date
+        current_date = datetime.now().date()
+
         # Create a response to serve the ZIP file
         response = HttpResponse(zip_buffer, content_type='application/zip')
-        response['Content-Disposition'] = 'attachment; filename="certificates.zip"'
+        response['Content-Disposition'] = f'attachment; filename="{current_date}_workshop_certificates.zip"'
         return response
 
     else:
@@ -2137,9 +2148,12 @@ def download_selected_tronixcertificates(request):
         # Rewind the buffer to the beginning
         zip_buffer.seek(0)
 
+        #Get the current date
+        current_date = datetime.now().date()
+
         # Create a response to serve the ZIP file
         response = HttpResponse(zip_buffer, content_type='application/zip')
-        response['Content-Disposition'] = 'attachment; filename="certificates.zip"'
+        response['Content-Disposition'] = f'attachment; filename="{current_date}_tronix_certificates.zip"'
         return response
 
     else:
@@ -2164,10 +2178,11 @@ def download_selected_ivcertificates(request):
                 # Retrieve the student object based on the student_id
                 student_instance = get_object_or_404(StudentIV, id=student_id)
                 student_name = student_instance.name
+                year = student_instance.created_at.year
 
                 # Generate PDF certificate for the selected student
                 pdf_content = render_pdf_industrialvisit(request, student_id).content
-                file_name = f"SRC{student_instance.certificate_number}_{student_name.replace(' ', '_')}_certificate.pdf"
+                file_name = f"SRC/{year}/{student_instance.certificate_number}_{student_name.replace(' ', '_')}_certificate.pdf"
 
                 # file_name = f"{student_id}_certificate.pdf"
 
@@ -2177,9 +2192,12 @@ def download_selected_ivcertificates(request):
         # Rewind the buffer to the beginning
         zip_buffer.seek(0)
 
+        #Get the current date
+        current_date = datetime.now().date()
+
         # Create a response to serve the ZIP file
         response = HttpResponse(zip_buffer, content_type='application/zip')
-        response['Content-Disposition'] = 'attachment; filename="certificates.zip"'
+        response['Content-Disposition'] = f'attachment; filename="{current_date}_iv_certificates.zip"'
         return response
 
     else:
