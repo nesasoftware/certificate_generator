@@ -1261,7 +1261,7 @@ def render_pdf_view(request, student_id):
 
     # Save the QR code as a file on the server
     qr_filename = f"qr_code_{student_instance.certificate_number}.png"
-    qr_path = os.path.join(settings.MEDIA_ROOT, qr_filename)
+    qr_path = os.path.join(settings.MEDIA_ROOT, f"qrcode/{qr_filename}")
     # print("QR Code Path:", qr_path)
     qr.png(qr_path, scale=6)
 
