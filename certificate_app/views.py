@@ -51,7 +51,7 @@ from rest_framework import status
 from rest_framework.decorators import action
 
 
-# student form page for submitting details
+# internship student form page for submitting details
 @login_required(login_url='login')
 def my_view(request):
     certificate_types = CertificateTypes.objects.all()
@@ -203,7 +203,7 @@ def my_view(request):
 
     return render(request, 'student_form.html', {'certificate_types': certificate_types, 'authorities': authorities, 'upload_form': upload_form})
 
-# student form page for submitting details
+# workshop student form page for submitting details
 @login_required(login_url='login')
 def student_workshop_submit(request):
     certificate_types = CertificateTypes.objects.all()
@@ -235,7 +235,7 @@ def student_workshop_submit(request):
 
 
             # Fetch the last used certificate number
-            last_certificate_number = Student.objects.order_by('-id').first().certificate_number
+            last_certificate_number = StudentWorkshop.objects.order_by('-id').first().certificate_number
 
             # Convert the last certificate number to an integer (if it's not already)
             last_certificate_number = int(last_certificate_number) if last_certificate_number else 0
@@ -268,7 +268,7 @@ def student_workshop_submit(request):
                 authority = Authority.objects.get(id=authority_id)
                 StudentRelatedAuthority.objects.create(std_workshop=student, authority=authority)
 
-            return redirect('display_students')  # Redirect to the display students page
+            return redirect('display_workshop_students')  # Redirect to the display students page
         
 
         elif 'upload_csv' in request.POST:
@@ -345,7 +345,7 @@ def student_workshop_submit(request):
                         # Print a message indicating successful processing
                         print("CSV file processed successfully")                       
 
-                return redirect('display_students')
+                return redirect('display_workshop_students')
             else:
                 # Print form errors if any
                 print("Form errors:", upload_form.errors)
@@ -356,7 +356,151 @@ def student_workshop_submit(request):
     return render(request, 'student_workshop_form.html', {'certificate_types': certificate_types, 'authorities': authorities, 'upload_form': upload_form})
 
 
-# student form page for submitting details
+# iv student form page for submitting details
+@login_required(login_url='login')
+def student_iv_submit(request):
+    certificate_types = CertificateTypes.objects.all()
+    authorities = Authority.objects.all()
+    upload_form = UploadFileForm()
+
+    if request.method == 'POST':
+        if 'iv_submit_form' in request.POST:
+            certificate_number =request.POST.get('certificate_number')
+            name = request.POST.get('name')
+            sem_year = request.POST.get('sem_year')
+            dept = request.POST.get('dept')
+            college_name = request.POST.get('college_name')
+            duration = request.POST.get('duration')
+            conducted_date = request.POST.get('conducted_date')
+            mentor_name = request.POST.get('mentor_name')
+            issued_date = timezone.now().date()
+            certificate_type_id = request.POST.get('certificate_type')
+            authority_ids = request.POST.getlist('authority')
+            course_id = request.POST.get('courses')
+            
+            # Fetch the CertificateTypes instance based on the provided certificate_type_id
+            certificate_type = CertificateTypes.objects.get(id=certificate_type_id)
+         
+            # Fetch the Course instance based on the provided course_id
+            course = Course.objects.get(id=course_id)
+      
+            #Assign the selected course to the student through the CertificateTypes instance
+            certificate_type.courses.add(course) 
+  
+            iv_student = StudentIV.objects.create(
+                name=name,
+                sem_year =sem_year,
+                dept=dept,
+                college_name=college_name,
+                duration= duration,
+                conducted_date=conducted_date,
+                mentor_name=mentor_name,
+                issued_date=issued_date,
+                certificate_type_id=certificate_type_id,
+                course=course,
+                certificate_number=certificate_number
+            )
+
+            # Add selected authorities to the student
+            for authority_id in authority_ids:
+                authority = Authority.objects.get(id=authority_id)
+                StudentRelatedAuthority.objects.create(std_iv=iv_student, authority=authority)
+
+            return redirect('display_iv_students')  # Redirect to the display students page
+        
+
+        elif 'upload_csv' in request.POST:
+            upload_form = UploadFileForm(request.POST, request.FILES)
+            if upload_form.is_valid():
+                csv_file = request.FILES['csv_file']
+                decoded_file = csv_file.read().decode('utf-8').splitlines()
+                reader = csv.DictReader(decoded_file)
+                for row in reader:
+                    conducted_date = timezone.datetime.strptime(row['conducted_date'], '%Y-%m-%d').strftime('%Y-%m-%d')
+
+                    authorities = row.get('auth_id', '').split(',')
+
+                    for auth_id in authorities:
+                        try:
+                            # Get Authority instance based on the custom ID (auth_id)
+                            authority = Authority.objects.get(auth_id=auth_id)
+                        except Authority.DoesNotExist:
+                             # Handle the case where the Authority instance with the provided auth_id doesn't exist
+                            print(f"Authority with auth_id {auth_id} does not exist. Skipping this auth_id.")
+                            continue
+                        
+                        # Fetch or create the Course instance based on the provided course_name
+                        course_name = row.get('course_name')
+                        course,create = Course.objects.get_or_create(course_name=course_name)
+
+                        # Fetch certificate_type_id from row data
+                        certificate_type_id = row.get('certificate_type_id')
+                        
+
+                        try:
+                            # Get CertificateTypes instance based on the custom ID
+                            certificate_type = CertificateTypes.objects.get(certify_type_id=certificate_type_id)
+                        except CertificateTypes.DoesNotExist:
+                            # Handle the case where the CertificateTypes instance with the provided certificate_type_id doesn't exist
+                            print(f"CertificateTypes with certificate_type_id {certificate_type_id} does not exist. Skipping this row.")
+                            continue
+                        
+
+                        # Fetch the last used certificate number
+                        last_certificate_number = StudentWorkshop.objects.order_by('-id').first().certificate_number
+
+                        # Convert the last certificate number to an integer (if it's not already)
+                        last_certificate_number = int(last_certificate_number) if last_certificate_number else 0
+
+    
+                        # Increment the last certificate number by 1 to generate the new certificate number
+                        if last_certificate_number:
+                            new_certificate_number = last_certificate_number + 1
+                        else:
+                            new_certificate_number = 1
+
+                        # Convert the new certificate number back to a string
+                        new_certificate_number_str = str(new_certificate_number)
+
+                        # Create Student instance for the current row
+                        try:
+                            # Create Student instance for the current row
+                            iv_student = StudentIV.objects.create(
+                                name=row.get('name', ''),
+                                college_name=row.get('college_name', ''),
+                                sem_year=row.get('sem_year', ''),
+                                conducted_date=row.get('conducted_date', ''),
+                                dept=row.get('dept', ''),
+                                duration=row.get('duration', ''),
+                                mentor_name=row.get('mentor_name', ''),
+                                issued_date=timezone.now().date(),
+                                certificate_type=certificate_type,
+                                course=course,
+                                certificate_number=new_certificate_number_str
+                            )
+
+                            # Create StudentRelatedAuthority instance linking student with authority
+                            StudentRelatedAuthority.objects.create(std_iv=iv_student, authority=authority)
+
+                            # Print a message indicating successful processing
+                            print("CSV file processed successfully")
+                        except ValidationError as e:
+                            # Display the validation error message to the user
+                            error_message = ', '.join(e.messages)
+                            print(f"Validation Error: {error_message}")                      
+
+                return redirect('display_iv_students')
+            else:
+                # Print form errors if any
+                print("Form errors:", upload_form.errors)
+        else:
+            # Print if 'upload_csv' is not in request.POST
+            print("Upload CSV not found in request")
+
+    return render(request, 'student_iv_form.html', {'certificate_types': certificate_types, 'authorities': authorities, 'upload_form': upload_form})    
+
+
+# tronix student form page for submitting details
 @login_required(login_url='login')
 def student_tronix_submit(request):
     certificate_types = CertificateTypes.objects.all()
@@ -564,134 +708,6 @@ def student_tronix_submit(request):
 
 
 @login_required(login_url='login')
-def student_iv_submit(request):
-    certificate_types = CertificateTypes.objects.all()
-    authorities = Authority.objects.all()
-    upload_form = UploadFileForm()
-
-    if request.method == 'POST':
-        if 'iv_submit_form' in request.POST:
-            certificate_number =request.POST.get('certificate_number')
-            name = request.POST.get('name')
-            sem_year = request.POST.get('sem_year')
-            dept = request.POST.get('dept')
-            college_name = request.POST.get('college_name')
-            duration = request.POST.get('duration')
-            conducted_date = request.POST.get('conducted_date')
-            mentor_name = request.POST.get('mentor_name')
-            issued_date = timezone.now().date()
-            certificate_type_id = request.POST.get('certificate_type')
-            authority_ids = request.POST.getlist('authority')
-            course_id = request.POST.get('courses')
-            
-            # Fetch the CertificateTypes instance based on the provided certificate_type_id
-            certificate_type = CertificateTypes.objects.get(id=certificate_type_id)
-         
-            # Fetch the Course instance based on the provided course_id
-            course = Course.objects.get(id=course_id)
-      
-            #Assign the selected course to the student through the CertificateTypes instance
-            certificate_type.courses.add(course) 
-  
-            iv_student = StudentIV.objects.create(
-                name=name,
-                sem_year =sem_year,
-                dept=dept,
-                college_name=college_name,
-                duration= duration,
-                conducted_date=conducted_date,
-                mentor_name=mentor_name,
-                issued_date=issued_date,
-                certificate_type_id=certificate_type_id,
-                course=course,
-                certificate_number=certificate_number
-            )
-
-            # Add selected authorities to the student
-            for authority_id in authority_ids:
-                authority = Authority.objects.get(id=authority_id)
-                StudentRelatedAuthority.objects.create(std_iv=iv_student, authority=authority)
-
-            return redirect('display_iv_students')  # Redirect to the display students page
-        
-
-        elif 'upload_csv' in request.POST:
-            upload_form = UploadFileForm(request.POST, request.FILES)
-            if upload_form.is_valid():
-                csv_file = request.FILES['csv_file']
-                decoded_file = csv_file.read().decode('utf-8').splitlines()
-                reader = csv.DictReader(decoded_file)
-                for row in reader:
-                    conducted_date = timezone.datetime.strptime(row['conducted_date'], '%Y-%m-%d').strftime('%Y-%m-%d')
-
-                    authorities = row.get('auth_id', '').split(',')
-
-                    for auth_id in authorities:
-                        try:
-                            # Get Authority instance based on the custom ID (auth_id)
-                            authority = Authority.objects.get(auth_id=auth_id)
-                        except Authority.DoesNotExist:
-                             # Handle the case where the Authority instance with the provided auth_id doesn't exist
-                            print(f"Authority with auth_id {auth_id} does not exist. Skipping this auth_id.")
-                            continue
-                        
-                        # Fetch or create the Course instance based on the provided course_name
-                        course_name = row.get('course_name')
-                        course,create = Course.objects.get_or_create(course_name=course_name)
-
-                        # Fetch certificate_type_id from row data
-                        certificate_type_id = row.get('certificate_type_id')
-                        
-
-                        try:
-                            # Get CertificateTypes instance based on the custom ID
-                            certificate_type = CertificateTypes.objects.get(certify_type_id=certificate_type_id)
-                        except CertificateTypes.DoesNotExist:
-                            # Handle the case where the CertificateTypes instance with the provided certificate_type_id doesn't exist
-                            print(f"CertificateTypes with certificate_type_id {certificate_type_id} does not exist. Skipping this row.")
-                            continue
-
-
-                        # Create Student instance for the current row
-                        try:
-                            # Create Student instance for the current row
-                            iv_student = StudentIV.objects.create(
-                                name=row.get('name', ''),
-                                college_name=row.get('college_name', ''),
-                                sem_year=row.get('sem_year', ''),
-                                conducted_date=row.get('conducted_date', ''),
-                                dept=row.get('dept', ''),
-                                duration=row.get('duration', ''),
-                                mentor_name=row.get('mentor_name', ''),
-                                issued_date=timezone.now().date(),
-                                certificate_type=certificate_type,
-                                course=course,
-                                certificate_number=certificate_number('certificate_number','')
-                            )
-
-                            # Create StudentRelatedAuthority instance linking student with authority
-                            StudentRelatedAuthority.objects.create(std_iv=iv_student, authority=authority)
-
-                            # Print a message indicating successful processing
-                            print("CSV file processed successfully")
-                        except ValidationError as e:
-                            # Display the validation error message to the user
-                            error_message = ', '.join(e.messages)
-                            print(f"Validation Error: {error_message}")                      
-
-                return redirect('display_iv_students')
-            else:
-                # Print form errors if any
-                print("Form errors:", upload_form.errors)
-        else:
-            # Print if 'upload_csv' is not in request.POST
-            print("Upload CSV not found in request")
-
-    return render(request, 'student_iv_form.html', {'certificate_types': certificate_types, 'authorities': authorities, 'upload_form': upload_form})    
-
-
-
-@login_required(login_url='login')
 def get_courses(request):
     certificate_type_id = request.GET.get('certificate_type_id')
     certificate_type = CertificateTypes.objects.get(id=certificate_type_id)
@@ -701,7 +717,7 @@ def get_courses(request):
 
 
     
-# display all students
+# display all students of internship
 @login_required(login_url='login')
 def display_students(request):
     students = Student.objects.all().order_by('-created_at')
@@ -762,7 +778,7 @@ def display_students(request):
     # return render(request, 'table.html', {'students': students, 'certificate_types': certificate_types, 'certificate_courses': certificate_courses})
     return render(request, 'table.html', context)
 
-# display all students
+# display all students of workshop
 @login_required(login_url='login')
 def display_workshop_students(request):
     students = StudentWorkshop.objects.all().order_by('-created_at')
@@ -824,7 +840,7 @@ def display_workshop_students(request):
     return render(request, 'table_workshop.html', context)
 
 
-# display all students
+# display all students of iv
 @login_required(login_url='login')
 def display_iv_students(request):
     students_iv = StudentIV.objects.all().order_by('-created_at')
@@ -886,7 +902,7 @@ def display_iv_students(request):
     return render(request, 'table_iv.html', context)
 
 
-# display all students
+# display all students of tronix
 @login_required(login_url='login')
 def display_tronix_students(request):
     students_tronix = StudentTronix.objects.all().order_by('-created_at')
@@ -955,47 +971,6 @@ def certificate_show(request, student_id):
     context = {'student_instance': student_instance, 'qr_code_path': qr_code_path}
     return render(request, 'show_certificate.html', context)
 
-
-
-#### verification page
-# Viewset for handling CRUD operations on CertificateTypes instances.
-class CertificateTypesViewSet(viewsets.ModelViewSet):
-    queryset = CertificateTypes.objects.all()
-    serializer_class = CertificateTypesSerializer
-
-
-# Viewset for handling CRUD operations on Course instances.
-class CourseViewSet(viewsets.ModelViewSet):
-    queryset = Course.objects.all()
-    serializer_class = CourseSerializer
-
-
-# Viewset for handling CRUD operations on Student instances and providing a custom action for certificate verification.
-class StudentViewSet(viewsets.ModelViewSet):
-    queryset = Student.objects.all()
-    serializer_class = StudentSerializer
-    lookup_field = 'certificate_number'
-
-
-    # Custom action for verifying student certificates based on certificate type and number.
-    @action(detail=False, methods=['get'])
-    def verify(self, request):
-        certificate_type = request.query_params.get('certificate_type')
-        certificate_number = request.query_params.get('certificate_number')
-
-        # Retrieve the student instance based on certificate type and number
-        instance = get_object_or_404(Student, certificate_type__certificate_type=certificate_type, certificate_number=certificate_number)
-        
-        serializer = self.get_serializer(instance)
-        return Response(serializer.data)
-
-
-# Function to render the certificate verification form with certificate types.
-    def certificate_verify_form(request):
-        certificate_types = CertificateTypes.objects.all()  # Retrieve all certificate types
-        return render(request, 'certificate_verify_form.html', {'certificate_types': certificate_types})
-
-
 # Function to verify a certificate based on its type and number.
 def certificate_verify(request):
     if request.method == 'POST':
@@ -1053,6 +1028,47 @@ def certificate_verification(request, certificate_number, certificate_type):
 #function to display an error page to the user
 def error_page(request):
     return render(request, 'error_page.html')
+
+
+
+#### verification page
+# Viewset for handling CRUD operations on CertificateTypes instances.
+class CertificateTypesViewSet(viewsets.ModelViewSet):
+    queryset = CertificateTypes.objects.all()
+    serializer_class = CertificateTypesSerializer
+
+
+# Viewset for handling CRUD operations on Course instances.
+class CourseViewSet(viewsets.ModelViewSet):
+    queryset = Course.objects.all()
+    serializer_class = CourseSerializer
+
+
+# Viewset for handling CRUD operations on Student instances and providing a custom action for certificate verification.
+class StudentViewSet(viewsets.ModelViewSet):
+    queryset = Student.objects.all()
+    serializer_class = StudentSerializer
+    lookup_field = 'certificate_number'
+
+
+    # Custom action for verifying student certificates based on certificate type and number.
+    @action(detail=False, methods=['get'])
+    def verify(self, request):
+        certificate_type = request.query_params.get('certificate_type')
+        certificate_number = request.query_params.get('certificate_number')
+
+        # Retrieve the student instance based on certificate type and number
+        instance = get_object_or_404(Student, certificate_type__certificate_type=certificate_type, certificate_number=certificate_number)
+        
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
+
+# Function to render the certificate verification form with certificate types.
+    def certificate_verify_form(request):
+        certificate_types = CertificateTypes.objects.all()  # Retrieve all certificate types
+        return render(request, 'certificate_verify_form.html', {'certificate_types': certificate_types})
+
 
 
 # def pdf_content_internship(request, student_id):
@@ -1185,7 +1201,7 @@ def render_pdf_view(request, student_id):
     my_Style = getSampleStyleSheet()['BodyText']
     
     my_Style.alignment = 1 
-    my_Style.leading = 17  # Line height in points
+    my_Style.leading = 19  # Line height in points
 
     # Retrieve the course name directly from the Course object
     course_name = student_instance.course.course_name
@@ -1201,10 +1217,10 @@ def render_pdf_view(request, student_id):
     p1 = Paragraph(f'''<i>Student of <b>{student_instance.college_name}</b>, has successfully completed the academic internship
         program at <b>SinroRobotics Pvt Ltd</b> on <b>{course_name}</b> from <b>{start_date_formatted}</b> to <b>{end_date_formatted}</b>.</i>''', my_Style)
     
-    width = 940
-    height = 480
-    p1.wrapOn(c, 450, 50)
-    p1.drawOn(c, width-930, height-415)
+    width = 900
+    height = 470
+    p1.wrapOn(c, 400, 50)
+    p1.drawOn(c, width-870, height-415)
 
     # Get the StudentRelatedAuthority instance for the given student_id
     student_related_authority = get_object_or_404(StudentRelatedAuthority, std_id=student_id)
@@ -1219,9 +1235,9 @@ def render_pdf_view(request, student_id):
     if authority:
         # Accessing the signature attribute of the related Authority instance
         signature_image_url = str(authority.signature)
-        print("Signature Image URL:", signature_image_url)
+        # print("Signature Image URL:", signature_image_url)
 
-        c.drawImage('media/' + signature_image_url, 4.0 * inch, 0 * inch, width=80, height=40, mask='auto')
+        c.drawImage('media/' + signature_image_url, 4.1 * inch, 0 * inch, width=80, height=40, mask='auto')
 
     
     #c.drawImage('pictures/Nebu-John-SIgn.png',4.4*inch, 0.1*inch, width=100, height=50,mask=None)
@@ -1230,12 +1246,13 @@ def render_pdf_view(request, student_id):
     pdfmetrics.registerFont(TTFont('Quattrocento-Bold', font_path))
     c.setFont('Quattrocento-Bold', 12)
     c.setFillColorRGB(0,0,0)
-    c.drawString( 0.8*inch, 0.08*inch, str(datetime.now().strftime("%Y-%m-%d")))
+    c.drawString( 0.8*inch, 0.08*inch, str(datetime.now().strftime("%d-%m-%Y")))
 
 
     # Generate QR code
     base_url = request.build_absolute_uri('/')
-    qr_data = f"{base_url}certificate_verify/{student_instance.certificate_number}/"
+    #qr_data = f"{base_url}certificate_verify/{student_instance.certificate_number}/"
+    qr_data = "https://courses.sinrorobotics.com"
     qr = pyqrcode.create(qr_data)
 
     # Save the QR code as BytesIO
@@ -1245,7 +1262,7 @@ def render_pdf_view(request, student_id):
     # Save the QR code as a file on the server
     qr_filename = f"qr_code_{student_instance.certificate_number}.png"
     qr_path = os.path.join(settings.MEDIA_ROOT, qr_filename)
-    print("QR Code Path:", qr_path)
+    # print("QR Code Path:", qr_path)
     qr.png(qr_path, scale=6)
 
     # Pass the URL or path of the QR code image to the context
@@ -1361,7 +1378,7 @@ def render_pdf_workshop(request, student_id):
     c.setFont('MonteCarlo', font_size)
     c.setFillColor(HexColor('#c46608'))
         
-    align_y = 1.9 * inch    
+    align_y = 1.8 * inch    
     c.drawCentredString(start_x, align_y, name)
     
     
@@ -1372,7 +1389,7 @@ def render_pdf_workshop(request, student_id):
     # Define your custom style
     my_Style = getSampleStyleSheet()['BodyText']
     
-    my_Style.alignment = 1 
+    my_Style.alignment = 1 # center alignment
     my_Style.leading = 17  # Line height in points
 
 
@@ -1388,10 +1405,10 @@ def render_pdf_workshop(request, student_id):
     p1 = Paragraph(f'''<i>Student of <b>{student_instance.college_name}</b>, has successfully completed the workshop
         program at <b>SinroRobotics Pvt Ltd </b>under guidance of <b>{student_instance.mentor_name}</b> on <b>{course_name}</b> from <b>{start_date_formatted}</b> to <b>{end_date_formatted}</b>.</i>''', my_Style)
     
-    width = 940
-    height = 480
-    p1.wrapOn(c, 450, 50)
-    p1.drawOn(c, width-930, height-410)
+    width = 900
+    height = 470
+    p1.wrapOn(c, 400, 50)
+    p1.drawOn(c, width-870, height-415)
 
     # Get the StudentRelatedAuthority instance for the given student_id
     student_related_authority = get_object_or_404(StudentRelatedAuthority, std_workshop=student_id)
@@ -1407,9 +1424,9 @@ def render_pdf_workshop(request, student_id):
 
         # Accessing the signature attribute of the related Authority instance
         signature_image_url = str(authority.signature)
-        print("Signature Image URL:", signature_image_url)
+        # print("Signature Image URL:", signature_image_url)
 
-        c.drawImage('media/' + signature_image_url, 4.4 * inch, 0 * inch, width=80, height=40, mask='auto')
+        c.drawImage('media/' + signature_image_url, 4.1 * inch, 0 * inch, width=80, height=40, mask='auto')
 
     
     #c.drawImage('pictures/Nebu-John-SIgn.png',4.4*inch, 0.1*inch, width=100, height=50,mask=None)
@@ -1418,12 +1435,370 @@ def render_pdf_workshop(request, student_id):
     pdfmetrics.registerFont(TTFont('Quattrocento-Bold', font_path))
     c.setFont('Quattrocento-Bold', 12)
     c.setFillColorRGB(0,0,0)
-    c.drawString( 0.8*inch, 0.08*inch, str(datetime.now().strftime("%Y-%m-%d")))
+    c.drawString( 0.8*inch, 0.08*inch, str(datetime.now().strftime("%d-%m-%Y")))
 
 
     # Generate QR code
     base_url = request.build_absolute_uri('/')
-    qr_data = f"{base_url}certificate_verify/{student_instance.certificate_number}/"
+    #qr_data = f"{base_url}certificate_verify/{student_instance.certificate_number}/"
+    qr_data = "https://courses.sinrorobotics.com"
+    qr = pyqrcode.create(qr_data)
+
+    # Save the QR code as BytesIO
+    qr_buffer = io.BytesIO()
+    qr.png(qr_buffer, scale=6)
+
+    # Save the QR code as a file on the server
+    qr_filename = f"qr_code_{student_instance.certificate_number}.png"
+    qr_path = os.path.join(settings.MEDIA_ROOT, qr_filename)
+    # print("QR Code Path:", qr_path)
+    qr.png(qr_path, scale=6)
+
+    # Pass the URL or path of the QR code image to the context
+    context = {'qr_code_path': qr_path}
+
+    x = 6.4* inch
+    y = 4.24 * inch
+   
+    width=50
+    height=50
+    # Draw the QR code image on the PDF
+    qr_image = ImageReader(qr_buffer)
+    c.drawImage(qr_image, x, y, width, height)
+
+    
+    c.showPage()
+    c.save()
+
+    # Rewind the buffer to the beginning
+    buffer.seek(0)
+
+    # Write the buffer content to the response
+    response.write(buffer.getvalue())
+
+    # Close the buffers
+    buffer.close()
+    qr_buffer.close()
+
+    return response
+
+
+# This function generates a PDF certificate for industrial visit completion for a specific student.
+@login_required(login_url='login')
+def render_pdf_industrialvisit(request, student_id):
+
+    # Get the specific Student object based on student_id
+    student_instance = get_object_or_404(StudentIV, id=student_id)
+
+    # Get the certificate type associated with the student
+    certificate_type_id = student_instance.certificate_type_id
+    certificate_type = get_object_or_404(CertificateTypes, id=certificate_type_id)
+
+    # Get the courses related to the certificate type
+    courses = certificate_type.courses.first()
+
+    # Create a BytesIO buffer to store the PDF content
+    buffer = io.BytesIO()
+
+    file_name=f"{student_instance.id}_{slugify(student_instance.name)}_certificate"
+
+    # # Create the response object and it shows pdf page in other tab without downloading
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="{file_name}.pdf"'
+
+    # Create the response object and it directly download pdf page 
+    # response = HttpResponse(content_type='application/pdf')
+    # response['Content-Disposition'] = f'attachment; filename="{file_name}.pdf"'
+
+
+    #pdf page format
+    custom_page_size = (600, 440)
+    c = canvas.Canvas(buffer, bottomup=1, pagesize=custom_page_size)
+    c.translate(inch, inch)
+
+    desired_width = 596
+    desired_height = 436
+
+    
+    c.drawImage('pictures\Certificate of Participation Blank With Seal.jpg', -0.97*inch, -0.97*inch, width=desired_width, height=desired_height, mask=None)
+    font_path = 'static/fonts/Cascadia.ttf'
+    pdfmetrics.registerFont(TTFont('Cascadia', font_path))
+    c.setFont('Cascadia', 12)  
+    current_year = datetime.now().strftime("%Y")
+    c.drawString(5.0* inch, 4.75 * inch, f"SRC/{current_year}/{student_instance.certificate_number}")
+    
+    # Register Dancing Script font
+    font_path = 'static/fonts/MTCORSVA.TTF'
+    pdfmetrics.registerFont(TTFont('MonteCarlo', font_path))
+
+    
+    
+    # Example name
+    name = student_instance.name.capitalize()
+
+    # Set the font for the name
+    # c.setFont('MonteCarlo', font_size)
+    # c.setFillColor(HexColor('#c46608'))
+
+    # Define font size thresholds and corresponding font -
+    font_size_threshold = 30
+    default_font_size = 40
+    reduced_font_size = 30
+    
+    # Calculate the width of the name string
+    name_width = c.stringWidth(name)
+    
+    # Calculate the center of the page
+    center_x = letter[0] / 2
+    
+    # Calculate the starting x-coordinate to center the text
+    if len(name) < font_size_threshold:
+        start_x = 3.2 * inch
+        font_size = default_font_size
+    else:
+        # For longer names, reduce the font size and adjust the starting x-coordinate
+        start_x = 3.2 * inch
+        # start_x = center_x - (name_width / 2)
+        font_size = reduced_font_size
+    
+    align_y = 1.9 * inch
+    
+    # Set the font size
+    c.setFont('MonteCarlo', font_size)
+    c.setFillColor(HexColor('#c46608'))
+        
+    align_y = 1.9 * inch    
+    c.drawCentredString(start_x, align_y, name)
+    
+        
+    font_path = 'static/fonts/Minion-It.ttf'
+    pdfmetrics.registerFont(TTFont('Minion Pro', font_path))
+    c.setFont('Minion Pro', 12)
+
+    # Define your custom style
+    my_Style = getSampleStyleSheet()['BodyText']
+    
+    my_Style.alignment = 1 
+    my_Style.leading = 17  # Line height in points
+    my_Style.characterSpacing = 2.0  # Character spacing in points
+
+    # Retrieve the course name directly from the Course object
+    course_name = student_instance.course.course_name
+
+    p1 = Paragraph(f'''<i>{student_instance.sem_year} {student_instance.dept} dept. student of <b>{student_instance.college_name}</b>, has successfully completed {student_instance.duration} industrial training
+        in <b>{course_name}</b> on <b>{student_instance.conducted_date}</b>.</i>''', my_Style)
+    
+    width = 900
+    height = 500
+    p1.wrapOn(c, 360, 50)
+    p1.drawOn(c, width-850, height-435)
+
+    # Get the StudentRelatedAuthority instance for the given student_id
+    student_related_authority = get_object_or_404(StudentRelatedAuthority, std_iv_id=student_id)
+
+    # Accessing the related Student ID
+    student_id = student_related_authority.std_iv.id
+    
+
+    # Accessing the related Authority instance
+    authority = student_related_authority.authority
+
+    if authority:
+        # Accessing the signature attribute of the related Authority instance
+        signature_image_url = str(authority.signature)
+        # print("Signature Image URL:", signature_image_url)
+
+        c.drawImage('media/' + signature_image_url, 4.1 * inch, 0 * inch, width=80, height=40, mask='auto')
+
+    
+    #c.drawImage('pictures/Nebu-John-SIgn.png',4.4*inch, 0.1*inch, width=100, height=50,mask=None)
+
+    font_path = 'static/fonts/Quattrocento-Bold.ttf'
+    pdfmetrics.registerFont(TTFont('Quattrocento-Bold', font_path))
+    c.setFont('Quattrocento-Bold', 12)
+    c.setFillColorRGB(0,0,0)
+    c.drawString( 0.8*inch, 0.08*inch, str(datetime.now().strftime("%d-%m-%Y")))
+
+
+    # Generate QR code
+    base_url = request.build_absolute_uri('/')
+    #qr_data = f"{base_url}certificate_verify/{student_instance.certificate_number}/"
+    qr_data = "https://courses.sinrorobotics.com"
+    qr = pyqrcode.create(qr_data)
+
+    # Save the QR code as BytesIO
+    qr_buffer = io.BytesIO()
+    qr.png(qr_buffer, scale=6)
+
+    # Save the QR code as a file on the server
+    qr_filename = f"qr_code_{student_instance.certificate_number}.png"
+    qr_path = os.path.join(settings.MEDIA_ROOT, qr_filename)
+    # print("QR Code Path:", qr_path)
+    qr.png(qr_path, scale=6)
+
+    # Pass the URL or path of the QR code image to the context
+    context = {'qr_code_path': qr_path}
+
+    x = 6.4* inch
+    y = 4.24 * inch
+    # x = 200
+    # y = -10
+    width=50
+    height=50
+    # Draw the QR code image on the PDF
+    qr_image = ImageReader(qr_buffer)
+    c.drawImage(qr_image, x, y, width, height)
+
+    
+    c.showPage()
+    c.save()
+
+    # Rewind the buffer to the beginning
+    buffer.seek(0)
+
+    # Write the buffer content to the response
+    response.write(buffer.getvalue())
+
+    # Close the buffers
+    buffer.close()
+    qr_buffer.close()
+
+    return response
+
+
+# This function generates a PDF certificate for tronix completion for a specific student.
+@login_required(login_url='login')
+def render_pdf_tronix(request, student_id):
+
+    # Get the specific Student object based on student_id
+    student_instance = get_object_or_404(StudentTronix, id=student_id)
+    # tronix_list = Tronix.objects.all()
+    # tronix_item_list = TronixItems.objects.all()
+    # tronix_instances = Tronix.objects.all()
+
+    # Get the certificate type associated with the student
+    certificate_type_id = student_instance.certificate_type_id
+    certificate_type = get_object_or_404(CertificateTypes, id=certificate_type_id)
+
+    # Create a BytesIO buffer to store the PDF content
+    buffer = io.BytesIO()
+
+    file_name=f"{student_instance.id}_{slugify(student_instance.name)}_certificate"
+
+    # # Create the response object and it shows pdf page in other tab without downloading
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="{file_name}.pdf"'
+
+    # Create the response object and it directly download pdf page 
+    # response = HttpResponse(content_type='application/pdf')
+    # response['Content-Disposition'] = f'attachment; filename="{file_name}.pdf"'
+
+
+    #pdf page format
+    custom_page_size = (600, 440)
+    c = canvas.Canvas(buffer, bottomup=1, pagesize=custom_page_size)
+    c.translate(inch, inch)
+
+    desired_width = 596
+    desired_height = 436
+
+    
+    c.drawImage('pictures\Certificate Tronix Blank.jpg', -0.97*inch, -0.97*inch, width=desired_width, height=desired_height, mask=None)
+    font_path = 'static/fonts/Cascadia.ttf'
+    pdfmetrics.registerFont(TTFont('Cascadia', font_path))
+    c.setFont('Cascadia', 9)  
+    c.drawString(6.0* inch, 4.43 * inch, f"TRS{student_instance.certificate_number}")
+    
+    # Register Dancing Script font
+    font_path = 'static/fonts/MTCORSVA.TTF'
+    pdfmetrics.registerFont(TTFont('MonteCarlo', font_path))
+
+    c.drawString(3.85* inch, 3.2 * inch,f"{student_instance.tronix_details.season.upper()}")
+    
+    
+    font_path = 'static/fonts/Minion-It.ttf'
+    pdfmetrics.registerFont(TTFont('Minion Pro', font_path))
+    c.setFont('Minion Pro', 12)
+
+    # Define your custom style
+    my_Style = getSampleStyleSheet()['BodyText']
+    
+    # center text alignment
+    my_Style.alignment = 1 
+
+    # line height
+    my_Style.leading = 16
+
+    # Retrieve the course name directly from the Course object
+    # course_name = student_instance.course.course_name
+
+    p1 = Paragraph(f'''<i>This is to certify that <b>{student_instance.name.title()}</b>
+        <br/>For getting <b>{student_instance.position}</b> in 
+        <b>{student_instance.tronix_details.item}</b> <b>TRONIX</b> All Kerala Inter-School 
+        <br/>Robo Chambionship {student_instance.tronix_details.season.capitalize()} conducted at <b>{student_instance.place}</b> on <b>{student_instance.tronix_details.date}</b></i>''', my_Style)
+    
+    width = 940
+    height = 500
+    p1.wrapOn(c, 400, 50)
+    p1.drawOn(c, width-930, height-430)
+
+    # Get the StudentRelatedAuthority instance for the given student_id
+    student_related_authority = get_object_or_404(StudentRelatedAuthority, std_tronix=student_id)
+
+    # Accessing the related Student ID
+    student_id = student_related_authority.std_tronix.id
+
+    # Accessing the related Authority instance
+    authority = student_related_authority.authority
+
+    if authority:
+        # Accessing the signature attribute of the related Authority instance
+        signature_image_url = str(authority.signature)
+        print("Signature Image URL:", signature_image_url)
+
+        c.drawImage('media/' + signature_image_url, 4.4 * inch, 0.2 * inch, width=70, height=30, mask='auto')
+
+    
+    #c.drawImage('pictures/Nebu-John-SIgn.png',4.4*inch, 0.1*inch, width=100, height=50,mask=None)
+
+    font_path = 'static/fonts/Quattrocento-Bold.ttf'
+    pdfmetrics.registerFont(TTFont('Quattrocento-Bold', font_path))
+    c.setFont('Quattrocento-Bold', 9)
+    c.setFillColorRGB(0,0,0)
+    c.drawString( 0.65*inch, 0.3*inch, str(datetime.now().strftime("%d/%m/%Y")))
+
+
+    # Arrange  Associate Partners logo
+    # Retrieve associated partner logos for the Tronix instance
+    partner_logos = student_instance.tronix_details.partner_logos.all()
+
+
+    # Define initial x-coordinate for the first image
+    # Retrieve associated partner logos for the Tronix instance
+    # partner_logos = student_instance.tronix_details.partner_logos.all()
+
+
+    # Define initial x-coordinate for the first image
+    x_coord = -0.5 * inch
+    y_coord = -0.7 * inch
+
+    # Loop through the associated partner logos and draw them on the certificate
+    for partner_logo in partner_logos:
+        image_path = str(partner_logo.logo)
+        scale_factor = partner_logo.height/30 # Use scale factor to adjust height
+        width = partner_logo.width/scale_factor  # Use the width from the Partner object
+        height = partner_logo.height/scale_factor # Use the height from the Partner object
+
+        c.drawImage('media/' + image_path, x_coord, y_coord, width=width, height=height, mask='auto')
+
+        # Increment x-coordinate for the next image
+        x_coord += width + 0.1 * inch
+
+
+    # Generate QR code
+    base_url = request.build_absolute_uri('/')
+    #qr_data = f"{base_url}certificate_verify/{student_instance.certificate_number}/"
+    qr_data = "https://courses.sinrorobotics.com"
     qr = pyqrcode.create(qr_data)
 
     # Save the QR code as BytesIO
@@ -1439,8 +1814,9 @@ def render_pdf_workshop(request, student_id):
     # Pass the URL or path of the QR code image to the context
     context = {'qr_code_path': qr_path}
 
-    x = 6.4* inch
-    y = 4.75 * inch
+   
+    x = 2.5* inch #bottom right side
+    y = -0.2* inch
     # x = 200
     # y = -10
     width=50
@@ -1652,363 +2028,6 @@ def render_pdf_workshop(request, student_id):
 #     return response
 
 
-# This function generates a PDF certificate for tronix completion for a specific student.
-@login_required(login_url='login')
-def render_pdf_tronix(request, student_id):
-
-    # Get the specific Student object based on student_id
-    student_instance = get_object_or_404(StudentTronix, id=student_id)
-    # tronix_list = Tronix.objects.all()
-    # tronix_item_list = TronixItems.objects.all()
-    # tronix_instances = Tronix.objects.all()
-
-    # Get the certificate type associated with the student
-    certificate_type_id = student_instance.certificate_type_id
-    certificate_type = get_object_or_404(CertificateTypes, id=certificate_type_id)
-
-    # Create a BytesIO buffer to store the PDF content
-    buffer = io.BytesIO()
-
-    file_name=f"{student_instance.id}_{slugify(student_instance.name)}_certificate"
-
-    # # Create the response object and it shows pdf page in other tab without downloading
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'inline; filename="{file_name}.pdf"'
-
-    # Create the response object and it directly download pdf page 
-    # response = HttpResponse(content_type='application/pdf')
-    # response['Content-Disposition'] = f'attachment; filename="{file_name}.pdf"'
-
-
-    #pdf page format
-    custom_page_size = (600, 440)
-    c = canvas.Canvas(buffer, bottomup=1, pagesize=custom_page_size)
-    c.translate(inch, inch)
-
-    desired_width = 596
-    desired_height = 436
-
-    
-    c.drawImage('pictures\Certificate Tronix Blank.jpg', -0.97*inch, -0.97*inch, width=desired_width, height=desired_height, mask=None)
-    font_path = 'static/fonts/Cascadia.ttf'
-    pdfmetrics.registerFont(TTFont('Cascadia', font_path))
-    c.setFont('Cascadia', 9)  
-    c.drawString(6.0* inch, 4.43 * inch, f"TRS{student_instance.certificate_number}")
-    
-    # Register Dancing Script font
-    font_path = 'static/fonts/MTCORSVA.TTF'
-    pdfmetrics.registerFont(TTFont('MonteCarlo', font_path))
-
-    c.drawString(3.85* inch, 3.2 * inch,f"{student_instance.tronix_details.season.upper()}")
-    
-    
-    font_path = 'static/fonts/Minion-It.ttf'
-    pdfmetrics.registerFont(TTFont('Minion Pro', font_path))
-    c.setFont('Minion Pro', 12)
-
-    # Define your custom style
-    my_Style = getSampleStyleSheet()['BodyText']
-    
-    # center text alignment
-    my_Style.alignment = 1 
-
-    # line height
-    my_Style.leading = 16
-
-    # Retrieve the course name directly from the Course object
-    # course_name = student_instance.course.course_name
-
-    p1 = Paragraph(f'''<i>This is to certify that <b>{student_instance.name.title()}</b>
-        <br/>For getting <b>{student_instance.position}</b> in 
-        <b>{student_instance.tronix_details.item}</b> <b>TRONIX</b> All Kerala Inter-School 
-        <br/>Robo Chambionship {student_instance.tronix_details.season.capitalize()} conducted at <b>{student_instance.place}</b> on <b>{student_instance.tronix_details.date}</b></i>''', my_Style)
-    
-    width = 940
-    height = 500
-    p1.wrapOn(c, 400, 50)
-    p1.drawOn(c, width-930, height-430)
-
-    # Get the StudentRelatedAuthority instance for the given student_id
-    student_related_authority = get_object_or_404(StudentRelatedAuthority, std_tronix=student_id)
-
-    # Accessing the related Student ID
-    student_id = student_related_authority.std_tronix.id
-
-    # Accessing the related Authority instance
-    authority = student_related_authority.authority
-
-    if authority:
-        # Accessing the signature attribute of the related Authority instance
-        signature_image_url = str(authority.signature)
-        print("Signature Image URL:", signature_image_url)
-
-        c.drawImage('media/' + signature_image_url, 4.4 * inch, 0.2 * inch, width=70, height=30, mask='auto')
-
-    
-    #c.drawImage('pictures/Nebu-John-SIgn.png',4.4*inch, 0.1*inch, width=100, height=50,mask=None)
-
-    font_path = 'static/fonts/Quattrocento-Bold.ttf'
-    pdfmetrics.registerFont(TTFont('Quattrocento-Bold', font_path))
-    c.setFont('Quattrocento-Bold', 9)
-    c.setFillColorRGB(0,0,0)
-    c.drawString( 0.65*inch, 0.3*inch, str(datetime.now().strftime("%d/%m/%Y")))
-
-
-    # Arrange  Associate Partners logo
-    # Retrieve associated partner logos for the Tronix instance
-    partner_logos = student_instance.tronix_details.partner_logos.all()
-
-
-    # Define initial x-coordinate for the first image
-    # Retrieve associated partner logos for the Tronix instance
-    # partner_logos = student_instance.tronix_details.partner_logos.all()
-
-
-    # Define initial x-coordinate for the first image
-    x_coord = -0.5 * inch
-    y_coord = -0.7 * inch
-
-    # Loop through the associated partner logos and draw them on the certificate
-    for partner_logo in partner_logos:
-        image_path = str(partner_logo.logo)
-        scale_factor = partner_logo.height/30 # Use scale factor to adjust height
-        width = partner_logo.width/scale_factor  # Use the width from the Partner object
-        height = partner_logo.height/scale_factor # Use the height from the Partner object
-
-        c.drawImage('media/' + image_path, x_coord, y_coord, width=width, height=height, mask='auto')
-
-        # Increment x-coordinate for the next image
-        x_coord += width + 0.1 * inch
-
-
-    # Generate QR code
-    base_url = request.build_absolute_uri('/')
-    qr_data = f"{base_url}certificate_verify/{student_instance.certificate_number}/"
-    qr = pyqrcode.create(qr_data)
-
-    # Save the QR code as BytesIO
-    qr_buffer = io.BytesIO()
-    qr.png(qr_buffer, scale=6)
-
-    # Save the QR code as a file on the server
-    qr_filename = f"qr_code_{student_instance.certificate_number}.png"
-    qr_path = os.path.join(settings.MEDIA_ROOT, qr_filename)
-    print("QR Code Path:", qr_path)
-    qr.png(qr_path, scale=6)
-
-    # Pass the URL or path of the QR code image to the context
-    context = {'qr_code_path': qr_path}
-
-   
-    x = 2.5* inch #bottom right side
-    y = -0.2* inch
-    # x = 200
-    # y = -10
-    width=50
-    height=50
-    # Draw the QR code image on the PDF
-    qr_image = ImageReader(qr_buffer)
-    c.drawImage(qr_image, x, y, width, height)
-
-    
-    c.showPage()
-    c.save()
-
-    # Rewind the buffer to the beginning
-    buffer.seek(0)
-
-    # Write the buffer content to the response
-    response.write(buffer.getvalue())
-
-    # Close the buffers
-    buffer.close()
-    qr_buffer.close()
-
-    return response
-
-
-# This function generates a PDF certificate for industrial visit completion for a specific student.
-@login_required(login_url='login')
-def render_pdf_industrialvisit(request, student_id):
-
-    # Get the specific Student object based on student_id
-    student_instance = get_object_or_404(StudentIV, id=student_id)
-
-    # Get the certificate type associated with the student
-    certificate_type_id = student_instance.certificate_type_id
-    certificate_type = get_object_or_404(CertificateTypes, id=certificate_type_id)
-
-    # Get the courses related to the certificate type
-    courses = certificate_type.courses.first()
-
-    # Create a BytesIO buffer to store the PDF content
-    buffer = io.BytesIO()
-
-    file_name=f"{student_instance.id}_{slugify(student_instance.name)}_certificate"
-
-    # # Create the response object and it shows pdf page in other tab without downloading
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'inline; filename="{file_name}.pdf"'
-
-    # Create the response object and it directly download pdf page 
-    # response = HttpResponse(content_type='application/pdf')
-    # response['Content-Disposition'] = f'attachment; filename="{file_name}.pdf"'
-
-
-    #pdf page format
-    custom_page_size = (600, 440)
-    c = canvas.Canvas(buffer, bottomup=1, pagesize=custom_page_size)
-    c.translate(inch, inch)
-
-    desired_width = 596
-    desired_height = 436
-
-    
-    c.drawImage('pictures\Certificate of Participation Blank With Seal.jpg', -0.97*inch, -0.97*inch, width=desired_width, height=desired_height, mask=None)
-    font_path = 'static/fonts/Cascadia.ttf'
-    pdfmetrics.registerFont(TTFont('Cascadia', font_path))
-    c.setFont('Cascadia', 12)  
-    current_year = datetime.now().strftime("%Y")
-    c.drawString(5.0* inch, 4.75 * inch, f"SRC/{current_year}/{student_instance.certificate_number}")
-    
-    # Register Dancing Script font
-    font_path = 'static/fonts/MTCORSVA.TTF'
-    pdfmetrics.registerFont(TTFont('MonteCarlo', font_path))
-
-    
-    
-    # Example name
-    name = student_instance.name.capitalize()
-
-    # Set the font for the name
-    # c.setFont('MonteCarlo', font_size)
-    # c.setFillColor(HexColor('#c46608'))
-
-    # Define font size thresholds and corresponding font -
-    font_size_threshold = 30
-    default_font_size = 40
-    reduced_font_size = 30
-    
-    # Calculate the width of the name string
-    name_width = c.stringWidth(name)
-    
-    # Calculate the center of the page
-    center_x = letter[0] / 2
-    
-    # Calculate the starting x-coordinate to center the text
-    if len(name) < font_size_threshold:
-        start_x = 3.2 * inch
-        font_size = default_font_size
-    else:
-        # For longer names, reduce the font size and adjust the starting x-coordinate
-        start_x = 3.2 * inch
-        # start_x = center_x - (name_width / 2)
-        font_size = reduced_font_size
-    
-    align_y = 1.9 * inch
-    
-    # Set the font size
-    c.setFont('MonteCarlo', font_size)
-    c.setFillColor(HexColor('#c46608'))
-        
-    align_y = 1.9 * inch    
-    c.drawCentredString(start_x, align_y, name)
-    
-        
-    font_path = 'static/fonts/Minion-It.ttf'
-    pdfmetrics.registerFont(TTFont('Minion Pro', font_path))
-    c.setFont('Minion Pro', 12)
-
-    # Define your custom style
-    my_Style = getSampleStyleSheet()['BodyText']
-    
-    my_Style.alignment = 1 
-    my_Style.leading = 17  # Line height in points
-    my_Style.characterSpacing = 2.0  # Character spacing in points
-
-    # Retrieve the course name directly from the Course object
-    course_name = student_instance.course.course_name
-
-    p1 = Paragraph(f'''<i>{student_instance.sem_year} {student_instance.dept} dept. student of <b>{student_instance.college_name}</b>, has successfully completed {student_instance.duration} industrial training
-        in <b>{course_name}</b> on <b>{student_instance.conducted_date}</b>.</i>''', my_Style)
-    
-    width = 900
-    height = 500
-    p1.wrapOn(c, 360, 50)
-    p1.drawOn(c, width-850, height-435)
-
-    # Get the StudentRelatedAuthority instance for the given student_id
-    student_related_authority = get_object_or_404(StudentRelatedAuthority, std_iv_id=student_id)
-
-    # Accessing the related Student ID
-    student_id = student_related_authority.std_iv.id
-    
-
-    # Accessing the related Authority instance
-    authority = student_related_authority.authority
-
-    if authority:
-        # Accessing the signature attribute of the related Authority instance
-        signature_image_url = str(authority.signature)
-        print("Signature Image URL:", signature_image_url)
-
-        c.drawImage('media/' + signature_image_url, 4.1 * inch, 0 * inch, width=80, height=40, mask='auto')
-
-    
-    #c.drawImage('pictures/Nebu-John-SIgn.png',4.4*inch, 0.1*inch, width=100, height=50,mask=None)
-
-    font_path = 'static/fonts/Quattrocento-Bold.ttf'
-    pdfmetrics.registerFont(TTFont('Quattrocento-Bold', font_path))
-    c.setFont('Quattrocento-Bold', 12)
-    c.setFillColorRGB(0,0,0)
-    c.drawString( 0.8*inch, 0.08*inch, str(datetime.now().strftime("%Y-%m-%d")))
-
-
-    # Generate QR code
-    base_url = request.build_absolute_uri('/')
-    qr_data = f"{base_url}certificate_verify/{student_instance.certificate_number}/"
-    qr = pyqrcode.create(qr_data)
-
-    # Save the QR code as BytesIO
-    qr_buffer = io.BytesIO()
-    qr.png(qr_buffer, scale=6)
-
-    # Save the QR code as a file on the server
-    qr_filename = f"qr_code_{student_instance.certificate_number}.png"
-    qr_path = os.path.join(settings.MEDIA_ROOT, qr_filename)
-    print("QR Code Path:", qr_path)
-    qr.png(qr_path, scale=6)
-
-    # Pass the URL or path of the QR code image to the context
-    context = {'qr_code_path': qr_path}
-
-    x = 6.4* inch
-    y = 4.75 * inch
-    # x = 200
-    # y = -10
-    width=50
-    height=50
-    # Draw the QR code image on the PDF
-    qr_image = ImageReader(qr_buffer)
-    c.drawImage(qr_image, x, y, width, height)
-
-    
-    c.showPage()
-    c.save()
-
-    # Rewind the buffer to the beginning
-    buffer.seek(0)
-
-    # Write the buffer content to the response
-    response.write(buffer.getvalue())
-
-    # Close the buffers
-    buffer.close()
-    qr_buffer.close()
-
-    return response
-
-
 @login_required(login_url='login')
 def pdf_view(request, student_id):
     # Generate PDF content for the specific student
@@ -2182,7 +2201,7 @@ def download_selected_ivcertificates(request):
 
                 # Generate PDF certificate for the selected student
                 pdf_content = render_pdf_industrialvisit(request, student_id).content
-                file_name = f"SRC/{year}/{student_instance.certificate_number}_{student_name.replace(' ', '_')}_certificate.pdf"
+                file_name = f"SRC-{year}-{student_instance.certificate_number}_{student_name.replace(' ', '_')}_certificate.pdf"
 
                 # file_name = f"{student_id}_certificate.pdf"
 
