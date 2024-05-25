@@ -26,7 +26,10 @@
 
 }
 input, textarea {
-    border: 1px solid black !important;
+    border: 1px solid black ;
+}
+.verify-select-option{
+    color:#6e7276;
 }
 
 /* Optional: Adjust styling for the submit button */
@@ -203,7 +206,7 @@ input, textarea {
 
 .verify-main{
     border:0.2px solid #ccc;
-    margin: 20px auto;
+    margin: 20px;
 }
 .verify-head{
     margin: 10px 30px;
@@ -424,8 +427,9 @@ tbody{
     cursor:pointer;
 }
 /********Search_results.html  *******/
+
 .search-results{
-    margin: 50px auto 0px;
+    margin: 50px 50px 0px;
 }
 .search-results ul{
     list-style: none;
@@ -447,3 +451,68 @@ li{
 /* #certificatetypeDropdown{
     margin-bottom: 10px;
 } */
+
+/***  certificate_verify_form.html ***/
+
+.certi-verify-form{
+    background-color: aliceblue;
+}
+/* **  certificate form course card** */
+.course-cards {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+  }
+  .course-card a{
+    color: white;
+  }
+  .course-card a:hover{
+    color: white;
+  }
+  .course-cards .red {
+    background-color: #f43f5e;
+  }
+  
+  .course-cards .blue {
+    background-color: #3b82f6;
+  }
+  
+  .course-cards .green {
+    background-color: #22c55e;
+  }
+  .course-cards .yellow {
+    background-color: #d5c42c;
+  }
+  .course-cards .course-card {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
+    height: 200px;
+    width: 250px;
+    border-radius: 10px;
+    color: white;
+    cursor: pointer;
+    transition: 400ms;
+  }
+  
+  .course-cards .course-card p.tip {
+    font-size: 1.8rem;
+    font-weight: 500;
+  }
+  
+  .course-cards .course-card p.second-text {
+    font-size: 1.1rem;
+  }
+  
+  .course-cards .course-card:hover {
+    transform: scale(1.1, 1.1);
+  }
+  
+  /* .course-cards:hover > .course-card:not(:hover) {
+    filter: blur(10px);
+    transform: scale(0.9, 0.9);
+  } */
+
+  

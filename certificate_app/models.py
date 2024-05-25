@@ -97,6 +97,37 @@ class StudentTronix(models.Model):
     def __str__(self):
         return self.name
 
+# model for student of  workshop
+class StudentWorkshop(models.Model):
+    name = models.CharField(max_length=255, blank=True, default='')
+    college_name = models.CharField(max_length=255, blank=True, default='')
+    start_date = models.DateField(default=timezone.now)
+    end_date = models.DateField(default=timezone.now)
+    mentor_name = models.CharField(max_length=255, blank=True, default='')
+    issued_date = models.DateField(default=timezone.now)
+    certificate_type = models.ForeignKey(CertificateTypes, on_delete=models.CASCADE, related_name='student', null=True)
+    course= models.ForeignKey(Course, on_delete=models.CASCADE, related_name='enrolled_student', null=True)
+    created_at = models.DateTimeField( default=timezone.now)  # Add this field to store creation time
+    certificate_number = models.CharField(max_length=20, null=True, blank=True)  # Changed field name to certificate_number
+
+    def save(self, *args, **kwargs):
+        # Set issued_date to the current date if it's not already set
+        if not self.issued_date:
+            self.issued_date = timezone.now().date()
+        if not self.pk:  # If the instance is being created (not updated)
+            self.created_at = self.issued_date  # Set created_at to issued_date
+        super().save(*args, **kwargs)
+
+
+    def get_certificatenumber(self):
+        if self.certificate_number:
+            return True  # Certificate is valid
+        else:
+            return False  # Certificate is invalid    
+
+    def __str__(self):
+        return self.name
+    
 
 # model for student of internship and workshop
 class Student(models.Model):
@@ -162,6 +193,7 @@ class StudentIV(models.Model):
 # Model representing the relationship between students and authorities.
 class StudentRelatedAuthority(models.Model):
     std = models.ForeignKey(Student, on_delete=models.CASCADE, null=True)
+    std_workshop = models.ForeignKey(StudentWorkshop, on_delete=models.CASCADE, null=True)
     std_iv = models.ForeignKey(StudentIV, on_delete=models.CASCADE, null=True)
     std_tronix = models.ForeignKey(StudentTronix, on_delete=models.CASCADE, null=True)
     authority = models.ForeignKey(Authority, on_delete=models.CASCADE, null=True)

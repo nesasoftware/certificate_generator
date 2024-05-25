@@ -287,13 +287,13 @@
             // Add only the desired columns to the HTML content
             htmlContent += '<tr>';
             htmlContent += '<td>' + row.cells[2].innerHTML + '</td>'; // Name column
-            htmlContent += '<td>' + row.cells[3].innerHTML + '</td>'; // Semester/Year column
+            htmlContent += '<td>' + row.cells[3].innerHTML + '</td>'; // college/institution column
             htmlContent += '<td>' + row.cells[4].innerHTML + '</td>'; // Department column
-            htmlContent += '<td>' + row.cells[5].innerHTML + '</td>'; // Institution Name column
-            htmlContent += '<td>' + row.cells[6].innerHTML + '</td>'; // Course column
-            htmlContent += '<td>' + row.cells[7].innerHTML + '</td>'; // Duration column
-            htmlContent += '<td>' + row.cells[8].innerHTML + '</td>'; // Conducted Date column
-            htmlContent += '<td>' + row.cells[9].innerHTML + '</td>'; // Issued Date column
+            htmlContent += '<td>' + row.cells[5].innerHTML + '</td>'; // course Name column
+            htmlContent += '<td>' + row.cells[6].innerHTML + '</td>'; // start date column
+            htmlContent += '<td>' + row.cells[7].innerHTML + '</td>'; // end date column
+            htmlContent += '<td>' + row.cells[8].innerHTML + '</td>'; // mentor name column
+            // htmlContent += '<td>' + row.cells[9].innerHTML + '</td>'; // Issued Date column
             htmlContent += '</tr>';
         }
 
@@ -309,7 +309,7 @@
         // Create a link element and trigger a click event to download the Excel file
         var link = document.createElement('a');
         link.href = url;
-        link.download = 'student_data.xls'; // File name
+        link.download = 'internship_student_data.xls'; // File name
         link.click();
 
         // Release the URL object
