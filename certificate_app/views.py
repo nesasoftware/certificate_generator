@@ -163,6 +163,12 @@ def my_view(request):
                             print(f"CertificateTypes with certificate_type_id {certificate_type_id} does not exist. Skipping this row.")
                             continue
                         
+                        last_student = Student.objects.order_by('-id').first()
+                        
+                        if last_student:
+                            last_certificate_number = last_student.certificate_number
+                        else:
+                            last_certificate_number = 900  # or handle the case where there are no students
 
                         # Fetch the last used certificate number
                         last_certificate_number = Student.objects.order_by('-id').first().certificate_number
@@ -243,6 +249,11 @@ def student_workshop_submit(request):
 
             # Fetch the last used certificate number
             last_certificate_number = StudentWorkshop.objects.order_by('-id').first().certificate_number
+            last_student = Student.objects.order_by('-id').first()
+            if last_student:
+                last_certificate_number = last_student.certificate_number
+            else:
+                last_certificate_number = 900  # or handle the case where there are no students
 
             # Convert the last certificate number to an integer (if it's not already)
             last_certificate_number = int(last_certificate_number) if last_certificate_number else 0
@@ -315,6 +326,11 @@ def student_workshop_submit(request):
                             print(f"CertificateTypes with certificate_type_id {certificate_type_id} does not exist. Skipping this row.")
                             continue
                         
+                        last_student = Student.objects.order_by('-id').first()
+                        if last_student:
+                            last_certificate_number = last_student.certificate_number
+                        else:
+                            last_certificate_number = 900  # or handle the case where there are no students
 
                         # Fetch the last used certificate number
                         last_certificate_number = StudentWorkshop.objects.order_by('-id').first().certificate_number

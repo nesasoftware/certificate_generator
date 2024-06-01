@@ -231,10 +231,10 @@ class StudentIV(models.Model):
 
 # Model representing the relationship between students and authorities.
 class StudentRelatedAuthority(models.Model):
-    std = models.ForeignKey(Student, on_delete=models.CASCADE, null=True)
-    std_workshop = models.ForeignKey(StudentWorkshop, on_delete=models.CASCADE, null=True)
+    std = models.ForeignKey(Student, on_delete=models.CASCADE, null=True, blank=True)
+    std_workshop = models.ForeignKey(StudentWorkshop, on_delete=models.CASCADE, null=True, blank=True)
     std_iv = models.ForeignKey(StudentIV, on_delete=models.CASCADE, null=True)
-    std_tronix = models.ForeignKey(StudentTronix, on_delete=models.CASCADE, null=True)
+    std_tronix = models.ForeignKey(StudentTronix, on_delete=models.CASCADE, null=True, blank=True)
     authority = models.ForeignKey(Authority, on_delete=models.CASCADE, null=True)
 
     def __str__(self):
