@@ -84,8 +84,14 @@ def my_view(request):
             certificate_type.courses.add(course) 
             
 
+
             # Fetch the last used certificate number
-            last_certificate_number = Student.objects.order_by('-id').first().certificate_number
+            last_student = Student.objects.order_by('-id').first()
+            if last_student:
+                last_certificate_number = last_student.certificate_number
+            else:
+                last_certificate_number = 900  # or handle the case where there are no students
+
 
             # Convert the last certificate number to an integer (if it's not already)
             last_certificate_number = int(last_certificate_number) if last_certificate_number else 0
