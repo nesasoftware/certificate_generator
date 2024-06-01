@@ -1,11 +1,12 @@
 from django.contrib import admin
-from . models import Authority, Student, CertificateTypes, Course, StudentIV, StudentTronix, Tronix, TronixItems, StudentRelatedAuthority, Partner
+from . models import Authority, Student, CertificateTypes, Course, StudentIV, StudentTronix,StudentWorkshop, Tronix, TronixItems, StudentRelatedAuthority, Partner
 
 # Register your models here.
 admin.site.register(Authority)
 admin.site.register(Student)
 admin.site.register(StudentIV)
 admin.site.register(StudentTronix)
+admin.site.register(StudentWorkshop)
 admin.site.register(Tronix)
 admin.site.register(TronixItems)
 admin.site.register(CertificateTypes)

@@ -17,7 +17,8 @@
               <form method="post" action="" class="frm">
                 {% csrf_token %}
                 <label for="id_certificate_number">Certificate Number:</label>
-                <input type="text" id="id_certificate_number" name="certificate_number" value="{{ student.certificate_number }}"><br>
+                <input type="text" id="id_certificate_number" name="certificate_number"
+                  value="{{ student.certificate_number }}"><br>
                 <label for="id_name">Name:</label>
                 <input type="text" id="id_name" name="name" value="{{ student.name }}"><br>
                 <label for="id_college_name">College Name:</label>
@@ -47,7 +48,7 @@
                 {% endfor %}
 
                 <!-- Courses dropdowns -->
-                {% for certificate_type in certificate_types %}
+                <!-- {% for certificate_type in certificate_types %}
                 <div id="courses_{{ certificate_type.id }}" class="courses">
                   <label>Courses:</label>
                   <select id="courses_{{ certificate_type.id }}" name="courses">
@@ -56,7 +57,19 @@
                     {% endfor %}
                   </select><br>
                 </div>
+                {% endfor %} -->
+
+                {% for certificate_type in certificate_types %}
+                <div id="courses_{{ certificate_type.id }}" class="courses">
+                  <label>Courses for {{ certificate_type.certificate_type }}:</label>
+                  <select id="courses_{{ certificate_type.id }}" name="courses_{{ certificate_type.id }}">
+                    {% for course in certificate_type.courses.all %}
+                    <option value="{{ course.id }}">{{ course.course_name }}</option>
+                    {% endfor %}
+                  </select><br>
+                </div>
                 {% endfor %}
+
 
                 <input class="btn btn-primary" type="submit" name="submit_form" value="submit">
               </form>

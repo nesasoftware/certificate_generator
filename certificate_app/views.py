@@ -70,17 +70,19 @@ def my_view(request):
             certificate_type_id = request.POST.get('certificate_type')
             authority_ids = request.POST.getlist('authority')
             course_id = request.POST.get('courses')
+            print("course id: ",course_id)
             
             # Fetch the CertificateTypes instance based on the provided certificate_type_id
             certificate_type = CertificateTypes.objects.get(id=certificate_type_id)
          
             # Fetch the Course instance based on the provided course_id
-            course = Course.objects.get(id=course_id)
-      
+            # course = Course.objects.get(id=course_id)
+            # print("course: ",course)
 
+            
             #Assign the selected course to the student through the CertificateTypes instance
             certificate_type.courses.add(course) 
-
+            
 
             # Fetch the last used certificate number
             last_certificate_number = Student.objects.order_by('-id').first().certificate_number

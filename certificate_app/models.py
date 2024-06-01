@@ -20,6 +20,10 @@ class Course(models.Model):
 
     def __str__(self):
         return self.course_name if self.course_name else ''
+    
+    class Meta:
+        verbose_name ="Courses of Certificates"
+        verbose_name_plural = "Courses of Certificates"
 
 
 
@@ -36,6 +40,11 @@ class CertificateTypes(models.Model):
     def get_certificate(self):
         self.certificate_type
 
+    class Meta:
+        verbose_name ="Certificate Types"
+        verbose_name_plural = "Certificate Types"
+
+
 
 # model for partner that related to tronix
 class Partner(models.Model):
@@ -46,6 +55,8 @@ class Partner(models.Model):
 
     def __str__(self):
         return self.name
+    
+    
 
 
 # model representing items of tronix
@@ -54,6 +65,13 @@ class TronixItems(models.Model):
 
     def __str__(self):
         return self.items
+    
+    class Meta:
+        verbose_name ="Tronix items"
+        verbose_name_plural = "Tronix Items"
+
+
+
 
 
 # model for tronix details
@@ -71,6 +89,10 @@ class Tronix(models.Model):
         Get partners associated with this Tronix season.
         """
         return self.partner_logos.all()
+
+    class Meta:
+        verbose_name ="Tronix Certificate "
+        verbose_name_plural = "Tronix Certificate"
 
 
 # model for student of tronix
@@ -96,6 +118,11 @@ class StudentTronix(models.Model):
 
     def __str__(self):
         return self.name
+    
+    class Meta:
+        verbose_name ="Student Tronix Data"
+        verbose_name_plural = "Student Tronix Data"
+
 
 # model for student of  workshop
 class StudentWorkshop(models.Model):
@@ -128,6 +155,10 @@ class StudentWorkshop(models.Model):
     def __str__(self):
         return self.name
     
+    class Meta:
+        verbose_name ="Student Workshop Data"
+        verbose_name_plural = "Student Workshop Data"
+    
 
 # model for student of internship and workshop
 class Student(models.Model):
@@ -159,6 +190,10 @@ class Student(models.Model):
 
     def __str__(self):
         return self.name
+    
+    class Meta:
+        verbose_name ="Student Internship Data"
+        verbose_name_plural = "Student Internship Data"
   
 
 # model for Student of industrial visit(iv)
@@ -188,6 +223,10 @@ class StudentIV(models.Model):
 
     def __str__(self):
         return self.name
+    
+    class Meta:
+        verbose_name ="Student IV Data"
+        verbose_name_plural = "Student IV Data"
   
 
 # Model representing the relationship between students and authorities.
