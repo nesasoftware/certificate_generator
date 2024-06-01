@@ -83,9 +83,8 @@ def my_view(request):
             #Assign the selected course to the student through the CertificateTypes instance
             certificate_type.courses.add(course) 
             
-
-
             # Fetch the last used certificate number
+            # last_certificate_number = Student.objects.order_by('-id').first().certificate_number
             last_student = Student.objects.order_by('-id').first()
             if last_student:
                 last_certificate_number = last_student.certificate_number
