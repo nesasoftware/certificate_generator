@@ -71,8 +71,8 @@ def my_view(request):
             authority_ids = request.POST.getlist('authority')
             # course_id = request.POST.get('courses')
             course_ids = {int(key.split('-')[-1]): request.POST.get(key) for key in request.POST if key.startswith('courses-')}
-            print("certificate type id: ",type(certificate_type_id))
-            print("course  ids: ",course_ids)
+            # print("certificate type id: ",type(certificate_type_id))
+            # print("course  ids: ",course_ids)
             # Check if certificate_type_id exists in the course_ids dictionary
             if certificate_type_id in course_ids:
               course_id = course_ids[certificate_type_id]
@@ -81,7 +81,7 @@ def my_view(request):
               print(f"No course ID found for certificate type ID {certificate_type_id}")
 
 
-            print("course id: ",course_id)
+            # print("course id: ",course_id)
             
             # Fetch the CertificateTypes instance based on the provided certificate_type_id
             certificate_type = CertificateTypes.objects.get(id=certificate_type_id)
@@ -89,7 +89,7 @@ def my_view(request):
             
             # Fetch the Course instance based on the provided course_id
             course = Course.objects.get(id=course_id)
-            print("course: ", course)
+            # print("course: ", course)
 
             
             #Assign the selected course to the student through the CertificateTypes instance
@@ -101,7 +101,7 @@ def my_view(request):
             if last_student:
                 last_certificate_number = last_student.certificate_number
             else:
-                last_certificate_number = 900  # or handle the case where there are no students
+                last_certificate_number = 999  # or handle the case where there are no students
 
 
             # Convert the last certificate number to an integer (if it's not already)
@@ -183,7 +183,7 @@ def my_view(request):
                             last_certificate_number = 900  # or handle the case where there are no students
 
                         # Fetch the last used certificate number
-                        last_certificate_number = Student.objects.order_by('-id').first().certificate_number
+                        # last_certificate_number = Student.objects.order_by('-id').first().certificate_number
 
                         # Convert the last certificate number to an integer (if it's not already)
                         last_certificate_number = int(last_certificate_number) if last_certificate_number else 0
@@ -251,8 +251,8 @@ def student_workshop_submit(request):
                 course_id = request.POST.get('courses')
 
                 course_ids = {int(key.split('-')[-1]): request.POST.get(key) for key in request.POST if key.startswith('courses-')}
-                print("certificate type id: ",type(certificate_type_id))
-                print("course  ids: ",course_ids)
+                # print("certificate type id: ",type(certificate_type_id))
+                # print("course  ids: ",course_ids)
                 # Check if certificate_type_id exists in the course_ids dictionary
                 if certificate_type_id in course_ids:
                     course_id = course_ids[certificate_type_id]
@@ -261,7 +261,7 @@ def student_workshop_submit(request):
                     print(f"No course ID found for certificate type ID {certificate_type_id}")
 
 
-                print("course id: ",course_id)
+                # print("course id: ",course_id)
                 
                 # Fetch the CertificateTypes instance based on the provided certificate_type_id
                 certificate_type = CertificateTypes.objects.get(id=certificate_type_id)
@@ -269,7 +269,7 @@ def student_workshop_submit(request):
                 
                 # Fetch the Course instance based on the provided course_id
                 course = Course.objects.get(id=course_id)
-                print("course: ", course)
+                # print("course: ", course)
 
                 
                 #Assign the selected course to the student through the CertificateTypes instance
@@ -568,8 +568,8 @@ def student_iv_submit(request):
             authority_ids = request.POST.getlist('authority')
             course_id = request.POST.get('courses')
             course_ids = {int(key.split('-')[-1]): request.POST.get(key) for key in request.POST if key.startswith('courses-')}
-            print("certificate type id: ",type(certificate_type_id))
-            print("course  ids: ",course_ids)
+            # print("certificate type id: ",type(certificate_type_id))
+            # print("course  ids: ",course_ids)
             # Check if certificate_type_id exists in the course_ids dictionary
             if certificate_type_id in course_ids:
               course_id = course_ids[certificate_type_id]
@@ -578,7 +578,7 @@ def student_iv_submit(request):
               print(f"No course ID found for certificate type ID {certificate_type_id}")
 
 
-            print("course id: ",course_id)
+            # print("course id: ",course_id)
             
             # Fetch the CertificateTypes instance based on the provided certificate_type_id
             certificate_type = CertificateTypes.objects.get(id=certificate_type_id)
@@ -586,7 +586,7 @@ def student_iv_submit(request):
             
             # Fetch the Course instance based on the provided course_id
             course = Course.objects.get(id=course_id)
-            print("course: ", course)
+            # print("course: ", course)
 
             
             #Assign the selected course to the student through the CertificateTypes instance
@@ -652,9 +652,15 @@ def student_iv_submit(request):
                             print(f"CertificateTypes with certificate_type_id {certificate_type_id} does not exist. Skipping this row.")
                             continue
                         
+                        last_student = Student.objects.order_by('-id').first()
+                        
+                        if last_student:
+                            last_certificate_number = last_student.certificate_number
+                        else:
+                            last_certificate_number = 900  # or handle the case where there are no students
 
                         # Fetch the last used certificate number
-                        last_certificate_number = StudentWorkshop.objects.order_by('-id').first().certificate_number
+                        # last_certificate_number = StudentWorkshop.objects.order_by('-id').first().certificate_number
 
                         # Convert the last certificate number to an integer (if it's not already)
                         last_certificate_number = int(last_certificate_number) if last_certificate_number else 0
@@ -729,7 +735,8 @@ def student_tronix_submit(request):
             tronix_item_name = request.POST.get('tronix_item') 
             #tronix_item = request.POST.get('tronix_item')  
             position = request.POST.get('position')
-            certificate_type_id = request.POST.get('certificate_type')
+            # certificate_type_id = request.POST.get('certificate_type')
+            certificate_type_id = int(request.POST.get('certificate_type'))
             authority_ids = request.POST.getlist('authority')
 
             # Get the TronixItems object based on the selected item name
@@ -1088,7 +1095,7 @@ def display_workshop_students(request):
         certificate_number = f"SRC/{current_year}/{number}"
         #certificate_number[students.id] = certificate_number  # Map student ID to certificate number
 
-    print(certificate_number)
+    # print(certificate_number)
     
     context = {
         'students': students,
@@ -1152,7 +1159,7 @@ def display_iv_students(request):
         certificate_number = f"SRC/{current_year}/{number}"
         certificate_numbers[student.id] = certificate_number  # Map student ID to certificate number
 
-    print(certificate_numbers)
+    # print(certificate_numbers)
     
     context = {
         'students_iv': students_iv,
