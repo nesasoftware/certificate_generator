@@ -67,17 +67,29 @@ def my_view(request):
             end_date = request.POST.get('end_date')
             mentor_name = request.POST.get('mentor_name')
             issued_date = timezone.now().date()
-            certificate_type_id = request.POST.get('certificate_type')
+            certificate_type_id = int(request.POST.get('certificate_type'))
             authority_ids = request.POST.getlist('authority')
-            course_id = request.POST.get('courses')
+            # course_id = request.POST.get('courses')
+            course_ids = {int(key.split('-')[-1]): request.POST.get(key) for key in request.POST if key.startswith('courses-')}
+            print("certificate type id: ",type(certificate_type_id))
+            print("course  ids: ",course_ids)
+            # Check if certificate_type_id exists in the course_ids dictionary
+            if certificate_type_id in course_ids:
+              course_id = course_ids[2]
+              print(f"Course ID for certificate type ID {certificate_type_id}: {course_id}")
+            else:
+              print(f"No course ID found for certificate type ID {certificate_type_id}")
+
+
             print("course id: ",course_id)
             
             # Fetch the CertificateTypes instance based on the provided certificate_type_id
             certificate_type = CertificateTypes.objects.get(id=certificate_type_id)
-         
+            
+            
             # Fetch the Course instance based on the provided course_id
-            # course = Course.objects.get(id=course_id)
-            # print("course: ",course)
+            course = Course.objects.get(id=course_id)
+            print("course: ", course)
 
             
             #Assign the selected course to the student through the CertificateTypes instance
@@ -216,6 +228,7 @@ def my_view(request):
 
     return render(request, 'student_form.html', {'certificate_types': certificate_types, 'authorities': authorities, 'upload_form': upload_form})
 
+
 # workshop student form page for submitting details
 @login_required(login_url='login')
 def student_workshop_submit(request):
@@ -225,158 +238,312 @@ def student_workshop_submit(request):
 
     if request.method == 'POST':
         if 'submit_form' in request.POST:
-            certificate_number =request.POST.get('certificate_number')
-            name = request.POST.get('name')
-            college_name = request.POST.get('college_name')
-            start_date = request.POST.get('start_date')
-            end_date = request.POST.get('end_date')
-            mentor_name = request.POST.get('mentor_name')
-            issued_date = timezone.now().date()
-            certificate_type_id = request.POST.get('certificate_type')
-            authority_ids = request.POST.getlist('authority')
-            course_id = request.POST.get('courses')
-            
-            # Fetch the CertificateTypes instance based on the provided certificate_type_id
-            certificate_type = CertificateTypes.objects.get(id=certificate_type_id)
-         
-            # Fetch the Course instance based on the provided course_id
-            course = Course.objects.get(id=course_id)
-      
+            try:
+                certificate_number = request.POST.get('certificate_number')
+                name = request.POST.get('name')
+                college_name = request.POST.get('college_name')
+                start_date = request.POST.get('start_date')
+                end_date = request.POST.get('end_date')
+                mentor_name = request.POST.get('mentor_name')
+                issued_date = timezone.now().date()
+                certificate_type_id = request.POST.get('certificate_type')
+                authority_ids = request.POST.getlist('authority')
+                course_id = request.POST.get('courses')
 
-            #Assign the selected course to the student through the CertificateTypes instance
-            certificate_type.courses.add(course) 
+                course_ids = {int(key.split('-')[-1]): request.POST.get(key) for key in request.POST if key.startswith('courses-')}
+                print("certificate type id: ",type(certificate_type_id))
+                print("course  ids: ",course_ids)
+                # Check if certificate_type_id exists in the course_ids dictionary
+                if certificate_type_id in course_ids:
+                    course_id = course_ids[2]
+                    print(f"Course ID for certificate type ID {certificate_type_id}: {course_id}")
+                else:
+                    print(f"No course ID found for certificate type ID {certificate_type_id}")
 
 
-            # Fetch the last used certificate number
-            last_certificate_number = StudentWorkshop.objects.order_by('-id').first().certificate_number
-            last_student = Student.objects.order_by('-id').first()
-            if last_student:
-                last_certificate_number = last_student.certificate_number
-            else:
-                last_certificate_number = 900  # or handle the case where there are no students
+                print("course id: ",course_id)
+                
+                # Fetch the CertificateTypes instance based on the provided certificate_type_id
+                certificate_type = CertificateTypes.objects.get(id=certificate_type_id)
+                
+                
+                # Fetch the Course instance based on the provided course_id
+                course = Course.objects.get(id=course_id)
+                print("course: ", course)
 
-            # Convert the last certificate number to an integer (if it's not already)
-            last_certificate_number = int(last_certificate_number) if last_certificate_number else 0
+                
+                #Assign the selected course to the student through the CertificateTypes instance
+                certificate_type.courses.add(course) 
+                
 
-    
-            # Increment the last certificate number by 1 to generate the new certificate number
-            if last_certificate_number:
+                # Fetch the last used certificate number
+                last_student_workshop = StudentWorkshop.objects.order_by('-id').first()
+                if last_student_workshop:
+                    last_certificate_number = int(last_student_workshop.certificate_number)
+                else:
+                    last_certificate_number = 900
+
+                # Increment the certificate number
                 new_certificate_number = last_certificate_number + 1
-            else:
-                new_certificate_number = 1
 
-            # Convert the new certificate number back to a string
-            new_certificate_number_str = str(new_certificate_number)
+                student = StudentWorkshop.objects.create(
+                    name=name,
+                    college_name=college_name,
+                    start_date=start_date,
+                    end_date=end_date,
+                    mentor_name=mentor_name,
+                    issued_date=issued_date,
+                    certificate_type=certificate_type,
+                    course=course,
+                    certificate_number=str(new_certificate_number)
+                )
 
+                # Add selected authorities to the student
+                for authority_id in authority_ids:
+                    authority = Authority.objects.get(id=authority_id)
+                    StudentRelatedAuthority.objects.create(std_workshop=student, authority=authority)
 
-            student = StudentWorkshop.objects.create(
-                name=name,
-                college_name=college_name,
-                start_date=start_date,
-                end_date=end_date,
-                mentor_name=mentor_name,
-                issued_date=issued_date,
-                certificate_type_id=certificate_type_id,
-                course=course,
-                certificate_number=new_certificate_number_str
-            )
+                return redirect('display_workshop_students')
 
-            # Add selected authorities to the student
-            for authority_id in authority_ids:
-                authority = Authority.objects.get(id=authority_id)
-                StudentRelatedAuthority.objects.create(std_workshop=student, authority=authority)
-
-            return redirect('display_workshop_students')  # Redirect to the display students page
-        
+            except ObjectDoesNotExist as e:
+                # Handle specific object not found errors
+                print(f"Object not found: {e}")
+            except Exception as e:
+                # Handle any other exceptions
+                print(f"An error occurred: {e}")
 
         elif 'upload_csv' in request.POST:
             upload_form = UploadFileForm(request.POST, request.FILES)
             if upload_form.is_valid():
-                csv_file = request.FILES['csv_file']
-                decoded_file = csv_file.read().decode('utf-8').splitlines()
-                reader = csv.DictReader(decoded_file)
-                for row in reader:
-                    start_date = timezone.datetime.strptime(row['start_date'], '%d-%m-%Y').strftime('%Y-%m-%d')
-                    end_date = timezone.datetime.strptime(row['end_date'], '%d-%m-%Y').strftime('%Y-%m-%d')
-
-                    authorities = row.get('auth_id', '').split(',')
-
-                    for auth_id in authorities:
+                try:
+                    csv_file = request.FILES['csv_file']
+                    decoded_file = csv_file.read().decode('utf-8').splitlines()
+                    reader = csv.DictReader(decoded_file)
+                    for row in reader:
                         try:
-                            # Get Authority instance based on the custom ID (auth_id)
-                            authority = Authority.objects.get(auth_id=auth_id)
-                        except Authority.DoesNotExist:
-                             # Handle the case where the Authority instance with the provided auth_id doesn't exist
-                            print(f"Authority with auth_id {auth_id} does not exist. Skipping this auth_id.")
-                            continue
-                        
-                        # Fetch or create the Course instance based on the provided course_name
-                        course_name = row.get('course_name')
-                        course,create = Course.objects.get_or_create(course_name=course_name)
+                            start_date = timezone.datetime.strptime(row['start_date'], '%d-%m-%Y').strftime('%Y-%m-%d')
+                            end_date = timezone.datetime.strptime(row['end_date'], '%d-%m-%Y').strftime('%Y-%m-%d')
+                            authorities = row.get('auth_id', '').split(',')
 
-                        # Fetch certificate_type_id from row data
-                        certificate_type_id = row.get('certificate_type_id')
-                        
+                            for auth_id in authorities:
+                                try:
+                                    authority = Authority.objects.get(auth_id=auth_id)
+                                except Authority.DoesNotExist:
+                                    print(f"Authority with auth_id {auth_id} does not exist. Skipping this auth_id.")
+                                    continue
 
-                        try:
-                            # Get CertificateTypes instance based on the custom ID
-                            certificate_type = CertificateTypes.objects.get(certify_type_id=certificate_type_id)
-                        except CertificateTypes.DoesNotExist:
-                            # Handle the case where the CertificateTypes instance with the provided certificate_type_id doesn't exist
-                            print(f"CertificateTypes with certificate_type_id {certificate_type_id} does not exist. Skipping this row.")
-                            continue
-                        
-                        last_student = Student.objects.order_by('-id').first()
-                        if last_student:
-                            last_certificate_number = last_student.certificate_number
-                        else:
-                            last_certificate_number = 900  # or handle the case where there are no students
+                            course_name = row.get('course_name')
+                            course, _ = Course.objects.get_or_create(course_name=course_name)
 
-                        # Fetch the last used certificate number
-                        last_certificate_number = StudentWorkshop.objects.order_by('-id').first().certificate_number
+                            certificate_type_id = row.get('certificate_type_id')
+                            try:
+                                certificate_type = CertificateTypes.objects.get(certify_type_id=certificate_type_id)
+                            except CertificateTypes.DoesNotExist:
+                                print(f"CertificateTypes with certificate_type_id {certificate_type_id} does not exist. Skipping this row.")
+                                continue
 
-                        # Convert the last certificate number to an integer (if it's not already)
-                        last_certificate_number = int(last_certificate_number) if last_certificate_number else 0
+                            last_student_workshop = StudentWorkshop.objects.order_by('-id').first()
+                            if last_student_workshop:
+                                last_certificate_number = int(last_student_workshop.certificate_number)
+                            else:
+                                last_certificate_number = 900
 
-    
-                        # Increment the last certificate number by 1 to generate the new certificate number
-                        if last_certificate_number:
                             new_certificate_number = last_certificate_number + 1
-                        else:
-                            new_certificate_number = 1
 
-                        # Convert the new certificate number back to a string
-                        new_certificate_number_str = str(new_certificate_number)
+                            student = StudentWorkshop.objects.create(
+                                name=row.get('name', ''),
+                                college_name=row.get('college_name', ''),
+                                start_date=start_date,
+                                end_date=end_date,
+                                mentor_name=row.get('mentor_name', ''),
+                                issued_date=timezone.now().date(),
+                                certificate_type=certificate_type,
+                                course=course,
+                                certificate_number=str(new_certificate_number)
+                            )
 
-                        # Create Student instance for the current row
-                        student = StudentWorkshop.objects.create(
-                            name=row.get('name', ''),
-                            college_name=row.get('college_name', ''),
-                            start_date=start_date,
-                            end_date=end_date,
-                            mentor_name=row.get('mentor_name', ''),
-                            issued_date=timezone.now().date(),
-                            certificate_type=certificate_type,  
-                            course=course,
-                            certificate_number=new_certificate_number_str
-                            # course=row.get('course_name','')
-                        )
+                            for auth_id in authorities:
+                                authority = Authority.objects.get(auth_id=auth_id)
+                                StudentRelatedAuthority.objects.create(std_workshop=student, authority=authority)
 
-                        # Create StudentRelatedAuthority instance linking student with authority
-                        StudentRelatedAuthority.objects.create(std_workshop=student, authority=authority)
+                        except csv.Error as e:
+                            print(f"CSV error in row: {e}")
+                        except ObjectDoesNotExist as e:
+                            print(f"Object not found: {e}")
+                        except Exception as e:
+                            print(f"An error occurred while processing a row: {e}")
 
-                        # Print a message indicating successful processing
-                        print("CSV file processed successfully")                       
-
-                return redirect('display_workshop_students')
+                    print("CSV file processed successfully")
+                    return redirect('display_workshop_students')
+                except csv.Error as e:
+                    print(f"CSV error: {e}")
+                except Exception as e:
+                    print(f"An error occurred while processing the CSV file: {e}")
             else:
-                # Print form errors if any
                 print("Form errors:", upload_form.errors)
-        else:
-            # Print if 'upload_csv' is not in request.POST
-            print("Upload CSV not found in request")
 
     return render(request, 'student_workshop_form.html', {'certificate_types': certificate_types, 'authorities': authorities, 'upload_form': upload_form})
+
+# def student_workshop_submit(request):
+#     certificate_types = CertificateTypes.objects.all()
+#     authorities = Authority.objects.all()
+#     upload_form = UploadFileForm()
+
+#     if request.method == 'POST':
+#         if 'submit_form' in request.POST:
+#             certificate_number =request.POST.get('certificate_number')
+#             name = request.POST.get('name')
+#             college_name = request.POST.get('college_name')
+#             start_date = request.POST.get('start_date')
+#             end_date = request.POST.get('end_date')
+#             mentor_name = request.POST.get('mentor_name')
+#             issued_date = timezone.now().date()
+#             certificate_type_id = request.POST.get('certificate_type')
+#             authority_ids = request.POST.getlist('authority')
+#             course_id = request.POST.get('courses')
+            
+#             # Fetch the CertificateTypes instance based on the provided certificate_type_id
+#             certificate_type = CertificateTypes.objects.get(id=certificate_type_id)
+         
+#             # Fetch the Course instance based on the provided course_id
+#             course = Course.objects.get(id=course_id)
+      
+
+#             #Assign the selected course to the student through the CertificateTypes instance
+#             certificate_type.courses.add(course) 
+
+
+#             # Fetch the last used certificate number
+#             last_certificate_number = StudentWorkshop.objects.order_by('-id').first().certificate_number
+#             # last_student = Student.objects.order_by('-id').first()
+#             # if last_student:
+#             #     last_certificate_number = last_student.certificate_number
+#             # else:
+#             #     last_certificate_number = 900  # or handle the case where there are no students
+
+#             # # Convert the last certificate number to an integer (if it's not already)
+#             # last_certificate_number = int(last_certificate_number) if last_certificate_number else 0
+
+    
+#             # Increment the last certificate number by 1 to generate the new certificate number
+#             if last_certificate_number:
+#                 new_certificate_number = last_certificate_number + 1
+#             else:
+#                 new_certificate_number = 1
+
+#             # Convert the new certificate number back to a string
+#             new_certificate_number_str = str(new_certificate_number)
+
+
+#             student = StudentWorkshop.objects.create(
+#                 name=name,
+#                 college_name=college_name,
+#                 start_date=start_date,
+#                 end_date=end_date,
+#                 mentor_name=mentor_name,
+#                 issued_date=issued_date,
+#                 certificate_type_id=certificate_type_id,
+#                 course=course,
+#                 certificate_number=new_certificate_number_str
+#             )
+
+#             # Add selected authorities to the student
+#             for authority_id in authority_ids:
+#                 authority = Authority.objects.get(id=authority_id)
+#                 StudentRelatedAuthority.objects.create(std_workshop=student, authority=authority)
+
+#             return redirect('display_workshop_students')  # Redirect to the display students page
+        
+
+#         elif 'upload_csv' in request.POST:
+#             upload_form = UploadFileForm(request.POST, request.FILES)
+#             if upload_form.is_valid():
+#                 csv_file = request.FILES['csv_file']
+#                 decoded_file = csv_file.read().decode('utf-8').splitlines()
+#                 reader = csv.DictReader(decoded_file)
+#                 for row in reader:
+#                     start_date = timezone.datetime.strptime(row['start_date'], '%d-%m-%Y').strftime('%Y-%m-%d')
+#                     end_date = timezone.datetime.strptime(row['end_date'], '%d-%m-%Y').strftime('%Y-%m-%d')
+
+#                     authorities = row.get('auth_id', '').split(',')
+
+#                     for auth_id in authorities:
+#                         try:
+#                             # Get Authority instance based on the custom ID (auth_id)
+#                             authority = Authority.objects.get(auth_id=auth_id)
+#                         except Authority.DoesNotExist:
+#                              # Handle the case where the Authority instance with the provided auth_id doesn't exist
+#                             print(f"Authority with auth_id {auth_id} does not exist. Skipping this auth_id.")
+#                             continue
+                        
+#                         # Fetch or create the Course instance based on the provided course_name
+#                         course_name = row.get('course_name')
+#                         course,create = Course.objects.get_or_create(course_name=course_name)
+
+#                         # Fetch certificate_type_id from row data
+#                         certificate_type_id = row.get('certificate_type_id')
+                        
+
+#                         try:
+#                             # Get CertificateTypes instance based on the custom ID
+#                             certificate_type = CertificateTypes.objects.get(certify_type_id=certificate_type_id)
+#                         except CertificateTypes.DoesNotExist:
+#                             # Handle the case where the CertificateTypes instance with the provided certificate_type_id doesn't exist
+#                             print(f"CertificateTypes with certificate_type_id {certificate_type_id} does not exist. Skipping this row.")
+#                             continue
+                        
+#                         last_student = Student.objects.order_by('-id').first()
+#                         if last_student:
+#                             last_certificate_number = last_student.certificate_number
+#                         else:
+#                             last_certificate_number = 900  # or handle the case where there are no students
+
+#                         # Fetch the last used certificate number
+#                         last_certificate_number = StudentWorkshop.objects.order_by('-id').first().certificate_number
+
+#                         # Convert the last certificate number to an integer (if it's not already)
+#                         last_certificate_number = int(last_certificate_number) if last_certificate_number else 0
+
+    
+#                         # Increment the last certificate number by 1 to generate the new certificate number
+#                         if last_certificate_number:
+#                             new_certificate_number = last_certificate_number + 1
+#                         else:
+#                             new_certificate_number = 1
+
+#                         # Convert the new certificate number back to a string
+#                         new_certificate_number_str = str(new_certificate_number)
+
+#                         # Create Student instance for the current row
+#                         student = StudentWorkshop.objects.create(
+#                             name=row.get('name', ''),
+#                             college_name=row.get('college_name', ''),
+#                             start_date=start_date,
+#                             end_date=end_date,
+#                             mentor_name=row.get('mentor_name', ''),
+#                             issued_date=timezone.now().date(),
+#                             certificate_type=certificate_type,  
+#                             course=course,
+#                             certificate_number=new_certificate_number_str
+#                             # course=row.get('course_name','')
+#                         )
+
+#                         # Create StudentRelatedAuthority instance linking student with authority
+#                         StudentRelatedAuthority.objects.create(std_workshop=student, authority=authority)
+
+#                         # Print a message indicating successful processing
+#                         print("CSV file processed successfully")                       
+
+#                 return redirect('display_workshop_students')
+#             else:
+#                 # Print form errors if any
+#                 print("Form errors:", upload_form.errors)
+#         else:
+#             # Print if 'upload_csv' is not in request.POST
+#             print("Upload CSV not found in request")
+
+#     return render(request, 'student_workshop_form.html', {'certificate_types': certificate_types, 'authorities': authorities, 'upload_form': upload_form})
+
 
 
 # iv student form page for submitting details
@@ -400,15 +567,32 @@ def student_iv_submit(request):
             certificate_type_id = request.POST.get('certificate_type')
             authority_ids = request.POST.getlist('authority')
             course_id = request.POST.get('courses')
+            course_ids = {int(key.split('-')[-1]): request.POST.get(key) for key in request.POST if key.startswith('courses-')}
+            print("certificate type id: ",type(certificate_type_id))
+            print("course  ids: ",course_ids)
+            # Check if certificate_type_id exists in the course_ids dictionary
+            if certificate_type_id in course_ids:
+              course_id = course_ids[2]
+              print(f"Course ID for certificate type ID {certificate_type_id}: {course_id}")
+            else:
+              print(f"No course ID found for certificate type ID {certificate_type_id}")
+
+
+            print("course id: ",course_id)
             
             # Fetch the CertificateTypes instance based on the provided certificate_type_id
             certificate_type = CertificateTypes.objects.get(id=certificate_type_id)
-         
+            
+            
             # Fetch the Course instance based on the provided course_id
             course = Course.objects.get(id=course_id)
-      
+            print("course: ", course)
+
+            
             #Assign the selected course to the student through the CertificateTypes instance
             certificate_type.courses.add(course) 
+            
+             
   
             iv_student = StudentIV.objects.create(
                 name=name,
@@ -521,6 +705,7 @@ def student_iv_submit(request):
             print("Upload CSV not found in request")
 
     return render(request, 'student_iv_form.html', {'certificate_types': certificate_types, 'authorities': authorities, 'upload_form': upload_form})    
+
 
 
 # tronix student form page for submitting details
@@ -743,63 +928,117 @@ def get_courses(request):
 # display all students of internship
 @login_required(login_url='login')
 def display_students(request):
-    students = Student.objects.all().order_by('-created_at')
-    #student_iv_data = StudentIV.objects.all().order_by('-created_at')
+    try:
+        students = Student.objects.all().order_by('-created_at')
+        courses = Course.objects.all()
+        certificate_types = CertificateTypes.objects.all()
+        certificate_courses = {}
 
-    # students_iv = StudentIV.objects.all().order_by('-created_at')
-
-    # # Combine the data into a single list with a type indicator
-    # combined_data = [(student, 'Student') for student in students] + [(student_iv, 'StudentIV') for student_iv in students_iv]
- 
-    courses=Course.objects.all()
-
-    certificate_types = CertificateTypes.objects.all()
-    certificate_courses = {}
-
-
-    for certificate_type_instance in certificate_types:
-        certificate_type_pk = certificate_type_instance.pk
-        # Now you can use certificate_type_pk as needed, for example:
-        # print(f"Primary key of CertificateTypes instance: {certificate_type_pk}")
-
-        # Access the courses related to this instance
-        current_courses = certificate_type_instance.courses.all()
-
-        # Store the related courses for this certificate type
-        certificate_courses[certificate_type_pk] = current_courses
-
-        # Iterate over each Course instance related to the current certificate type
-        for course_instance in current_courses:
-            # Retrieve the related CertificateTypes for the current Course instance
-            certificate_types_related_to_course = course_instance.certificate_types.all()
+        if not students.exists():
+            students = None  # Or any other placeholder indicating no data
         
-            # Iterate over each related CertificateTypes instance
-            for certificate_type_instance_related_to_course in certificate_types_related_to_course:
-                certificate_type_pk_related_to_course = certificate_type_instance_related_to_course.pk
-                # Now you can use certificate_type_pk_related_to_course as needed, for example:
-                # print(f"Primary key of CertificateTypes instance related to Course '{course_instance.course_name}': {certificate_type_pk_related_to_course}")
-    
-    current_year = datetime.now().strftime("%Y")
+        if not courses.exists():
+            courses = None  # Or any other placeholder indicating no data
+        
+        if not certificate_types.exists():
+            certificate_types = None  # Or any other placeholder indicating no data
 
-    # Iterate over each student to generate certificate numbers
-    for std in students:
-        number = std.certificate_number
-        current_year = datetime.now().strftime("%Y")
-        certificate_number = f"SRC/{current_year}/{number}"
-        #certificate_number[students.id] = certificate_number  # Map student ID to certificate number
+        for certificate_type_instance in certificate_types:
+            certificate_type_pk = certificate_type_instance.pk
+            current_courses = certificate_type_instance.courses.all()
 
-    print(certificate_number)
-    
-    context = {
-        'students': students,
-        'certificate_types': certificate_types,
-        'courses': courses,
-        'certificate_id_number': certificate_number,  # Include the certificate numbers in the context
-    }
-    
+            certificate_courses[certificate_type_pk] = current_courses
 
-    # return render(request, 'table.html', {'students': students, 'certificate_types': certificate_types, 'certificate_courses': certificate_courses})
+            for course_instance in current_courses:
+                certificate_types_related_to_course = course_instance.certificate_types.all()
+
+                for certificate_type_instance_related_to_course in certificate_types_related_to_course:
+                    certificate_type_pk_related_to_course = certificate_type_instance_related_to_course.pk
+
+        current_year = timezone.now().strftime("%Y")
+        certificate_number = None  # Initialize the certificate number variable
+
+        for std in students:
+            number = std.certificate_number
+            current_year = timezone.now().strftime("%Y")
+            certificate_number = f"SRC/{current_year}/{number}"
+
+        context = {
+            'students': students,
+            'certificate_types': certificate_types,
+            'courses': courses,
+            'certificate_id_number': certificate_number,
+        }
+    except Exception as e:
+        # Handle any other exceptions that might occur
+        print(f"An error occurred: {e}")
+        context = {
+            'students': None,
+            'certificate_types': None,
+            'courses': None,
+            'certificate_id_number': None,
+            'error_message': "An error occurred while retrieving the data."
+        }
+
     return render(request, 'table.html', context)
+# def display_students(request):
+#     students = Student.objects.all().order_by('-created_at')
+#     #student_iv_data = StudentIV.objects.all().order_by('-created_at')
+
+#     # students_iv = StudentIV.objects.all().order_by('-created_at')
+
+#     # # Combine the data into a single list with a type indicator
+#     # combined_data = [(student, 'Student') for student in students] + [(student_iv, 'StudentIV') for student_iv in students_iv]
+ 
+#     courses=Course.objects.all()
+
+#     certificate_types = CertificateTypes.objects.all()
+#     certificate_courses = {}
+
+
+#     for certificate_type_instance in certificate_types:
+#         certificate_type_pk = certificate_type_instance.pk
+#         # Now you can use certificate_type_pk as needed, for example:
+#         # print(f"Primary key of CertificateTypes instance: {certificate_type_pk}")
+
+#         # Access the courses related to this instance
+#         current_courses = certificate_type_instance.courses.all()
+
+#         # Store the related courses for this certificate type
+#         certificate_courses[certificate_type_pk] = current_courses
+
+#         # Iterate over each Course instance related to the current certificate type
+#         for course_instance in current_courses:
+#             # Retrieve the related CertificateTypes for the current Course instance
+#             certificate_types_related_to_course = course_instance.certificate_types.all()
+        
+#             # Iterate over each related CertificateTypes instance
+#             for certificate_type_instance_related_to_course in certificate_types_related_to_course:
+#                 certificate_type_pk_related_to_course = certificate_type_instance_related_to_course.pk
+#                 # Now you can use certificate_type_pk_related_to_course as needed, for example:
+#                 # print(f"Primary key of CertificateTypes instance related to Course '{course_instance.course_name}': {certificate_type_pk_related_to_course}")
+    
+#     current_year = datetime.now().strftime("%Y")
+
+#     # Iterate over each student to generate certificate numbers
+#     for std in students:
+#         number = std.certificate_number
+#         current_year = datetime.now().strftime("%Y")
+#         certificate_number = f"SRC/{current_year}/{number}"
+#         #certificate_number[students.id] = certificate_number  # Map student ID to certificate number
+
+#     print(certificate_number)
+    
+#     context = {
+#         'students': students,
+#         'certificate_types': certificate_types,
+#         'courses': courses,
+#         'certificate_id_number': certificate_number,  # Include the certificate numbers in the context
+#     }
+    
+
+#     # return render(request, 'table.html', {'students': students, 'certificate_types': certificate_types, 'certificate_courses': certificate_courses})
+#     return render(request, 'table.html', context)
 
 # display all students of workshop
 @login_required(login_url='login')

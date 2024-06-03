@@ -59,16 +59,17 @@
                 </div>
                 {% endfor %} -->
 
+
                 {% for certificate_type in certificate_types %}
                 <div id="courses_{{ certificate_type.id }}" class="courses">
-                  <label>Courses for {{ certificate_type.certificate_type }}:</label>
-                  <select id="courses_{{ certificate_type.id }}" name="courses_{{ certificate_type.id }}">
-                    {% for course in certificate_type.courses.all %}
-                    <option value="{{ course.id }}">{{ course.course_name }}</option>
-                    {% endfor %}
-                  </select><br>
+                    <label>Courses for {{ certificate_type.certificate_type }}:</label>
+                    <select id="courses{{ certificate_type.id }}" name="courses-{{ certificate_type.id }}">
+                        {% for course in certificate_type.courses.all %}
+                            <option value="{{ course.id }}">{{ course.course_name }}</option>
+                        {% endfor %}
+                    </select><br>
                 </div>
-                {% endfor %}
+            {% endfor %}
 
 
                 <input class="btn btn-primary" type="submit" name="submit_form" value="submit">

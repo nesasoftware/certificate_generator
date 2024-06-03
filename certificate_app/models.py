@@ -238,7 +238,7 @@ class StudentRelatedAuthority(models.Model):
     authority = models.ForeignKey(Authority, on_delete=models.CASCADE, null=True)
 
     def __str__(self):
-        return self.std
+        return str(self.std)
     
 
 # class StudentRelatedCourse(models.Model):
