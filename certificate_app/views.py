@@ -101,7 +101,7 @@ def my_view(request):
             if last_student:
                 last_certificate_number = last_student.certificate_number
             else:
-                last_certificate_number = 999  # or handle the case where there are no students
+                last_certificate_number = 1000 # or handle the case where there are no students
 
 
             # Convert the last certificate number to an integer (if it's not already)
@@ -180,7 +180,7 @@ def my_view(request):
                         if last_student:
                             last_certificate_number = last_student.certificate_number
                         else:
-                            last_certificate_number = 900  # or handle the case where there are no students
+                            last_certificate_number = 1000 # or handle the case where there are no students
 
                         # Fetch the last used certificate number
                         # last_certificate_number = Student.objects.order_by('-id').first().certificate_number
@@ -419,7 +419,7 @@ def student_workshop_submit(request):
 #             # if last_student:
 #             #     last_certificate_number = last_student.certificate_number
 #             # else:
-#             #     last_certificate_number = 900  # or handle the case where there are no students
+#             #     last_certificate_number = 1000 # or handle the case where there are no students
 
 #             # # Convert the last certificate number to an integer (if it's not already)
 #             # last_certificate_number = int(last_certificate_number) if last_certificate_number else 0
@@ -496,7 +496,7 @@ def student_workshop_submit(request):
 #                         if last_student:
 #                             last_certificate_number = last_student.certificate_number
 #                         else:
-#                             last_certificate_number = 900  # or handle the case where there are no students
+#                             last_certificate_number = 1000 # or handle the case where there are no students
 
 #                         # Fetch the last used certificate number
 #                         last_certificate_number = StudentWorkshop.objects.order_by('-id').first().certificate_number
@@ -657,7 +657,7 @@ def student_iv_submit(request):
                         if last_student:
                             last_certificate_number = last_student.certificate_number
                         else:
-                            last_certificate_number = 900  # or handle the case where there are no students
+                            last_certificate_number = 1000 # or handle the case where there are no students
 
                         # Fetch the last used certificate number
                         # last_certificate_number = StudentWorkshop.objects.order_by('-id').first().certificate_number
