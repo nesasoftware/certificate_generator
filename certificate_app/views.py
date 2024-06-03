@@ -75,7 +75,7 @@ def my_view(request):
             print("course  ids: ",course_ids)
             # Check if certificate_type_id exists in the course_ids dictionary
             if certificate_type_id in course_ids:
-              course_id = course_ids[2]
+              course_id = course_ids[certificate_type_id]
               print(f"Course ID for certificate type ID {certificate_type_id}: {course_id}")
             else:
               print(f"No course ID found for certificate type ID {certificate_type_id}")
@@ -246,7 +246,7 @@ def student_workshop_submit(request):
                 end_date = request.POST.get('end_date')
                 mentor_name = request.POST.get('mentor_name')
                 issued_date = timezone.now().date()
-                certificate_type_id = request.POST.get('certificate_type')
+                certificate_type_id = int(request.POST.get('certificate_type'))
                 authority_ids = request.POST.getlist('authority')
                 course_id = request.POST.get('courses')
 
@@ -255,7 +255,7 @@ def student_workshop_submit(request):
                 print("course  ids: ",course_ids)
                 # Check if certificate_type_id exists in the course_ids dictionary
                 if certificate_type_id in course_ids:
-                    course_id = course_ids[2]
+                    course_id = course_ids[certificate_type_id]
                     print(f"Course ID for certificate type ID {certificate_type_id}: {course_id}")
                 else:
                     print(f"No course ID found for certificate type ID {certificate_type_id}")
@@ -564,7 +564,7 @@ def student_iv_submit(request):
             conducted_date = request.POST.get('conducted_date')
             mentor_name = request.POST.get('mentor_name')
             issued_date = timezone.now().date()
-            certificate_type_id = request.POST.get('certificate_type')
+            certificate_type_id = int(request.POST.get('certificate_type'))
             authority_ids = request.POST.getlist('authority')
             course_id = request.POST.get('courses')
             course_ids = {int(key.split('-')[-1]): request.POST.get(key) for key in request.POST if key.startswith('courses-')}
@@ -572,7 +572,7 @@ def student_iv_submit(request):
             print("course  ids: ",course_ids)
             # Check if certificate_type_id exists in the course_ids dictionary
             if certificate_type_id in course_ids:
-              course_id = course_ids[2]
+              course_id = course_ids[certificate_type_id]
               print(f"Course ID for certificate type ID {certificate_type_id}: {course_id}")
             else:
               print(f"No course ID found for certificate type ID {certificate_type_id}")
