@@ -172,6 +172,7 @@ class Student(models.Model):
     course= models.ForeignKey(Course, on_delete=models.CASCADE, related_name='enrolled_students', null=True)
     created_at = models.DateTimeField( default=timezone.now)  # Add this field to store creation time
     certificate_number = models.CharField(max_length=20, null=True, blank=True)  # Changed field name to certificate_number
+    digital_sign = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         # Set issued_date to the current date if it's not already set

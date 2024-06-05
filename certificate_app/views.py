@@ -29,6 +29,8 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.colors import HexColor
 from reportlab.lib.utils import ImageReader
 from reportlab.lib import colors
+from PyPDF2 import PdfFileReader, PdfFileWriter
+from PyPDF2.generic import ByteStringObject, NameObject, TextStringObject
 from pdf2image import convert_from_path
 import pyqrcode 
 import io
@@ -60,6 +62,9 @@ def my_view(request):
 
     if request.method == 'POST':
         if 'submit_form' in request.POST:
+            # Get the checkbox value
+            digital_sign = request.POST.get('digital_sign') == 'yes'
+
             certificate_number =request.POST.get('certificate_number')
             name = request.POST.get('name')
             college_name = request.POST.get('college_name')
@@ -127,7 +132,8 @@ def my_view(request):
                 issued_date=issued_date,
                 certificate_type_id=certificate_type_id,
                 course=course,
-                certificate_number=new_certificate_number_str
+                certificate_number=new_certificate_number_str,
+                digital_sign= digital_sign,
             )
 
             # Add selected authorities to the student
@@ -208,7 +214,8 @@ def my_view(request):
                             issued_date=timezone.now().date(),
                             certificate_type=certificate_type,  
                             course=course,
-                            certificate_number=new_certificate_number_str
+                            certificate_number=new_certificate_number_str,
+                            digital_sign=row.get('digital_sign') == 'yes'  # Store the checkbox value from CSV
                             # course=row.get('course_name','')
                         )
 
@@ -1501,15 +1508,34 @@ def render_pdf_view(request, student_id):
     # Accessing the related Authority instance
     authority = student_related_authority.authority
 
-    if authority:
-        # Accessing the signature attribute of the related Authority instance
-        signature_image_url = str(authority.signature)
-        # print("Signature Image URL:", signature_image_url)
+    if student_instance.digital_sign:
+        # Add a tick mark (✓) to the PDF
+        tick = "\u2713"
+        c.setFont("Helvetica", 40)
+        c.setFillColorRGB(0, 1, 0)  # Set the color to green (RGB)
+        c.drawString(4.8 * inch, 0 * inch, tick)
+    else:
+        if authority:
+            # Accessing the signature attribute of the related Authority instance
+            signature_image_url = str(authority.signature)
+            signature_path = os.path.join(settings.MEDIA_ROOT, signature_image_url)
+            # Ensure the signature image path is correct
+            if os.path.exists(signature_path):
+                c.drawImage(signature_path, 4.1 * inch, 0 * inch, width=80, height=40, mask='auto')
 
-        c.drawImage('media/' + signature_image_url, 4.1 * inch, 0 * inch, width=80, height=40, mask='auto')
+    # if authority:
+    #     # Accessing the signature attribute of the related Authority instance
+    #     signature_image_url = str(authority.signature)
+    #     # print("Signature Image URL:", signature_image_url)
 
-    
-    #c.drawImage('pictures/Nebu-John-SIgn.png',4.4*inch, 0.1*inch, width=100, height=50,mask=None)
+    #     c.drawImage('media/' + signature_image_url, 4.1 * inch, 0 * inch, width=80, height=40, mask='auto')
+
+    # # Add a tick mark (✓) to the PDF
+    # tick = "\u2713"
+    # c.setFont("Helvetica", 40)
+    # c.setFillColorRGB(0, 1, 0)  # Set the color to green (RGB)
+    # c.drawString( 4.8 * inch, 0 * inch, tick)
+    # #c.drawImage('pictures/Nebu-John-SIgn.png',4.4*inch, 0.1*inch, width=100, height=50,mask=None)
 
     font_path = 'static/fonts/Quattrocento-Bold.ttf'
     pdfmetrics.registerFont(TTFont('Quattrocento-Bold', font_path))
